@@ -1,10 +1,15 @@
-const Editor = () => {
+import { useParams } from 'react-router';
+
+const DesignInterface = () => {
+  const { projectId } = useParams<{ projectId: string }>();
   return (
     <div className="p-8">
       <h1 className="text-4xl font-bold text-slate-800">Página del Editor</h1>
-      <p className="text-slate-600 mt-2">Aquí es donde ocurrirá la magia del Drag & Drop.</p>
+      <p className="text-slate-600 mt-2">
+        Aquí es donde ocurrirá la magia del Drag & Drop. {projectId}
+      </p>
     </div>
   );
-}
+};
 
-export default Editor;
+export default DesignInterface;
