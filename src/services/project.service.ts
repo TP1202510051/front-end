@@ -1,3 +1,4 @@
+import type { Project } from '@/models/projectModel';
 import axios from 'axios';
 
 interface ProjectRequest {
@@ -6,7 +7,7 @@ interface ProjectRequest {
 }
 
 interface ProjectAnswerResponse {
-  answer: string;
+  answer: number;
 }
 
 const apiUrl = 'http://localhost:8080/api/projects';  // Asegúrate de usar la URL correcta de tu backend
@@ -35,3 +36,15 @@ export const createProject = async (userId: number, name: string): Promise<Proje
     throw error;  // Rechaza la promesa si hay un error
   }
 };
+
+
+export const getProjectsByUserId = async (userId: number): Promise<Project[]> => {
+    try {
+      const response = await axios.get<Project[]>(`${apiUrl}/user/${userId}`);
+      console.log("Proyectos obtenidos:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error obteniendo proyectos:", error);
+      throw error;  // Rechaza la promesa si hay un error
+    }
+  };

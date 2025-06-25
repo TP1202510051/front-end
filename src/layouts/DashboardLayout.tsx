@@ -13,29 +13,25 @@ import { Plus } from 'lucide-react';
 import { Outlet } from 'react-router';
 import { useState } from 'react';
 import { createProject } from '../services/project.service';
+import { useNavigate } from 'react-router-dom';
 
 export const DashboardLayout = () => {
 
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-  const [response, setResponse] = useState<string | null>(null);
-  //const [loading, setLoading] = useState<boolean>(false);
   const [projectName, setProjectName] = useState<string>("");
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setProjectName(event.target.value);  // Aquí se actualiza correctamente el estado con el valor del input
+    setProjectName(event.target.value);
   };
 
-
   const handleAccept = async () => {
-
-
     try {
-      const result = await createProject(1, projectName); // Pasa el ID y el nombre del proyecto
-      // Asegúrate de que 'result' es lo que esperas (un objeto con respuesta, por ejemplo)
-      console.log("Proyecto creado con éxito:", response);  // Verifica lo que devuelve el backend
-      setResponse(`Proyecto creado con éxito: ${result.answer}`); // Usa la respuesta correcta del backend
+      const result = await createProject(1, projectName);
+      console.log("Proyecto creado con éxito:", result);
+      setIsOpen(false);
+      navigate(`/design-interface/${result}`);
     } catch (error) {
-      setResponse("Hubo un error al crear el proyecto.");
       console.error("Error al crear proyecto:", error);
     }
   };
