@@ -11,7 +11,7 @@ type DashboardCardProps = {
 
 const DashboardCard = ({ id, imageUrl, title, lastEdited }: DashboardCardProps) => {
   return (
-    <Link to={`/design-interface/${id}`} className="block h-full">
+    <Link to={`/design-interface/${id}/${title}`} className="block h-full">
       <Card
         className="w-full py-0 gap-0 overflow-hidden rounded-lg bg-[var(--card-background)]/40 backdrop-blur-sm border border-white/10 
       hover:border-sky-400 hover:scale-105 transition-all duration-300 cursor-pointer"

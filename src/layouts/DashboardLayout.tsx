@@ -30,7 +30,7 @@ export const DashboardLayout = () => {
       const result = await createProject(1, projectName);
       console.log("Proyecto creado con éxito:", result);
       setIsOpen(false);
-      navigate(`/design-interface/${result}`);
+      navigate(`/design-interface/${result}/${projectName}`);
     } catch (error) {
       console.error("Error al crear proyecto:", error);
     }

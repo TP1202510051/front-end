@@ -39,7 +39,7 @@ const router = createBrowserRouter([
     errorElement: <NotFound />,
     children: [
       {
-        path: '/design-interface/:projectId',
+        path: '/design-interface/:projectId/:projectName',
         Component: DesignInterface,
       },
     ],
