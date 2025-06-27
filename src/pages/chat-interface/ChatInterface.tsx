@@ -8,45 +8,58 @@ import type { Message } from '@/models/messageModel';
 import { Client, type IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 
+interface ChatInterfaceProps {
+  onCode: (jsx: string) => void;
+}
 
-
-const ChatInterface = () => {
+const ChatInterface = ({onCode}: ChatInterfaceProps) => {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
   const { projectId, projectName } = useParams<{ projectId: string; projectName: string }>();
 
-    const promptMap: { mini: string; full: string }[] = [
+  const promptMap: { mini: string; full: string }[] = [
     {
       mini: 'Tienda básica sin carrito',
-      full: `Crea el esqueleto en React+TSX y Tailwind para una tienda virtual básica que muestre un catálogo de productos. Debe incluir:
-- Cabecera con logo y menú (Inicio, Tienda, Contacto).
-- Grid responsive de tarjetas de producto con imagen, nombre y precio.
-- Pie de página con información de la empresa y enlaces legales.`
+      full: `
+  Sólo genera el fragmento JSX de la interfaz front-end en React+JSX. Debe incluir:
+  - Estructura semántica (header, main, footer).
+  - Cabecera con logo y menú (Inicio, Tienda, Contacto).
+  - Grid responsive de tarjetas de producto con imagen, nombre y precio (usa etiquetas y className genéricos, sin Tailwind).
+  - Pie de página con información de la empresa y enlaces legales.
+      `.trim()
     },
     {
-      mini: 'Tienda con carrito compras',
-      full: `Desarrolla en React+TSX una tienda virtual que incluya:
-- Catálogo de productos en un grid con “Añadir al carrito”.
-- Un componente <Cart> accesible desde el header que muestre ítems, cantidades y subtotal.
-- Funcionalidad para incrementar, decrementar o eliminar productos del carrito.`
+      mini: 'Tienda con carrito de compras',
+      full: `
+  Sólo genera el fragmento JSX de la interfaz front-end en React+JSX. Debe incluir:
+  - Catálogo de productos en un grid con botón “Añadir al carrito” (usa etiquetas y className genéricos).
+  - Componente <Cart> mock que muestre ítems, cantidades y subtotal.
+  - Botones para incrementar, decrementar o eliminar ítems (solo UI).
+      `.trim()
     },
     {
       mini: 'Tienda con pago online',
-      full: `Genera el código en React+TSX para una tienda con carrito y checkout. Debe incluir:
-- Integración con pasarela de pago (Stripe o PayPal) en la página de pago.
-- Formulario de datos de facturación y tarjeta.
-- Validación de campos y manejo de errores.
-- Redirección a página de confirmación tras el pago.`
+      full: `
+  Sólo genera el fragmento JSX de la interfaz front-end en React+JSX. Debe incluir:
+  - Página de checkout con formulario de facturación y tarjeta (solo UI).
+  - Validación visual de campos (placeholders).
+  - Indicadores de estado de envío y error.
+  - Botón de “Pagar” que simule redirección a una página de confirmación.
+      `.trim()
     },
     {
-      mini: 'Tienda completa con inventario',
-      full: `Diseña una solución full-stack:
-- Backend en Spring Boot con JPA para gestionar productos e inventario (CRUD y control de stock).
-- Frontend en React+TSX que consuma la API: catálogo, carrito, checkout con pago online y actualización de stock.
-- Panel de administración separado para crear/editar productos y ver niveles de inventario.`
+      mini: 'Panel de inventario',
+      full: `
+  Sólo genera el fragmento JSX de la interfaz front-end en React+JSX. Debe incluir:
+  - Tabla o grid de productos con columnas: imagen, nombre, stock.
+  - Filtros y búsqueda (solo UI).
+  - Botones de “Editar” y “Eliminar” (solo UI).
+  - Diseño responsivo usando CSS clásico o className genéricos.
+      `.trim()
     },
   ];
+
 
   useEffect(() => {
     const socket = new SockJS('http://localhost:8080/ws');
@@ -59,21 +72,39 @@ const ChatInterface = () => {
 
     client.onConnect = () => {
       client.subscribe(`/topic/conversation/${projectId}`, (msg: IMessage) => {
-        const body = msg.body;
+        let parsed: { code: string; message: string };
+        try {
+          parsed = JSON.parse(msg.body);
+          console.log('Mensaje recibido:', parsed);
+        } catch (e) {
+          console.error('No es JSON válido:', msg.body);
+          return;
+        }
+
+        if (parsed.code) {
+          console.log('Código de la IA:', parsed.code);
+        }
+        console.log('Código de la IA:', parsed.code);
+
+        const jsxOnly = parsed.code
+          .replace(/import[\s\S]*?from ['"][\s\S]*?['"];?/g, '')
+          .replace(/export\s+default\s+\w+\s*;?/, '');
+
+        onCode(jsxOnly);
+
         setMessages(prev => [
           ...prev,
           {
             id: Date.now().toString(),
-            content: body,
+            content: parsed.message,
             createdAt: Date.now().toString(),
             projectId: projectId || '',
             type: 'response',
-            code: ''
           },
         ]);
       });
     };
-    
+      
     client.activate();
 
     return () => {
@@ -110,7 +141,6 @@ const ChatInterface = () => {
           createdAt: Date.now().toString(),
           projectId: projectId || '',
           type: 'prompt',
-          code: ''
         }
       ]);
     }
