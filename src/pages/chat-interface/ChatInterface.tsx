@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useParams } from 'react-router-dom';
 import { createMessage } from '@/services/messaging.service';
 import { getMessagesByProjectId } from '@/services/messaging.service';
 import type { Message } from '@/models/messageModel';
@@ -10,13 +9,14 @@ import SockJS from 'sockjs-client';
 
 interface ChatInterfaceProps {
   onCode: (jsx: string) => void;
+  projectId: string;
+  projectName: string;
 }
 
-const ChatInterface = ({onCode}: ChatInterfaceProps) => {
+const ChatInterface = ({onCode, projectId, projectName}: ChatInterfaceProps) => {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const { projectId, projectName } = useParams<{ projectId: string; projectName: string }>();
 
   const promptMap: { mini: string; full: string }[] = [
     {
