@@ -3,7 +3,8 @@ import './App.css';
 import { BlankLayout } from './layouts/BlankLayout.tsx';
 import { DashboardLayout } from './layouts/DashboardLayout.tsx';
 import Dashboard from './pages/dashboard/Dashboard.tsx';
-import DesignInterface from './pages/design-interface/DesignInterface.tsx';
+//import DesignInterface from './pages/design-interface/DesignInterface.tsx';
+import DesignInterfaceRender from './pages/design-interface/DesignInterfaceRender.tsx';
 import Home from './pages/home/Home';
 import NotFound from './pages/not-found/NotFound.tsx';
 import IconLayout from './layouts/IconLayout.tsx';
@@ -40,7 +41,7 @@ const router = createBrowserRouter([
     children: [
       {
         path: '/design-interface/:projectId/:projectName',
-        Component: DesignInterface,
+        Component: DesignInterfaceRender,
       },
     ],
   },

@@ -3,6 +3,5 @@ export interface Message {
     content: string;
     createdAt: string;
     projectId: string;
-    code: string;
     type: string;
 }

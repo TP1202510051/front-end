@@ -28,6 +28,13 @@ export type CanvasComponent =
       props: ProductGridProps;
       position: Position;
       size: { width: number; height: number };
+    }
+  | {
+      id: string;
+      type: 'CustomCode';
+      props: { code: string };
+      position: Position;
+      size: { width: number; height: number };
     };
 
 export type ActiveTool = 'select' | 'HeroSection';
@@ -43,32 +50,16 @@ interface CanvasState {
   addComponent: (component: Omit<CanvasComponent, 'id'>) => void;
   setActiveTool: (tool: ActiveTool) => void;
   selectComponent: (id: string | null) => void;
+  setComponents: (
+    comps: CanvasComponent[] | { components: CanvasComponent[] }
+  ) => void;
 }
-
-const initialComponents: CanvasComponent[] = [
-  {
-    id: 'hero-1',
-    type: 'HeroSection',
-    props: { title: 'Descubre la Nueva Colección' },
-    position: { x: 40, y: 20 },
-    size: { width: 600, height: 260 },
-  },
-  {
-    id: 'prod-grid-1',
-    type: 'ProductGrid',
-    props: { category: 'Novedades' },
-    position: { x: 40, y: 320 },
-    size: { width: 600, height: 400 },
-  },
-];
 
 export const useCanvasStore = create<CanvasState>()(
   persist(
     (set) => ({
-      components: initialComponents,
-
+      components: [],
       activeTool: 'select',
-
       selectedComponentId: null,
 
       setActiveTool: (tool) => set({ activeTool: tool }),
@@ -80,7 +71,7 @@ export const useCanvasStore = create<CanvasState>()(
           components: [
             ...state.components,
             {
-              id: `comp-${Date.now()}`, // Generamos un ID único
+              id: `comp-${Date.now()}`,
               ...componentData,
             } as CanvasComponent,
           ],
@@ -89,12 +80,25 @@ export const useCanvasStore = create<CanvasState>()(
       updateComponent: (id, newValues) =>
         set((state) => ({
           components: state.components.map((comp) =>
-            comp.id === id ? ({ ...comp, ...newValues } as CanvasComponent) : comp,
+            comp.id === id ? ({ ...comp, ...newValues } as CanvasComponent) : comp
           ),
         })),
+
+      setComponents: (comps: CanvasComponent[] | { components: CanvasComponent[] }) => {
+        const normalized: CanvasComponent[] = Array.isArray(comps)
+          ? comps
+          : Array.isArray((comps as { components?: CanvasComponent[] }).components)
+          ? (comps as { components: CanvasComponent[] }).components
+          : [];
+        set({
+          components: normalized,
+          selectedComponentId: null,
+          activeTool: 'select',
+        });
+      },
     }),
     {
       name: 'canvas-storage',
-    },
-  ),
+    }
+  )
 );
