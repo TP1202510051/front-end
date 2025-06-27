@@ -12,25 +12,33 @@ const DesignInterfaceRender: React.FC = () => {
 
   const [liveCode, setLiveCode] = useState<string>('');
 
+  function normalizeJSX(raw: string): string {
+  const code = raw.trim();
+  // Si ya está envuelto en <>…</> o en un solo nodo, lo devolvemos tal cual
+  if (code.startsWith('<>') || /^<[^/][\s\S]*>[\s\S]*<\/[^>]+>$/.test(code)) {
+    return code;
+  }
+  // Si no, lo envolvemos
+  return `<>${code}</>`;
+}
+
   useEffect(() => {
     console.log('Nuevo liveCode recibido:', liveCode);
   }, [liveCode]);
 
   return (
     <div className="w-full h-screen flex flex-col bg-[#202123] overflow-hidden">
-      <Toolbar />
-
       <div className="flex flex-grow overflow-hidden">
-        <div className="w-1/4 bg-gray-700 flex flex-col overflow-auto p-4">
+        <div className="w-1/4 bg-[#343540] flex flex-col overflow-auto p-4">
           <h2 className="text-white font-semibold mb-4">Componentes</h2>
           <ProductFormDialog projectId={projectId ?? ''}/>
         </div>
 
-        <div className="w-full flex-grow flex items-center justify-center bg-white overflow-auto p-4">
-          <div style={{ border: '2px dashed red', width: '100%', height: '100%' }}>
+        <div className="w-full flex-grow flex items-center justify-center bg-[#202123] overflow-auto p-4">
+          <div style={{ width: '100%', height: '100%' }}>
             {liveCode ? (
               <JsxParser
-                jsx={liveCode}
+                jsx={normalizeJSX(liveCode)}
                 renderInWrapper={false}
                 allowUnknownElements
                 showWarnings={true}
