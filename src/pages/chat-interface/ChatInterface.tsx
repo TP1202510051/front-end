@@ -76,7 +76,7 @@ const ChatInterface = ({onCode, projectId, projectName}: ChatInterfaceProps) => 
         try {
           parsed = JSON.parse(msg.body);
           console.log('Mensaje recibido:', parsed);
-        } catch (e) {
+        } catch {
           console.error('No es JSON válido:', msg.body);
           return;
         }
