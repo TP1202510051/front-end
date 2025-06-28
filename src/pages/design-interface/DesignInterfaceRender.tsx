@@ -1,30 +1,41 @@
-// src/pages/design-interface/DesignInterfaceRender.tsx
 import React, { useState, useEffect } from 'react';
 import JsxParser from 'react-jsx-parser';
-import Toolbar from '../../components/canvas-components/Toolbar';
 import ChatInterface from '../chat-interface/ChatInterface';
 import { ProductFormDialog } from '@/components/created-components/ProductFormDialog';
 import { useParams } from 'react-router-dom';
+import { getLatestCodeByProjectId } from '@/services/code.service';
 
 
 const DesignInterfaceRender: React.FC = () => {
-    const { projectId, projectName } = useParams<{ projectId: string; projectName: string }>();
+  const { projectId, projectName } = useParams<{ projectId: string; projectName: string }>();
 
   const [liveCode, setLiveCode] = useState<string>('');
 
   function normalizeJSX(raw: string): string {
   const code = raw.trim();
-  // Si ya está envuelto en <>…</> o en un solo nodo, lo devolvemos tal cual
   if (code.startsWith('<>') || /^<[^/][\s\S]*>[\s\S]*<\/[^>]+>$/.test(code)) {
     return code;
   }
-  // Si no, lo envolvemos
   return `<>${code}</>`;
 }
 
   useEffect(() => {
     console.log('Nuevo liveCode recibido:', liveCode);
   }, [liveCode]);
+
+  const fetchMessages = async () => {
+      try {
+        const data = await getLatestCodeByProjectId(Number(projectId));
+        setLiveCode(data?.code ?? '');
+      } catch (error) {
+        console.error("Error al obtener los proyectos", error);
+      }
+    };
+      
+    useEffect(() => {
+      fetchMessages();
+    }, []);
+  
 
   return (
     <div className="w-full h-screen flex flex-col bg-[#202123] overflow-hidden">

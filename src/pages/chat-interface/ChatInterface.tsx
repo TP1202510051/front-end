@@ -156,15 +156,15 @@ const ChatInterface = ({onCode, projectId, projectName}: ChatInterfaceProps) => 
   }, [messages]);
 
   const fetchMessages = async () => {
-  try {
-    const data = await getMessagesByProjectId(Number(projectId));
-    const filtered = data.filter(msg => msg.type !== 'system');
-    setMessages(filtered);
-  } catch (error) {
-    console.error("Error al obtener los proyectos", error);
-  }
-};
-  
+    try {
+      const data = await getMessagesByProjectId(Number(projectId));
+      const filtered = data.filter(msg => msg.type !== 'system');
+      setMessages(filtered);
+    } catch (error) {
+      console.error("Error al obtener los proyectos", error);
+    }
+  };
+    
   useEffect(() => {
     fetchMessages();
   }, []);
