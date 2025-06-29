@@ -38,13 +38,13 @@ export const createMessage = async (windowId: number, message: string): Promise<
 const apiUrl = 'http://localhost:8080/api/messages'; 
 
 
-export const getMessagesByProjectId = async (projectId: number): Promise<Message[]> => {
+export const getMessagesByWindowId = async (windowId: number): Promise<Message[]> => {
     try {
-      const response = await axios.get<Message[]>(`${apiUrl}/${projectId}`);
-      console.log("Proyectos obtenidos:", response.data);
+      const response = await axios.get<Message[]>(`${apiUrl}/${windowId}`);
+      console.log("mensajes obtenidos:", response.data);
       return response.data;
     } catch (error) {
-      console.error("Error obteniendo proyectos:", error);
-      throw error;  // Rechaza la promesa si hay un error
+      console.error("Error obteniendo mensajes:", error);
+      throw error;
     }
   };

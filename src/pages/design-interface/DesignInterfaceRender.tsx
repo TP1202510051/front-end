@@ -3,11 +3,13 @@ import ChatInterface from '../chat-interface/ChatInterface';
 import { ProductFormDialog } from '@/components/created-components/ProductFormDialog';
 import { useParams } from 'react-router-dom';
 import WindowInterface from '../window-interface/WindowInterface';
+import type { Window } from '@/models/windowModel';
 
 
 const DesignInterfaceRender: React.FC = () => {
   const { projectId, projectName } = useParams<{ projectId: string; projectName: string }>();
-  const [selectedWindowId, setSelectedWindowId] = useState<string | null>(null);
+  const [selectedWindow, setSelectedWindow] = useState<Window>();
+
 
   const [liveCode, setLiveCode] = useState<string>('');
 
@@ -25,12 +27,12 @@ const DesignInterfaceRender: React.FC = () => {
         </div>
 
         <div className="w-full flex-grow flex flex-col items-center justify-center bg-[#202123] overflow-auto p-4">
-          <WindowInterface projectId={projectId ?? ''} webSocketCode={liveCode} onWindowSelect={setSelectedWindowId}/>
+          <WindowInterface projectId={projectId ?? ''} webSocketCode={liveCode} onWindowSelect={setSelectedWindow} />
         </div>
 
         <div className="w-1/2 bg-gray-900 flex flex-col overflow-auto">
-          {selectedWindowId && ( 
-            <ChatInterface onCode={setLiveCode} windowId={selectedWindowId} projectName={projectName ?? ''}/>
+          {selectedWindow && ( 
+            <ChatInterface onCode={setLiveCode} projectName={projectName ?? ''} window={selectedWindow}/>
             )}
         </div>
       </div>

@@ -8,7 +8,7 @@ import WindowCreationDialog from '@/components/created-components/WindowCreation
 interface WindowInterfaceProps {
   projectId: string;
   webSocketCode?: string;
-  onWindowSelect: (windowId: string) => void;
+  onWindowSelect: (window: Window) => void;
 }
 
 const WindowInterface: React.FC<WindowInterfaceProps> = ({
@@ -62,7 +62,7 @@ const WindowInterface: React.FC<WindowInterfaceProps> = ({
             key={win.id}
             className="bg-[#202123] text-white rounded-lg px-4 py-2 mr-2 hover:bg-gray-600 transition-colors"
             onClick={() => {
-              onWindowSelect(win.id);
+              onWindowSelect(win);
               fetchCodeForWindow(win.id);
             }}
           >

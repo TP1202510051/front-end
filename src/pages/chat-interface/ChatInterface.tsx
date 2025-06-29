@@ -2,19 +2,20 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { createMessage } from '@/services/messaging.service';
-import { getMessagesByProjectId } from '@/services/messaging.service';
+import { getMessagesByWindowId } from '@/services/messaging.service';
 import type { Message } from '@/models/messageModel';
 import { Client, type IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
+import type { Window } from '@/models/windowModel';
 
 
 interface ChatInterfaceProps {
   onCode: (jsx: string) => void;
-  windowId: string;
   projectName: string;
+  window: Window;
 }
 
-const ChatInterface = ({onCode, windowId, projectName}: ChatInterfaceProps) => {
+const ChatInterface = ({onCode, projectName, window}: ChatInterfaceProps) => {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -72,20 +73,14 @@ const ChatInterface = ({onCode, windowId, projectName}: ChatInterfaceProps) => {
     });
 
     client.onConnect = () => {
-      client.subscribe(`/topic/conversation/${windowId}`, (msg: IMessage) => {
+      client.subscribe(`/topic/conversation/${window.id}`, (msg: IMessage) => {
         let parsed: { code: string; message: string };
         try {
           parsed = JSON.parse(msg.body);
-          console.log('Mensaje recibido:', parsed);
         } catch {
           console.error('No es JSON válido:', msg.body);
           return;
         }
-
-        if (parsed.code) {
-          console.log('Código de la IA:', parsed.code);
-        }
-        console.log('Código de la IA:', parsed.code);
 
         const jsxOnly = parsed.code
           .replace(/import[\s\S]*?from ['"][\s\S]*?['"];?/g, '')
@@ -99,7 +94,7 @@ const ChatInterface = ({onCode, windowId, projectName}: ChatInterfaceProps) => {
             id: Date.now().toString(),
             content: parsed.message,
             createdAt: Date.now().toString(),
-            windowId: windowId || '',
+            windowId: window.id,
             type: 'response',
           },
         ]);
@@ -107,11 +102,8 @@ const ChatInterface = ({onCode, windowId, projectName}: ChatInterfaceProps) => {
     };
       
     client.activate();
-
-    return () => {
-      client.deactivate();
-    };
-  }, [windowId]);
+    return () => { client.deactivate(); };
+  }, [window.id, onCode]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -120,31 +112,24 @@ const ChatInterface = ({onCode, windowId, projectName}: ChatInterfaceProps) => {
 
   const handleSendMessage = async (overridePrompt?: string) => {
     const toSend = (overridePrompt ?? message).trim();
-
-    if (!toSend || !windowId) return;
+    if (!toSend) return;
 
     try {
-      if (windowId !== undefined) {
-        const result = await createMessage(Number(windowId), toSend);
-        console.log("Proyecto creado con éxito:", result);
-      } else {
-        console.error("projectId is undefined");
-      }
+      await createMessage(Number(window.id), toSend);
     } catch (error) {
-      console.error("Error al crear proyecto:", error);
+      console.error('Error al crear mensaje', error);
     }
-    if (toSend) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          content: toSend,
-          createdAt: Date.now().toString(),
-          windowId: windowId || '',
-          type: 'prompt',
-        }
-      ]);
-    }
+
+    setMessages(prev => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        content: toSend,
+        createdAt: Date.now().toString(),
+        windowId: window.id,
+        type: 'prompt',
+      },
+    ]);
     setMessage('');
   };
 
@@ -158,22 +143,20 @@ const ChatInterface = ({onCode, windowId, projectName}: ChatInterfaceProps) => {
 
   const fetchMessages = async () => {
     try {
-      const data = await getMessagesByProjectId(Number(windowId));
-      const filtered = data.filter(msg => msg.type !== 'system');
-      setMessages(filtered);
+      const data = await getMessagesByWindowId(Number(window.id));
+      setMessages(data.filter(msg => msg.type !== 'system'));
     } catch (error) {
-      console.error("Error al obtener los proyectos", error);
+      console.error('Error al obtener los mensajes', error);
     }
   };
-
   useEffect(() => {
     setMessages([]);
     fetchMessages();
-  }, [windowId]);
+  }, [window.id]);
 
   return (
     <div className="bg-[#343540] text-white flex flex-col h-screen py-4">
-      <h1 className="text-4xl font-extrabold mb-4 text-center">{projectName}</h1>
+      <h1 className="text-2xl mb-4 text-center">{projectName}: {window.windowName}</h1>
       <div className="flex-1 overflow-y-auto space-y-2 px-4">
         {messages.length === 0 ? (
           <div className="grid grid-cols-1 gap-4 w-full">
