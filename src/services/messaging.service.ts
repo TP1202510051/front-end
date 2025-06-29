@@ -2,7 +2,7 @@ import type { Message } from '@/models/messageModel';
 import axios from 'axios';
 
 interface MessageRequest {
-  projectId: number;
+  windowId: number;
   message: string;
 }
 
@@ -12,10 +12,10 @@ interface Response {
 
 const apiBroker = 'https://sender-to-broker-function-614278839638.europe-west1.run.app';
 
-export const createMessage = async (projectId: number, message: string): Promise<Response> => {
+export const createMessage = async (windowId: number, message: string): Promise<Response> => {
   try {
     const requestPayload: MessageRequest = {
-      projectId,
+      windowId,
       message,
     };
 

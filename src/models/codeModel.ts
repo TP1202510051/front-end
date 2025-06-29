@@ -2,6 +2,6 @@ export interface Code {
     id: string;
     messageId: string;
     createdAt: string;
-    projectId: string;
+    windowId: string;
     code: string;
 }

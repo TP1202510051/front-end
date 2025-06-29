@@ -1,5 +1,5 @@
 // src/components/ProductFormDialog.tsx
-import React, { useState, useEffect } from "react"
+import React, { useState } from "react"
 import { Plus, Upload } from "lucide-react"
 import {
   Dialog,
@@ -11,11 +11,8 @@ import {
 import { Input } from "../ui/input"
 import { Button } from "../ui/button"
 import {
-  getSizes,
   createProduct,
   type CreateProductRequest,
-  type Size,
-  type ProductResponse,
 } from "@/services/product.service"
 
 
