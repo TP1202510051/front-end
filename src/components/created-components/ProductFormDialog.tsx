@@ -24,6 +24,7 @@ export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId }: 
     const [discount, setDiscount] = useState("")
     const [imageUrl, setImageUrl] = useState("")
     const [products, setProducts] = useState<Product[]>([]);
+    const [isOpen, setIsOpen] = useState(false);
 
     const [sizeInputs, setSizeInputs] = useState<string[]>([""])
 
@@ -57,26 +58,50 @@ export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId }: 
     };
 
     const handleSubmit = async () => {
-    const payload: Product = {
-      name,
-      description,
-      price: parseFloat(price),
-      discount: parseFloat(discount),
-      image: imageUrl,
-      categoryId,
-      sizes: sizeInputs
+      const payload: Product = {
+        name,
+        description,
+        price: parseFloat(price),
+        discount: parseFloat(discount),
+        image: imageUrl,
+        categoryId,
+        sizes: sizeInputs
           .filter((s) => s.trim() !== "")
           .map((s) => ({ name: s.trim(), isActive: true })),
-    }
+      };
 
-    try {
-      const created = await createProduct(payload)
-      console.log("Producto creado:", created)
-      // cerrar diálogo o refrescar lista...
-    } catch (err) {
-      console.error("Error creando el producto:", err)
-    }
-  }
+      try {
+        const result = await createProduct(payload);
+
+        setProducts((prev) => [
+          ...prev,
+          {
+            id: result.id,
+            name: result.name,
+            categoryId: String(result.categoryId),
+            sizes: result.sizes,
+            description: result.description,
+            image: result.image,
+            price: result.price,
+            discount: result.discount,
+          },
+        ]);
+
+        console.log("Producto creado:", result);
+
+        setName("");
+        setDescription("");
+        setPrice("");
+        setDiscount("");
+        setImageUrl("");
+        setSizeInputs([""]);
+
+        setIsOpen(false);
+
+      } catch (err) {
+        console.error("Error creando el producto:", err);
+      }
+    };
   
   useEffect(() => {
     setProducts([]);
@@ -85,13 +110,16 @@ export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId }: 
 
   return (
     <>
-    <span className="text-md font-medium">Products:</span>
+    <span className="text-md font-medium">Productos:</span>
       {products.map((product) => (
-        <div className="p-4 border rounded shadow flex flex-col gap-2">
+        <div
+          key={product.id}
+          className="p-4 border rounded shadow flex flex-col gap-2"
+        >
           <span className="text-sm font-medium">{product.name}</span>
         </div>
       ))}
-      <Dialog>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
           <Button variant="default" size="default">
             Nuevo producto

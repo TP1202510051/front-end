@@ -38,13 +38,22 @@ const ProductInterface: React.FC<ProductInterfaceProps> = ({ projectId }) => {
 
     const handleAccept = async () => {
         try {
-          const result = await createCategory(Number(projectId), categoryName);
-          console.log("Cateogria creada con éxito:", result);
-          setIsOpen(false);
+            const result = await createCategory(Number(projectId), categoryName);
+            console.log("Categoría creada con éxito:", result);
+            
+            setCategories(prev => [...prev, {
+            id: result.id,
+            categoryName: result.categoryName,
+            projectId: String(result.projectId),
+            createdAt: result.createdAt,
+            }]);
+
+            setCategoryName("");
+            setIsOpen(false);
         } catch (error) {
-          console.error("Error al crear categoria:", error);
+            console.error("Error al crear categoría:", error);
         }
-      };
+        };
 
     useEffect(() => {
         setCategories([]);
@@ -62,7 +71,7 @@ const ProductInterface: React.FC<ProductInterfaceProps> = ({ projectId }) => {
               </DialogTrigger>
               <DialogContent className="bg-[var(--dashboard-background)] rounded-sm outline-none">
                 <DialogTitle className="text-white .lato-regular">
-                  Ingrese nombre del nuevo proyecto
+                  Ingrese nombre de la nueva categoria
                 </DialogTitle>
                 <div className="mt-4">
                   <Input
@@ -83,7 +92,7 @@ const ProductInterface: React.FC<ProductInterfaceProps> = ({ projectId }) => {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
-            <span className="text-xl font-medium">Categories: </span>
+            <span className="text-xl font-medium">Categorias: </span>
             {categories.map((category) => (
                 <div key={category.id} className="p-4 border rounded shadow flex flex-col gap-2">
                     <span className="text-lg font-medium">{category.categoryName}</span>
