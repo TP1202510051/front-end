@@ -7,13 +7,14 @@ import type { Message } from '@/models/messageModel';
 import { Client, type IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 
+
 interface ChatInterfaceProps {
   onCode: (jsx: string) => void;
-  projectId: string;
+  windowId: string;
   projectName: string;
 }
 
-const ChatInterface = ({onCode, projectId, projectName}: ChatInterfaceProps) => {
+const ChatInterface = ({onCode, windowId, projectName}: ChatInterfaceProps) => {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -71,7 +72,7 @@ const ChatInterface = ({onCode, projectId, projectName}: ChatInterfaceProps) => 
     });
 
     client.onConnect = () => {
-      client.subscribe(`/topic/conversation/${projectId}`, (msg: IMessage) => {
+      client.subscribe(`/topic/conversation/${windowId}`, (msg: IMessage) => {
         let parsed: { code: string; message: string };
         try {
           parsed = JSON.parse(msg.body);
@@ -98,7 +99,7 @@ const ChatInterface = ({onCode, projectId, projectName}: ChatInterfaceProps) => 
             id: Date.now().toString(),
             content: parsed.message,
             createdAt: Date.now().toString(),
-            projectId: projectId || '',
+            windowId: windowId || '',
             type: 'response',
           },
         ]);
@@ -110,7 +111,7 @@ const ChatInterface = ({onCode, projectId, projectName}: ChatInterfaceProps) => 
     return () => {
       client.deactivate();
     };
-  }, [projectId]);
+  }, [windowId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -120,11 +121,11 @@ const ChatInterface = ({onCode, projectId, projectName}: ChatInterfaceProps) => 
   const handleSendMessage = async (overridePrompt?: string) => {
     const toSend = (overridePrompt ?? message).trim();
 
-    if (!toSend || !projectId) return;
+    if (!toSend || !windowId) return;
 
     try {
-      if (projectId !== undefined) {
-        const result = await createMessage(Number(projectId), toSend);
+      if (windowId !== undefined) {
+        const result = await createMessage(Number(windowId), toSend);
         console.log("Proyecto creado con éxito:", result);
       } else {
         console.error("projectId is undefined");
@@ -139,7 +140,7 @@ const ChatInterface = ({onCode, projectId, projectName}: ChatInterfaceProps) => 
           id: Date.now().toString(),
           content: toSend,
           createdAt: Date.now().toString(),
-          projectId: projectId || '',
+          windowId: windowId || '',
           type: 'prompt',
         }
       ]);
@@ -156,18 +157,19 @@ const ChatInterface = ({onCode, projectId, projectName}: ChatInterfaceProps) => 
   }, [messages]);
 
   const fetchMessages = async () => {
-  try {
-    const data = await getMessagesByProjectId(Number(projectId));
-    const filtered = data.filter(msg => msg.type !== 'system');
-    setMessages(filtered);
-  } catch (error) {
-    console.error("Error al obtener los proyectos", error);
-  }
-};
-  
+    try {
+      const data = await getMessagesByProjectId(Number(windowId));
+      const filtered = data.filter(msg => msg.type !== 'system');
+      setMessages(filtered);
+    } catch (error) {
+      console.error("Error al obtener los proyectos", error);
+    }
+  };
+
   useEffect(() => {
+    setMessages([]);
     fetchMessages();
-  }, []);
+  }, [windowId]);
 
   return (
     <div className="bg-[#343540] text-white flex flex-col h-screen py-4">
