@@ -124,7 +124,6 @@ const DesignInterface = () => {
           </DndContext>
         </div>
         <div className="w-1/2 bg-gray-900 flex flex-col overflow-auto">
-          <ChatInterface />
         </div>
       </div>
     </div>
