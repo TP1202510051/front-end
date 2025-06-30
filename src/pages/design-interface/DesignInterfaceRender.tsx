@@ -26,13 +26,13 @@ const DesignInterfaceRender: React.FC = () => {
           <ProductInterface projectId={projectId ?? ''}/>
         </div>
 
-        <div className="w-full flex-grow flex flex-col items-center justify-center bg-[#202123] overflow-auto p-4">
+        <div className="w-full flex-grow flex flex-col items-center justify-center bg-[#202123] p-4">
           <WindowInterface projectId={projectId ?? ''} webSocketCode={liveCode} onWindowSelect={setSelectedWindow} />
         </div>
 
-        <div className="w-1/2 bg-gray-900 flex flex-col overflow-auto">
+        <div className="w-1/3 bg-gray-900 flex flex-col overflow-auto">
           {selectedWindow && ( 
-            <ChatInterface onCode={setLiveCode} projectName={projectName ?? ''} window={selectedWindow}/>
+            <ChatInterface onCode={setLiveCode} projectName={projectName ?? ''} window={selectedWindow} projectId={projectId ?? ''}/>
             )}
         </div>
       </div>

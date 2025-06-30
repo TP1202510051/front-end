@@ -56,7 +56,7 @@ const WindowInterface: React.FC<WindowInterfaceProps> = ({
 
   return (
     <>
-      <div className="w-full h-16 bg-[#343540] flex items-center justify-center mb-4">
+      <div className="p-3 bg-[#343540] flex items-center justify-center mb-4 absolute bottom-0 rounded-lg">
         {windows.map((win) => (
           <button
             key={win.id}
@@ -72,18 +72,20 @@ const WindowInterface: React.FC<WindowInterfaceProps> = ({
         <WindowCreationDialog projectId={projectId} onWindow={(newWin) => setWindows((prev) => [...prev, newWin])}/>
       </div>
 
-      <div style={{ width: '100%', height: '100%' }}>
-        {liveCode ? (
-          <JsxParser
-            jsx={normalizeJSX(liveCode)}
-            renderInWrapper={false}
-            allowUnknownElements
-            showWarnings
-            bindings={{ Array, Math, Date, JSON }}
-          />
-        ) : (
-          <p className="text-gray-500">Aquí se mostrará…</p>
-        )}
+      <div className="flex flex-col w-full h-full">
+        <main className="flex-1 overflow-auto p-4 box-border">
+          {liveCode ? (
+            <JsxParser
+              jsx={normalizeJSX(liveCode)}
+              renderInWrapper={false}
+              allowUnknownElements
+              showWarnings
+              bindings={{ Array, Math, Date, JSON }}
+            />
+          ) : (
+            <p className="text-gray-500">Aquí se mostrará…</p>
+          )}
+        </main>
       </div>
     </>
   );

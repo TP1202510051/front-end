@@ -13,55 +13,55 @@ interface ChatInterfaceProps {
   onCode: (jsx: string) => void;
   projectName: string;
   window: Window;
+  projectId: string;
 }
 
-const ChatInterface = ({onCode, projectName, window}: ChatInterfaceProps) => {
+const ChatInterface = ({onCode, projectName, window, projectId}: ChatInterfaceProps) => {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const promptMap: { mini: string; full: string }[] = [
     {
-      mini: 'Tienda básica sin carrito',
+      mini: 'Tienda sencilla',
       full: `
-  Sólo genera el fragmento JSX de la interfaz front-end en React+JSX. Debe incluir:
-  - Estructura semántica (header, main, footer).
-  - Cabecera con logo y menú (Inicio, Tienda, Contacto).
-  - Grid responsive de tarjetas de producto con imagen, nombre y precio (usa etiquetas y className genéricos, sin Tailwind).
-  - Pie de página con información de la empresa y enlaces legales.
-      `.trim()
+  Me gustaría una página de tienda online muy básica:
+  - Una cabecera con el logo y un menú (Inicio, Tienda, Contacto).
+  - Un área donde se muestren los productos en tarjetas con foto, nombre y precio.
+  - Un pie de página con información de la empresa y enlaces de contacto.
+  `.trim()
     },
     {
-      mini: 'Tienda con carrito de compras',
+      mini: 'Tienda con carrito',
       full: `
-  Sólo genera el fragmento JSX de la interfaz front-end en React+JSX. Debe incluir:
-  - Catálogo de productos en un grid con botón “Añadir al carrito” (usa etiquetas y className genéricos).
-  - Componente <Cart> mock que muestre ítems, cantidades y subtotal.
-  - Botones para incrementar, decrementar o eliminar ítems (solo UI).
-      `.trim()
+  Necesito una tienda donde se pueda “añadir al carrito”:
+  - Muestra los productos con su foto, nombre y precio.
+  - Cada producto tiene un botón para agregar al carrito.
+  - Ver un carrito con la lista de productos, la cantidad y el total (solo la apariencia).
+  - Incluye cabecera y pie de página simples.
+  `.trim()
     },
     {
-      mini: 'Tienda con pago online',
+      mini: 'Checkout de pago',
       full: `
-  Sólo genera el fragmento JSX de la interfaz front-end en React+JSX. Debe incluir:
-  - Página de checkout con formulario de facturación y tarjeta (solo UI).
-  - Validación visual de campos (placeholders).
-  - Indicadores de estado de envío y error.
-  - Botón de “Pagar” que simule redirección a una página de confirmación.
-      `.trim()
+  Quiero la parte de pago de la tienda:
+  - Un formulario para ingresar datos de facturación (nombre, dirección) y datos de tarjeta.
+  - Mensajes de error si falta algo.
+  - Un botón “Pagar” que lleve a una página de confirmación (solo apariencia).
+  - Mantén una cabecera y un pie de página discretos.
+  `.trim()
     },
     {
-      mini: 'Panel de inventario',
+      mini: 'Gestión de inventario',
       full: `
-  Sólo genera el fragmento JSX de la interfaz front-end en React+JSX. Debe incluir:
-  - Tabla o grid de productos con columnas: imagen, nombre, stock.
-  - Filtros y búsqueda (solo UI).
-  - Botones de “Editar” y “Eliminar” (solo UI).
-  - Diseño responsivo usando CSS clásico o className genéricos.
-      `.trim()
+  Necesito una vista para controlar existencias:
+  - Muestra una lista de productos con su foto, nombre y cantidad disponible.
+  - Un espacio para buscar o filtrar productos.
+  - Botones para “Editar” o “Eliminar” cada producto (solo apariencia).
+  - Añade una cabecera y un pie de página sencillos.
+  `.trim()
     },
   ];
-
 
   useEffect(() => {
     const socket = new SockJS('http://localhost:8080/ws');
@@ -115,7 +115,7 @@ const ChatInterface = ({onCode, projectName, window}: ChatInterfaceProps) => {
     if (!toSend) return;
 
     try {
-      await createMessage(Number(window.id), toSend);
+      await createMessage(Number(window.id), toSend, Number(projectId));
     } catch (error) {
       console.error('Error al crear mensaje', error);
     }
