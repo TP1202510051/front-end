@@ -78,43 +78,45 @@ const ProductInterface: React.FC<ProductInterfaceProps> = ({ projectId, projectN
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-grow flex flex-col gap-4 overflow-y-auto pr-2">
-          <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                <DialogTrigger asChild>
-                  <Button className="hover:bg-gray-700 transition-colors cursor-pointer">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Nueva Categoria
+      <div className="flex-grow flex flex-col overflow-y-auto pr-2">
+          <div className='py-2 gap-2 flex items-center content-center text-white justify-between border-b-2 border-t-2 border-[#343540]'>
+            <span className="text-lg font-semibold">Categorias</span>
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+              <DialogTrigger asChild>
+                <Button variant="ghost" className="transition-colors cursor-pointer">
+                  <Plus className="" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-[var(--dashboard-background)] rounded-sm outline-none">
+                <DialogTitle className="text-white .lato-regular">
+                  Ingrese nombre de la nueva categoria
+                </DialogTitle>
+                <div className="mt-4">
+                  <Input
+                    id="link"
+                    placeholder="Nombre..."
+                    className="w-full p-2 text-white rounded border focus:outline-none selection:bg-gray-700/50"
+                    onChange={handleInputChange}
+                    value={categoryName}
+                  />
+                </div>
+                <DialogFooter className="pt-2 sm:justify-around">
+                  <Button type="submit" variant="secondary" className="cursor-pointer"  onClick={handleAccept}>
+                    Aceptar
                   </Button>
-                </DialogTrigger>
-                <DialogContent className="bg-[var(--dashboard-background)] rounded-sm outline-none">
-                  <DialogTitle className="text-white .lato-regular">
-                    Ingrese nombre de la nueva categoria
-                  </DialogTitle>
-                  <div className="mt-4">
-                    <Input
-                      id="link"
-                      placeholder="Nombre..."
-                      className="w-full p-2 text-white rounded border focus:outline-none selection:bg-gray-700/50"
-                      onChange={handleInputChange}
-                      value={categoryName}
-                    />
-                  </div>
-                  <DialogFooter className="pt-2 sm:justify-around">
-                    <Button type="submit" variant="secondary" className="cursor-pointer"  onClick={handleAccept}>
-                      Aceptar
-                    </Button>
-                    <Button type="button" variant="default" className="cursor-pointer"  onClick={() => setIsOpen(false)}>
-                      Cancelar
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-              <span className="text-xl font-medium">Categorias: </span>
+                  <Button type="button" variant="default" className="cursor-pointer"  onClick={() => setIsOpen(false)}>
+                    Cancelar
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
               {categories.map((category) => (
-                  <div key={category.id} className="p-4 border rounded shadow flex flex-col gap-2">
-                      <span className="text-lg font-medium">{category.categoryName}</span>
-                      <ProductFormDialog categoryId={category.id ?? ''}/>
-              </div>
+                <div key={category.id} className="pl-2 pt-2 rounded flex flex-col gap-2">
+                  <div className='pl-4'>
+                    <ProductFormDialog categoryId={category.id ?? ''} categoryName={category.categoryName}/>
+                  </div>
+                </div>
           ))}
       </div>
       <div className="mt-auto pt-4">

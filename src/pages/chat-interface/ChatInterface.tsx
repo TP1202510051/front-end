@@ -12,12 +12,11 @@ import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 
 interface ChatInterfaceProps {
   onCode: (jsx: string) => void;
-  projectName: string;
   window: Window;
   projectId: string;
 }
 
-const ChatInterface = ({onCode, projectName, window, projectId}: ChatInterfaceProps) => {
+const ChatInterface = ({onCode, window, projectId}: ChatInterfaceProps) => {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -178,8 +177,8 @@ const ChatInterface = ({onCode, projectName, window, projectId}: ChatInterfacePr
   }, [isListening, transcript]);
 
   return (
-    <div className="bg-[#343540] text-white flex flex-col h-screen py-4">
-      <h1 className="text-2xl mb-4 text-center">{projectName}: {window.windowName}</h1>
+    <div className="bg-[#2C2C2C] text-white flex flex-col h-screen py-4">
+      <h1 className="text-2xl mb-4 text-center">{window.windowName}</h1>
       <div className="flex-1 overflow-y-auto space-y-2 px-4">
         {messages.length === 0 ? (
           <div className="grid grid-cols-1 gap-4 w-full">
@@ -204,11 +203,16 @@ const ChatInterface = ({onCode, projectName, window, projectId}: ChatInterfacePr
                 <div
                   key={msg.id}
                   className={`
-                    bg-[#20212c] p-3 rounded-lg max-w-xs 
-                    ${msg.type === 'prompt' ? 'self-end' : 'self-start bg-transparent'}
+                    bg-transparent rounded-none p-3 max-w-xs 
+                    ${msg.type === 'prompt' ? 'self-end ' : 'self-start'}
                     whitespace-pre-wrap break-words
+                    border-b-2 border-[#343540]
                   `}
                 >
+                  <div className='text-xs font-semibold'>
+                    {msg.type !== 'prompt' && <p>Abstractify</p>}
+                    {msg.type == 'prompt' && <p className='w-full text-end justify-end'>User</p>}
+                  </div>
                   {msg.content}
                 </div>
             ))}
@@ -246,7 +250,7 @@ const ChatInterface = ({onCode, projectName, window, projectId}: ChatInterfacePr
         </Button>
         <Input
           placeholder="Explica la interfaz que deseas diseñar..."
-          className="flex-grow bg-[#343540] text-white p-2 rounded focus:outline-none"
+          className="flex-grow bg-transparent text-white p-2 rounded focus:outline-none"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyPress={handleKeyPress}
