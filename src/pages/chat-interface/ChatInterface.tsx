@@ -7,6 +7,7 @@ import type { Message } from '@/models/messageModel';
 import { Client, type IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import type { Window } from '@/models/windowModel';
+import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 
 
 interface ChatInterfaceProps {
@@ -20,6 +21,12 @@ const ChatInterface = ({onCode, projectName, window, projectId}: ChatInterfacePr
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const {
+    isListening,
+    transcript,
+    startListening,
+    stopListening,
+  } = useSpeechRecognition();
 
   const promptMap: { mini: string; full: string }[] = [
     {
@@ -154,6 +161,22 @@ const ChatInterface = ({onCode, projectName, window, projectId}: ChatInterfacePr
     fetchMessages();
   }, [window.id]);
 
+  useEffect(() => {
+    if (isListening) {
+      console.log('[🗣️ Transcript final]:', transcript);
+      setMessage(transcript);
+    }
+  }, [isListening, transcript]);
+
+  useEffect(() => {
+    if (!isListening && transcript.trim()) {
+      console.log('[🗣️ Transcript final]:', transcript);
+      handleSendMessage(transcript);
+      setMessage(''); // limpia el input al terminar de dictar
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isListening, transcript]);
+
   return (
     <div className="bg-[#343540] text-white flex flex-col h-screen py-4">
       <h1 className="text-2xl mb-4 text-center">{projectName}: {window.windowName}</h1>
@@ -194,9 +217,31 @@ const ChatInterface = ({onCode, projectName, window, projectId}: ChatInterfacePr
         )}
       </div>
       <div className="mt-4 flex items-center gap-2">
-        <Button type="button" variant="ghost" className="cursor-pointer"  onClick={() => handleSendMessage()}>
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
+        <Button
+          type="button"
+          variant="ghost"
+          className="cursor-pointer"
+          onClick={() => {
+            if (isListening) {
+              stopListening();
+            } else {
+              startListening();
+            }
+          }}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill={isListening ? 'red' : 'none'}
+            viewBox="0 0 24 24"
+            strokeWidth="1.5"
+            stroke="currentColor"
+            className="size-6"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"
+            />
           </svg>
         </Button>
         <Input
