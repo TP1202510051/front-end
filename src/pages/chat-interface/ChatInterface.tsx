@@ -220,7 +220,7 @@ const ChatInterface = ({onCode, window, projectId}: ChatInterfaceProps) => {
           </div>
         )}
       </div>
-      <div className="mt-4 flex items-center gap-2">
+      <div className="mt-4 mx-4 flex items-center gap-2">
         <Button
           type="button"
           variant="ghost"
