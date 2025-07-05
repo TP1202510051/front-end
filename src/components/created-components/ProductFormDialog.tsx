@@ -1,4 +1,3 @@
-// src/components/ProductFormDialog.tsx
 import React, { useState, useEffect } from "react"
 import { Plus, Upload } from "lucide-react"
 import {
@@ -10,8 +9,9 @@ import {
 } from "../ui/dialog"
 import { Input } from "../ui/input"
 import { Button } from "../ui/button"
-import { createProduct, getProductsByCategoryId } from "@/services/product.service"
+import { createProduct, getProductsByCategoryId, updateProduct, deleteProduct } from "@/services/product.service"
 import type { Product } from '@/models/productModel';
+import { DialogTitle } from "@radix-ui/react-dialog"
 
 
 interface ProductDialogProps {
@@ -26,6 +26,7 @@ export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId, ca
     const [imageUrl, setImageUrl] = useState("")
     const [products, setProducts] = useState<Product[]>([]);
     const [isOpen, setIsOpen] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
     const [sizeInputs, setSizeInputs] = useState<string[]>([""])
 
@@ -70,35 +71,19 @@ export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId, ca
           .filter((s) => s.trim() !== "")
           .map((s) => ({ name: s.trim(), isActive: true })),
       };
-
       try {
-        const result = await createProduct(payload);
-
-        setProducts((prev) => [
-          ...prev,
-          {
-            id: result.id,
-            name: result.name,
-            categoryId: String(result.categoryId),
-            sizes: result.sizes,
-            description: result.description,
-            image: result.image,
-            price: result.price,
-            discount: result.discount,
-          },
-        ]);
-
-        console.log("Producto creado:", result);
-
-        setName("");
-        setDescription("");
-        setPrice("");
-        setDiscount("");
-        setImageUrl("");
-        setSizeInputs([""]);
-
-        setIsOpen(false);
-
+        if (selectedProduct) {
+          const updatedProduct = await updateProduct(Number(selectedProduct.id), payload);
+          setProducts((prev) =>
+            prev.map((p) =>
+              p.id === updatedProduct.id ? updatedProduct : p
+            )
+          );
+        } else {
+          const result = await createProduct(payload);
+          setProducts((prev) => [...prev, result]);
+        }
+        resetForm();
       } catch (err) {
         console.error("Error creando el producto:", err);
       }
@@ -109,18 +94,32 @@ export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId, ca
     fetchProducts();
   }, [categoryId]);
 
+  const resetForm = () => {
+    setName("");
+    setDescription("");
+    setPrice("");
+    setDiscount("");
+    setImageUrl("");
+    setSizeInputs([""]);
+    setSelectedProduct(null);
+    setIsOpen(false);
+  };
+
   return (
     <>
     <span className="flex items-center content-center gap-2 text-white justify-between border-b-2 border-[#343540] pb-2">
       <span className="text-md font-medium pl-2">{categoryName}</span>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
-          <Button variant="ghost" className="transition-colors cursor-pointer">
+          <Button variant="ghost" className="transition-colors cursor-pointer" onClick={resetForm}>
             <Plus/>
           </Button>
         </DialogTrigger>
 
         <DialogContent className="w-[90vw] max-w-none bg-[#1E1E1E] text-white">
+          <DialogTitle className="text-lg font-semibold">
+            {selectedProduct ? "Editar Producto" : "Crear Producto"}
+          </DialogTitle>
           <form
             className="space-y-6"
             onSubmit={(e) => {
@@ -224,6 +223,23 @@ export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId, ca
             </div>
 
             <DialogFooter className="flex justify-end space-x-2">
+              {selectedProduct && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={async () => {
+                    try {
+                      await deleteProduct(Number(selectedProduct.id));
+                      setProducts((prev) => prev.filter(p => p.id !== selectedProduct.id));
+                      resetForm();
+                    } catch (error) {
+                      console.error("Error eliminando el producto:", error);
+                    }
+                  }}
+                >
+                  Eliminar
+                </Button>
+              )}
               <DialogClose asChild>
                 <Button variant="outline">Cancelar</Button>
               </DialogClose>
@@ -235,7 +251,18 @@ export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId, ca
     </span>
       {products.map((product) => (
         <div key={product.id} className="rounded flex flex-col pt-2 gap-2">
-          <Button className="transition-colors cursor-pointer text-left justify-start bg-transparent hover:bg-[#343540] text-white hover:font-semibold">
+          <Button className="transition-colors cursor-pointer text-left justify-start bg-transparent hover:bg-[#343540] text-white hover:font-semibold"
+            onClick={() => {
+              setSelectedProduct(product);
+              setName(product.name);
+              setDescription(product.description);
+              setPrice(String(product.price));
+              setDiscount(String(product.discount));
+              setImageUrl(product.image);
+              setSizeInputs(product.sizes?.map((s) => s.name) || []);
+              setIsOpen(true);
+            }}
+          >
             {product.name}          
           </Button>
         </div>

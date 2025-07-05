@@ -1,21 +1,10 @@
 import type { Product } from '@/models/productModel'
 import axios from 'axios'
 
-// export interface Size {
-//   name: string
-//   isActive: boolean
-// }
-
 const api = axios.create({
   baseURL: 'http://localhost:8080/api',
   headers: { 'Content-Type': 'application/json' },
 })
-
-// export const getSizes = async (): Promise<Size[]> => {
-//   const resp = await api.get<Size[]>('/sizes')
-//   console.log('Tallas obtenidas:', resp.data)
-//   return resp.data
-// }
 
 export const createProduct = async (
   payload: Product
@@ -36,3 +25,16 @@ export const getProductsByCategoryId = async (
     throw error;
   }
 };
+
+export const updateProduct = async (
+  productId: number,
+  payload: Product
+): Promise<Product> => {
+  console.log(payload);
+  const resp = await api.put<Product>(`/products/${productId}`, payload)
+  return resp.data
+}
+
+export const deleteProduct = async (productId: number): Promise<void> => {
+  await api.delete(`/products/${productId}`)
+}
