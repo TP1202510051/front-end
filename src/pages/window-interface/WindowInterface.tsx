@@ -56,11 +56,11 @@ const WindowInterface: React.FC<WindowInterfaceProps> = ({
 
   return (
     <>
-      <div className="p-3 bg-[#343540] flex items-center justify-center mb-4 absolute bottom-0 rounded-lg">
+      <div className="p-3 bg-[#2C2C2C] flex items-center justify-center mb-4 absolute bottom-0 rounded-lg">
         {windows.map((win) => (
           <button
             key={win.id}
-            className="bg-[#202123] text-white rounded-lg px-4 py-2 mr-2 hover:bg-gray-600 transition-colors"
+            className="bg-[#202123] text-white rounded-lg px-4 py-2 m-2 hover:bg-[#343540] hover:font-semibold"
             onClick={() => {
               onWindowSelect(win);
               fetchCodeForWindow(win.id);
@@ -71,9 +71,8 @@ const WindowInterface: React.FC<WindowInterfaceProps> = ({
         ))}
         <WindowCreationDialog projectId={projectId} onWindow={(newWin) => setWindows((prev) => [...prev, newWin])}/>
       </div>
-
       <div className="flex flex-col w-full h-full">
-        <main className="flex-1 overflow-auto p-4 box-border">
+        <main className="flex-1 overflow-auto p-10 box-border">
           {liveCode ? (
             <JsxParser
               jsx={normalizeJSX(liveCode)}

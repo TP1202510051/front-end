@@ -16,8 +16,9 @@ import type { Product } from '@/models/productModel';
 
 interface ProductDialogProps {
   categoryId: string;
+  categoryName?: string;
 }
-export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId }: ProductDialogProps) => {
+export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId, categoryName }: ProductDialogProps) => {
     const [name, setName] = useState("")
     const [description, setDescription] = useState("")
     const [price, setPrice] = useState("")
@@ -110,19 +111,12 @@ export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId }: 
 
   return (
     <>
-    <span className="text-md font-medium">Productos:</span>
-      {products.map((product) => (
-        <div
-          key={product.id}
-          className="p-4 border rounded shadow flex flex-col gap-2"
-        >
-          <span className="text-sm font-medium">{product.name}</span>
-        </div>
-      ))}
+    <span className="flex items-center content-center gap-2 text-white justify-between border-b-2 border-[#343540] pb-2">
+      <span className="text-md font-medium pl-2">{categoryName}</span>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
-          <Button variant="default" size="default">
-            Nuevo producto
+          <Button variant="ghost" className="transition-colors cursor-pointer">
+            <Plus/>
           </Button>
         </DialogTrigger>
 
@@ -238,6 +232,14 @@ export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId }: 
           </form>
         </DialogContent>
       </Dialog>
+    </span>
+      {products.map((product) => (
+        <div key={product.id} className="rounded flex flex-col pt-2 gap-2">
+          <Button className="transition-colors cursor-pointer text-left justify-start bg-transparent hover:bg-[#343540] text-white hover:font-semibold">
+            {product.name}          
+          </Button>
+        </div>
+      ))}
     </>
   )
 }

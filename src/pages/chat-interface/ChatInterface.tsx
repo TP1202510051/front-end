@@ -11,12 +11,11 @@ import type { Window } from '@/models/windowModel';
 
 interface ChatInterfaceProps {
   onCode: (jsx: string) => void;
-  projectName: string;
   window: Window;
   projectId: string;
 }
 
-const ChatInterface = ({onCode, projectName, window, projectId}: ChatInterfaceProps) => {
+const ChatInterface = ({onCode, window, projectId}: ChatInterfaceProps) => {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -155,8 +154,8 @@ const ChatInterface = ({onCode, projectName, window, projectId}: ChatInterfacePr
   }, [window.id]);
 
   return (
-    <div className="bg-[#343540] text-white flex flex-col h-screen py-4">
-      <h1 className="text-2xl mb-4 text-center">{projectName}: {window.windowName}</h1>
+    <div className="bg-[#2C2C2C] text-white flex flex-col h-screen py-4">
+      <h1 className="text-2xl mb-4 text-center">{window.windowName}</h1>
       <div className="flex-1 overflow-y-auto space-y-2 px-4">
         {messages.length === 0 ? (
           <div className="grid grid-cols-1 gap-4 w-full">
@@ -181,11 +180,16 @@ const ChatInterface = ({onCode, projectName, window, projectId}: ChatInterfacePr
                 <div
                   key={msg.id}
                   className={`
-                    bg-[#20212c] p-3 rounded-lg max-w-xs 
-                    ${msg.type === 'prompt' ? 'self-end' : 'self-start bg-transparent'}
+                    bg-transparent rounded-none p-3 max-w-xs 
+                    ${msg.type === 'prompt' ? 'self-end ' : 'self-start'}
                     whitespace-pre-wrap break-words
+                    border-b-2 border-[#343540]
                   `}
                 >
+                  <div className='text-xs font-semibold'>
+                    {msg.type !== 'prompt' && <p>Abstractify</p>}
+                    {msg.type == 'prompt' && <p className='w-full text-end justify-end'>User</p>}
+                  </div>
                   {msg.content}
                 </div>
             ))}
@@ -193,7 +197,7 @@ const ChatInterface = ({onCode, projectName, window, projectId}: ChatInterfacePr
           </div>
         )}
       </div>
-      <div className="mt-4 flex items-center gap-2">
+      <div className="mt-4 mx-4 flex items-center gap-2">
         <Button type="button" variant="ghost" className="cursor-pointer"  onClick={() => handleSendMessage()}>
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
@@ -201,7 +205,7 @@ const ChatInterface = ({onCode, projectName, window, projectId}: ChatInterfacePr
         </Button>
         <Input
           placeholder="Explica la interfaz que deseas diseñar..."
-          className="flex-grow bg-[#343540] text-white p-2 rounded focus:outline-none"
+          className="flex-grow bg-transparent text-white p-2 rounded focus:outline-none"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyPress={handleKeyPress}

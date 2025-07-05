@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 import WindowInterface from '../window-interface/WindowInterface';
 import type { Window } from '@/models/windowModel';
 import ProductInterface from '../products-interface/ProductInterface';
+import { Button } from '@/components/ui/button';
 
 const DesignInterfaceRender: React.FC = () => {
   const { projectId, projectName } = useParams<{
@@ -21,8 +22,10 @@ const DesignInterfaceRender: React.FC = () => {
   return (
     <div className="w-full h-screen flex flex-col bg-[#202123] overflow-hidden">
       <div className="flex flex-grow overflow-hidden">
-        <div className="w-1/4 bg-[#343540] flex flex-col overflow-auto p-4">
-          <h2 className="text-white font-semibold mb-4">Componentes</h2>
+        <div className="w-1/4 bg-[#2C2C2C] flex flex-col overflow-auto p-4 gap-3">
+          <Button className='p-6 bg-white rounded-4xl w-1/8'>
+          </Button>
+          <h2 className="text-white font-bold mb-4 text-2xl">{projectName}</h2>
           <ProductInterface projectId={projectId ?? ''} projectName={projectName ?? ''} />
         </div>
 
@@ -34,11 +37,10 @@ const DesignInterfaceRender: React.FC = () => {
           />
         </div>
 
-        <div className="w-1/3 bg-gray-900 flex flex-col overflow-auto">
+        <div className="w-1/3 bg-[#2C2C2C] flex flex-col overflow-auto">
           {selectedWindow && (
             <ChatInterface
               onCode={setLiveCode}
-              projectName={projectName ?? ''}
               window={selectedWindow}
               projectId={projectId ?? ''}
             />
