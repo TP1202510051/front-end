@@ -1,120 +1,156 @@
 import React, { useState, useEffect } from "react"
-import { Plus, Upload } from "lucide-react"
+import { Plus, Upload, Pencil, Trash2, Save } from "lucide-react"
 import {
   Dialog,
   DialogTrigger,
   DialogContent,
   DialogFooter,
   DialogClose,
+  DialogTitle
 } from "../ui/dialog"
 import { Input } from "../ui/input"
 import { Button } from "../ui/button"
 import { createProduct, getProductsByCategoryId, updateProduct, deleteProduct } from "@/services/product.service"
 import type { Product } from '@/models/productModel';
-import { DialogTitle } from "@radix-ui/react-dialog"
-
+import { updateCategoryName, deleteCategory } from "@/services/category.service"
 
 interface ProductDialogProps {
   categoryId: string;
   categoryName?: string;
 }
-export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId, categoryName }: ProductDialogProps) => {
-    const [name, setName] = useState("")
-    const [description, setDescription] = useState("")
-    const [price, setPrice] = useState("")
-    const [discount, setDiscount] = useState("")
-    const [imageUrl, setImageUrl] = useState("")
-    const [products, setProducts] = useState<Product[]>([]);
-    const [isOpen, setIsOpen] = useState(false);
-    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-    const [sizeInputs, setSizeInputs] = useState<string[]>([""])
+export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId, categoryName }) => {
+  const [name, setName] = useState("")
+  const [description, setDescription] = useState("")
+  const [price, setPrice] = useState("")
+  const [discount, setDiscount] = useState("")
+  const [imageUrl, setImageUrl] = useState("")
+  const [products, setProducts] = useState<Product[]>([])
+  const [isOpen, setIsOpen] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [sizeInputs, setSizeInputs] = useState<string[]>([""])
 
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0]
-      if (!file) return
-      const reader = new FileReader()
-      reader.onload = () => setImageUrl(reader.result as string)
-      reader.readAsDataURL(file)
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false)
+  const [editableCategoryName, setEditableCategoryName] = useState(categoryName || "")
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => setImageUrl(reader.result as string)
+    reader.readAsDataURL(file)
+  }
+
+  const handleAddSize = () => setSizeInputs((prev) => [...prev, ""])
+
+  const handleSizeChange = (idx: number, val: string) => {
+    const copy = [...sizeInputs]
+    copy[idx] = val
+    setSizeInputs(copy)
+  }
+
+  const fetchProducts = async () => {
+    try {
+      const data = await getProductsByCategoryId(Number(categoryId))
+      setProducts(data)
+    } catch (error) {
+      console.error('Error al obtener los productos', error)
+    }
+  }
+
+  const handleSubmit = async () => {
+    const payload: Product = {
+      name,
+      description,
+      price: parseFloat(price),
+      discount: parseFloat(discount),
+      image: imageUrl,
+      categoryId,
+      sizes: sizeInputs.filter((s) => s.trim() !== "").map((s) => ({ name: s.trim(), isActive: true })),
     }
 
-    const handleAddSize = () => {
-      setSizeInputs((prev) => [...prev, ""])
-    }
-
-    const handleSizeChange = (idx: number, val: string) => {
-      setSizeInputs((prev) => {
-        const copy = [...prev]
-        copy[idx] = val
-        return copy
-      })
-    }
-
-    const fetchProducts = async () => {
-      try {
-        const data = await getProductsByCategoryId(Number(categoryId));
-        setProducts(data);
-      } catch (error) {
-        console.error('Error al obtener los productos', error);
+    try {
+      if (selectedProduct) {
+        const updated = await updateProduct(Number(selectedProduct.id), payload)
+        setProducts((prev) => prev.map(p => p.id === updated.id ? updated : p))
+      } else {
+        const created = await createProduct(payload)
+        setProducts((prev) => [...prev, created])
       }
-    };
-
-    const handleSubmit = async () => {
-      const payload: Product = {
-        name,
-        description,
-        price: parseFloat(price),
-        discount: parseFloat(discount),
-        image: imageUrl,
-        categoryId,
-        sizes: sizeInputs
-          .filter((s) => s.trim() !== "")
-          .map((s) => ({ name: s.trim(), isActive: true })),
-      };
-      try {
-        if (selectedProduct) {
-          const updatedProduct = await updateProduct(Number(selectedProduct.id), payload);
-          setProducts((prev) =>
-            prev.map((p) =>
-              p.id === updatedProduct.id ? updatedProduct : p
-            )
-          );
-        } else {
-          const result = await createProduct(payload);
-          setProducts((prev) => [...prev, result]);
-        }
-        resetForm();
-      } catch (err) {
-        console.error("Error creando el producto:", err);
-      }
-    };
-  
-  useEffect(() => {
-    setProducts([]);
-    fetchProducts();
-  }, [categoryId]);
+      resetForm()
+    } catch (err) {
+      console.error("Error creando o actualizando el producto:", err)
+    }
+  }
 
   const resetForm = () => {
-    setName("");
-    setDescription("");
-    setPrice("");
-    setDiscount("");
-    setImageUrl("");
-    setSizeInputs([""]);
-    setSelectedProduct(null);
-    setIsOpen(false);
-  };
+    setName("")
+    setDescription("")
+    setPrice("")
+    setDiscount("")
+    setImageUrl("")
+    setSizeInputs([""])
+    setSelectedProduct(null)
+    setIsOpen(false)
+  }
+
+  useEffect(() => {
+    setProducts([])
+    fetchProducts()
+    setEditableCategoryName(categoryName || "")
+  }, [categoryId, categoryName])
+
+  const handleUpdateCategory = async () => {
+    try {
+      await updateCategoryName(categoryId, editableCategoryName)
+      setIsCategoryDialogOpen(false)
+    } catch (err) {
+      console.error("Error actualizando la categoría:", err)
+    }
+  }
+
+  const handleDeleteCategory = async () => {
+    try {
+      await deleteCategory(categoryId)
+      setIsCategoryDialogOpen(false)
+    } catch (err) {
+      console.error("Error eliminando la categoría:", err)
+    }
+  }
 
   return (
     <>
-    <span className="flex items-center content-center gap-2 text-white justify-between border-b-2 border-[#343540] pb-2">
-      <span className="text-md font-medium pl-2">{categoryName}</span>
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger asChild>
-          <Button variant="ghost" className="transition-colors cursor-pointer" onClick={resetForm}>
-            <Plus/>
-          </Button>
-        </DialogTrigger>
+      <span className="flex items-center content-center gap-2 text-white justify-between border-b-2 border-[#343540] pb-2 w-full">
+        <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="ghost" className="flex-1 justify-start text-white font-medium px-2 py-1 hover:bg-[#343540] hover:text-white truncate">
+              {editableCategoryName}
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="bg-[#1E1E1E] text-white rounded-md w-[90vw] max-w-md">
+            <DialogTitle className="text-lg">Editar Categoría</DialogTitle>
+            <Input
+              className="mt-4 text-white bg-[#2C2C2C]"
+              value={editableCategoryName}
+              onChange={(e) => setEditableCategoryName(e.target.value)}
+            />
+            <DialogFooter className="pt-4 flex justify-between">
+              <Button onClick={handleUpdateCategory} className="bg-green-600 hover:bg-green-700">
+                <Save className="mr-2 h-4 w-4" /> Guardar
+              </Button>
+              <Button onClick={handleDeleteCategory} variant="destructive">
+                <Trash2 className="mr-2 h-4 w-4" /> Eliminar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogTrigger asChild>
+            <Button variant="ghost" onClick={resetForm}>
+              <Plus />
+            </Button>
+          </DialogTrigger>
 
         <DialogContent className="w-[90vw] max-w-none bg-[#1E1E1E] text-white">
           <DialogTitle className="text-lg font-semibold">
@@ -248,25 +284,26 @@ export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId, ca
           </form>
         </DialogContent>
       </Dialog>
-    </span>
+      </span>
       {products.map((product) => (
         <div key={product.id} className="rounded flex flex-col pt-2 gap-2">
-          <Button className="transition-colors cursor-pointer text-left justify-start bg-transparent hover:bg-[#343540] text-white hover:font-semibold"
+          <Button
+            className="transition-colors cursor-pointer text-left justify-start bg-transparent hover:bg-[#343540] text-white hover:font-semibold"
             onClick={() => {
-              setSelectedProduct(product);
-              setName(product.name);
-              setDescription(product.description);
-              setPrice(String(product.price));
-              setDiscount(String(product.discount));
-              setImageUrl(product.image);
-              setSizeInputs(product.sizes?.map((s) => s.name) || []);
-              setIsOpen(true);
+              setSelectedProduct(product)
+              setName(product.name)
+              setDescription(product.description)
+              setPrice(String(product.price))
+              setDiscount(String(product.discount))
+              setImageUrl(product.image)
+              setSizeInputs(product.sizes?.map(s => s.name) || [])
+              setIsOpen(true)
             }}
           >
-            {product.name}          
+            {product.name}
           </Button>
         </div>
       ))}
     </>
   )
-}
+}  

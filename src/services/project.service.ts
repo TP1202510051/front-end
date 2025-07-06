@@ -83,3 +83,24 @@ export const exportProject = async (
     throw error;
   }
 };
+
+export const updateProjectName = async (projectId: string, newName: string): Promise<void> => {
+  try {
+    await axios.put(`${apiUrl}/${projectId}`, { name: newName }, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    console.error('Error actualizando el nombre del proyecto:', error);
+    throw error;
+  }
+};
+
+// 🗑️ Eliminar proyecto
+export const deleteProject = async (projectId: string): Promise<void> => {
+  try {
+    await axios.delete(`${apiUrl}/${projectId}`);
+  } catch (error) {
+    console.error('Error eliminando el proyecto:', error);
+    throw error;
+  }
+};

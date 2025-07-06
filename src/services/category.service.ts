@@ -12,20 +12,20 @@ export interface CreateCategoryRequest {
 }
 
 export interface CategoryResponse {
-    id: string
-    categoryName: string
-    createdAt: string
-    projectId: number
+  id: string
+  categoryName: string
+  createdAt: string
+  projectId: number
 }
 
 export const createCategory = async (
-    projectId: number,
-    name: string
+  projectId: number,
+  name: string
 ): Promise<CategoryResponse> => {
-    const payload: CreateCategoryRequest = {
-      name,
-      projectId,
-    };
+  const payload: CreateCategoryRequest = {
+    name,
+    projectId,
+  }
   console.log('Enviando CreateCategoryRequest:', payload)
   const resp = await api.post<CategoryResponse>('/categories', payload)
   console.log('Categoria creada:', resp.data)
@@ -40,7 +40,32 @@ export const getCategoriesByProjectId = async (
     console.log('Categorias obtenidas:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Error obteniendo ventanas:', error);
+    console.error('Error obteniendo categorías:', error);
     throw error;
   }
-};
+}
+
+export const updateCategoryName = async (
+  categoryId: string,
+  newName: string
+): Promise<void> => {
+  try {
+    await api.put(`/categories/${categoryId}`, { name: newName })
+    console.log(`Categoría ${categoryId} actualizada a "${newName}"`)
+  } catch (error) {
+    console.error('Error actualizando la categoría:', error);
+    throw error;
+  }
+}
+
+export const deleteCategory = async (
+  categoryId: string
+): Promise<void> => {
+  try {
+    await api.delete(`/categories/${categoryId}`)
+    console.log(`Categoría ${categoryId} eliminada`)
+  } catch (error) {
+    console.error('Error eliminando la categoría:', error);
+    throw error;
+  }
+}
