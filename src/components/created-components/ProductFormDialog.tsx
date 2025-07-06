@@ -138,9 +138,6 @@ export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId, ca
               <Button onClick={handleUpdateCategory} className="bg-green-600 hover:bg-green-700">
                 <Save className="mr-2 h-4 w-4" /> Guardar
               </Button>
-              <Button onClick={handleDeleteCategory} variant="destructive">
-                <Trash2 className="mr-2 h-4 w-4" /> Eliminar
-              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
