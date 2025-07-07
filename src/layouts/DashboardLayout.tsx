@@ -40,7 +40,7 @@ export const DashboardLayout = () => {
       setIsOpen(false);
       setProjectName(''); // Limpiamos el input
       // Usamos el ID del proyecto devuelto por el servicio para la navegación
-      navigate(`/design-interface/${result.answer}/${projectName}`);
+      navigate(`/design-interface/${result}/${projectName}`);
     } catch (error) {
       console.error('Error al crear proyecto:', error);
     }

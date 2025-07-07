@@ -40,7 +40,7 @@ export const createProject = async (
   }
 };
 
-export const getProjectsByUserId = async (userId: number): Promise<Project[]> => {
+export const getProjectsByUserId = async (userId: string): Promise<Project[]> => {
   try {
     const response = await axios.get<Project[]>(`${apiUrl}/user/${userId}`);
     console.log('Proyectos obtenidos:', response.data);

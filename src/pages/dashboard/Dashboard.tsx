@@ -2,14 +2,15 @@ import DashboardCard from '@/components/ui/dashboard-card';
 import type { Project } from '@/models/projectModel';
 import { getProjectsByUserId } from '@/services/project.service';
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Dashboard = () => {
   const [projects, setProjects] = useState<Project[]>([]);
+  const { currentUser } = useAuth();
 
-  // Función para obtener proyectos de la base de datos
   const fetchProjects = async () => {
     try {
-      const data = await getProjectsByUserId(1);
+      const data = await getProjectsByUserId(currentUser?.uid ?? '');
       console.log("Proyectos obtenidos en dashboard:", data);
       setProjects(data); // Establecer proyectos
     } catch (error) {
