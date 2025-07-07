@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react"
-import { Plus, Upload, Pencil, Trash2, Save } from "lucide-react"
+import { Plus, Upload, Save } from "lucide-react"
 import {
   Dialog,
   DialogTrigger,
@@ -12,7 +12,8 @@ import { Input } from "../ui/input"
 import { Button } from "../ui/button"
 import { createProduct, getProductsByCategoryId, updateProduct, deleteProduct } from "@/services/product.service"
 import type { Product } from '@/models/productModel';
-import { updateCategoryName, deleteCategory } from "@/services/category.service"
+import { updateCategoryName } from "@/services/category.service";
+import { uploadImageToFirebase } from "@/services/firebase.service"
 
 interface ProductDialogProps {
   categoryId: string;
@@ -32,14 +33,17 @@ export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId, ca
 
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false)
   const [editableCategoryName, setEditableCategoryName] = useState(categoryName || "")
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => setImageUrl(reader.result as string)
-    reader.readAsDataURL(file)
-  }
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setImageUrl(reader.result as string);
+    reader.readAsDataURL(file);
+  };
 
   const handleAddSize = () => setSizeInputs((prev) => [...prev, ""])
 
@@ -59,40 +63,48 @@ export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId, ca
   }
 
   const handleSubmit = async () => {
-    const payload: Product = {
-      name,
-      description,
-      price: parseFloat(price),
-      discount: parseFloat(discount),
-      image: imageUrl,
-      categoryId,
-      sizes: sizeInputs.filter((s) => s.trim() !== "").map((s) => ({ name: s.trim(), isActive: true })),
-    }
-
     try {
-      if (selectedProduct) {
-        const updated = await updateProduct(Number(selectedProduct.id), payload)
-        setProducts((prev) => prev.map(p => p.id === updated.id ? updated : p))
-      } else {
-        const created = await createProduct(payload)
-        setProducts((prev) => [...prev, created])
+      let finalImageUrl = imageUrl;
+
+      if (imageFile) {
+        finalImageUrl = await uploadImageToFirebase(imageFile);
       }
-      resetForm()
+
+      const payload: Product = {
+        name,
+        description,
+        price: parseFloat(price),
+        discount: parseFloat(discount),
+        image: finalImageUrl,
+        categoryId,
+        sizes: sizeInputs.filter((s) => s.trim() !== "").map((s) => ({ name: s.trim(), isActive: true })),
+      };
+
+      if (selectedProduct) {
+        const updated = await updateProduct(Number(selectedProduct.id), payload);
+        setProducts((prev) => prev.map(p => p.id === updated.id ? updated : p));
+      } else {
+        const created = await createProduct(payload);
+        setProducts((prev) => [...prev, created]);
+      }
+
+      resetForm();
     } catch (err) {
-      console.error("Error creando o actualizando el producto:", err)
+      console.error("Error creando o actualizando el producto:", err);
     }
-  }
+  };
 
   const resetForm = () => {
-    setName("")
-    setDescription("")
-    setPrice("")
-    setDiscount("")
-    setImageUrl("")
-    setSizeInputs([""])
-    setSelectedProduct(null)
-    setIsOpen(false)
-  }
+    setName("");
+    setDescription("");
+    setPrice("");
+    setDiscount("");
+    setImageUrl("");
+    setImageFile(null);
+    setSizeInputs([""]);
+    setSelectedProduct(null);
+    setIsOpen(false);
+  };
 
   useEffect(() => {
     setProducts([])
@@ -106,15 +118,6 @@ export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId, ca
       setIsCategoryDialogOpen(false)
     } catch (err) {
       console.error("Error actualizando la categoría:", err)
-    }
-  }
-
-  const handleDeleteCategory = async () => {
-    try {
-      await deleteCategory(categoryId)
-      setIsCategoryDialogOpen(false)
-    } catch (err) {
-      console.error("Error eliminando la categoría:", err)
     }
   }
 
@@ -161,14 +164,23 @@ export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId, ca
             }}
           >
             <div className="flex gap-4">
-              <div className="w-1/4 relative h-32 border-2 border-dashed border-input rounded-md flex items-center justify-center">
-                <Input
+              <div className="w-1/4 relative h-32 border-2 border-dashed border-input rounded-md overflow-hidden group">
+                {imageUrl && (
+                  <img
+                    src={imageUrl}
+                    alt="preview"
+                    className="w-full h-full object-cover opacity-50"
+                  />
+                )}
+                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                  <Upload className="size-8 text-white" />
+                </div>
+                <input
                   type="file"
                   accept="image/*"
-                  className="absolute inset-0 opacity-0 cursor-pointer"
                   onChange={handleImageChange}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 />
-                <Upload className="size-8 text-muted-foreground" />
               </div>
 
               <div className="flex-1 grid grid-cols-3 gap-4">
