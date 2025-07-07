@@ -9,10 +9,30 @@ import Home from './pages/home/Home';
 import NotFound from './pages/not-found/NotFound.tsx';
 import IconLayout from './layouts/IconLayout.tsx';
 import ChatInterface from './pages/chat-interface/ChatInterface.tsx';
+import PrivateRoute from './components/auth/PrivateRoute';
+import LoginPage from './pages/authentication/LoginPage';
+import RegisterPage from './pages/authentication/RegisterPage';
+import ProfilePage from './pages/authentication/ProfilePage';
 
 const router = createBrowserRouter([
+  // --- Rutas Públicas ---
+  // No usan PrivateRoute y tienen su propio layout simple si es necesario
   {
-    Component: DashboardLayout,
+    path: '/login',
+    Component: LoginPage,
+    errorElement: <NotFound />,
+  },
+  {
+    path: '/register',
+    Component: RegisterPage,
+    errorElement: <NotFound />,
+  },
+
+  // --- Rutas Protegidas ---
+  // Cada grupo de rutas protegidas usa el componente PrivateRoute
+  // pasándole el Layout que le corresponde.
+  {
+    element: <PrivateRoute LayoutComponent={DashboardLayout} />,
     errorElement: <NotFound />,
     children: [
       {
@@ -23,10 +43,15 @@ const router = createBrowserRouter([
         path: '/dashboard',
         Component: Dashboard,
       },
+      {
+        // La página de perfil también debe ser privada
+        path: '/profile',
+        Component: ProfilePage,
+      },
     ],
   },
   {
-    Component: IconLayout,
+    element: <PrivateRoute LayoutComponent={IconLayout} />,
     errorElement: <NotFound />,
     children: [
       {
@@ -36,7 +61,7 @@ const router = createBrowserRouter([
     ],
   },
   {
-    Component: BlankLayout,
+    element: <PrivateRoute LayoutComponent={BlankLayout} />,
     errorElement: <NotFound />,
     children: [
       {

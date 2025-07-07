@@ -2,7 +2,7 @@ import type { Project } from '@/models/projectModel';
 import axios from 'axios';
 
 interface ProjectRequest {
-  userId: number;
+  userId: string;
   name: string;
 }
 
@@ -13,7 +13,7 @@ interface ProjectAnswerResponse {
 const apiUrl = 'http://localhost:8080/api/projects'; // Asegúrate de usar la URL correcta de tu backend
 
 export const createProject = async (
-  userId: number,
+  userId: string,
   name: string,
 ): Promise<ProjectAnswerResponse> => {
   try {
@@ -84,11 +84,18 @@ export const exportProject = async (
   }
 };
 
-export const updateProjectName = async (projectId: string, newName: string): Promise<void> => {
+export const updateProjectName = async (
+  projectId: string,
+  newName: string,
+): Promise<void> => {
   try {
-    await axios.put(`${apiUrl}/${projectId}`, { name: newName }, {
-      headers: { 'Content-Type': 'application/json' },
-    });
+    await axios.put(
+      `${apiUrl}/${projectId}`,
+      { name: newName },
+      {
+        headers: { 'Content-Type': 'application/json' },
+      },
+    );
   } catch (error) {
     console.error('Error actualizando el nombre del proyecto:', error);
     throw error;
