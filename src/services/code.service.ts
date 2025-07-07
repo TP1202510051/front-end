@@ -1,7 +1,7 @@
 import type { Code } from '@/models/codeModel';
 import axios from 'axios';
 
-const apiUrl = 'http://localhost:8080/api/codes'; 
+const apiUrl = `${import.meta.env.VITE_API_BASE_URL}/codes`; 
 
 export const getLatestCodeByWindowId= async (windowId: number): Promise<Code> => {
     try {

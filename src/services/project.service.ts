@@ -10,7 +10,7 @@ interface ProjectAnswerResponse {
   answer: number;
 }
 
-const apiUrl = 'http://localhost:8080/api/projects'; // Asegúrate de usar la URL correcta de tu backend
+const apiUrl = `${import.meta.env.VITE_API_BASE_URL}/projects`;
 
 export const createProject = async (
   userId: string,

@@ -37,7 +37,7 @@ export const createMessage = async (windowId: number, message: string, projectId
   }
 };
 
-const apiUrl = 'http://localhost:8080/api/messages'; 
+const apiUrl = `${import.meta.env.VITE_API_BASE_URL}/messages`; 
 
 
 export const getMessagesByWindowId = async (windowId: number): Promise<Message[]> => {
