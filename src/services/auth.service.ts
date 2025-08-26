@@ -1,11 +1,11 @@
-import { 
-  signInWithEmailAndPassword, 
+import {
+  signInWithEmailAndPassword,
   signOut,
   createUserWithEmailAndPassword,
-  type AuthError
-} from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore"; 
-import { auth, db } from "../firebase";
+  type AuthError,
+} from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { auth, db } from '../firebase';
 
 interface UserProfileData {
   firstName: string;
@@ -18,6 +18,23 @@ interface UserProfileData {
     phone: string;
   };
 }
+
+export const testFirestoreWrite = async () => {
+  console.log('Iniciando prueba de escritura en Firestore...');
+  try {
+    // Intentamos escribir un documento simple en una colección de prueba
+    const testDocRef = doc(db, 'testCollection', 'testDocument');
+    await setDoc(testDocRef, {
+      testField: '¡Hola, Firestore!',
+      timestamp: new Date(),
+    });
+    console.log('ÉXITO: La escritura en Firestore se completó correctamente.');
+    alert('Prueba de escritura exitosa. Revisa la consola y tu Firestore.');
+  } catch (error) {
+    console.error('ERROR: La prueba de escritura en Firestore falló.', error);
+    alert('La prueba de escritura falló. Revisa la consola para ver el error.');
+  }
+};
 
 // --- Función de Login ---
 export const login = async (email: string, password: string) => {
@@ -46,24 +63,31 @@ export const register = async (userData: UserProfileData, password: string) => {
     const userCredential = await createUserWithEmailAndPassword(
       auth,
       userData.email,
-      password
+      password,
     );
     const user = userCredential.user;
 
     // 2. Crear el objeto de perfil sin el email (ya que está en el nivel superior)
     const profileData = {
       uid: user.uid,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      email: userData.email, // Guardamos el email para facilitar consultas
-      company: userData.company,
-      profilePictureUrl: null, // Valor inicial
-      companyLogoUrl: null,    // Valor inicial
+      firstName: userData.firstName || '', // Si es undefined, usa ''
+      lastName: userData.lastName || '', // Si es undefined, usa ''
+      email: userData.email, // El email siempre existirá
+      company: {
+        name: userData.company?.name || '', // El '?.' evita error si 'company' no existe
+        ruc: userData.company?.ruc || '',
+        address: userData.company?.address || '',
+        phone: userData.company?.phone || '',
+      },
+      profilePictureUrl: '',
+      companyLogoUrl: '',
     };
 
     // 3. Guardar los datos del perfil en una colección "users" en Firestore
     //    usando el UID del usuario como ID del documento.
-    await setDoc(doc(db, "users", user.uid), profileData);
+    console.log('UID del usuario antes de escribir:', user.uid);
+    console.log('Datos del usuario antes de escribir:', profileData);
+    await setDoc(doc(db, 'users', user.uid), profileData);
 
     return { user, error: null };
   } catch (error) {
