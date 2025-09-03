@@ -19,22 +19,22 @@ interface UserProfileData {
   };
 }
 
-export const testFirestoreWrite = async () => {
-  console.log('Iniciando prueba de escritura en Firestore...');
-  try {
-    // Intentamos escribir un documento simple en una colección de prueba
-    const testDocRef = doc(db, 'testCollection', 'testDocument');
-    await setDoc(testDocRef, {
-      testField: '¡Hola, Firestore!',
-      timestamp: new Date(),
-    });
-    console.log('ÉXITO: La escritura en Firestore se completó correctamente.');
-    alert('Prueba de escritura exitosa. Revisa la consola y tu Firestore.');
-  } catch (error) {
-    console.error('ERROR: La prueba de escritura en Firestore falló.', error);
-    alert('La prueba de escritura falló. Revisa la consola para ver el error.');
-  }
-};
+// export const testFirestoreWrite = async () => {
+//   console.log('Iniciando prueba de escritura en Firestore...');
+//   try {
+//     // Intentamos escribir un documento simple en una colección de prueba
+//     const testDocRef = doc(db, 'testCollection', 'testDocument');
+//     await setDoc(testDocRef, {
+//       testField: '¡Hola, Firestore!',
+//       timestamp: new Date(),
+//     });
+//     console.log('ÉXITO: La escritura en Firestore se completó correctamente.');
+//     alert('Prueba de escritura exitosa. Revisa la consola y tu Firestore.');
+//   } catch (error) {
+//     console.error('ERROR: La prueba de escritura en Firestore falló.', error);
+//     alert('La prueba de escritura falló. Revisa la consola para ver el error.');
+//   }
+// };
 
 // --- Función de Login ---
 export const login = async (email: string, password: string) => {

@@ -1,7 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { register, testFirestoreWrite } from '@/services/auth.service';
+// import { register, testFirestoreWrite } from '@/services/auth.service';
+import { register } from '@/services/auth.service';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -187,13 +188,13 @@ export default function RegisterPage() {
 
             {error && <p className="text-sm font-medium text-red-500">{error}</p>}
 
-            <Button
+            {/* <Button
               type="button"
               onClick={testFirestoreWrite}
               className="w-full bg-yellow-500 text-black"
             >
               Probar Escritura en Firestore
-            </Button>
+            </Button> */}
 
             <Button
               type="submit"

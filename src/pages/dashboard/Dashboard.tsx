@@ -9,8 +9,9 @@ const Dashboard = () => {
   const { currentUser } = useAuth();
 
   const fetchProjects = async () => {
+    if (!currentUser?.uid) return;
     try {
-      const data = await getProjectsByUserId(currentUser?.uid ?? '');
+      const data = await getProjectsByUserId(currentUser.uid);
       console.log("Proyectos obtenidos en dashboard:", data);
       setProjects(data); // Establecer proyectos
     } catch (error) {

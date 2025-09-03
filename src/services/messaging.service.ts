@@ -11,7 +11,7 @@ interface Response {
   answer: string;
 }
 
-const apiBroker = 'https://sender-to-broker-function-614278839638.europe-west1.run.app';
+const apiBroker = import.meta.env.VITE_CLOUD_RUN_URL;
 
 export const createMessage = async (windowId: number, message: string, projectId: number): Promise<Response> => {
   try {
