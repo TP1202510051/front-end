@@ -9,7 +9,6 @@ import SockJS from 'sockjs-client';
 import type { Window } from '@/models/windowModel';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 
-
 interface ChatInterfaceProps {
   onCode: (jsx: string) => void;
   window: Window;
@@ -70,7 +69,7 @@ const ChatInterface = ({onCode, window, projectId}: ChatInterfaceProps) => {
   ];
 
   useEffect(() => {
-    const socket = new SockJS('http://localhost:8080/ws');
+    const socket = new SockJS(import.meta.env.VITE_API_WS_URL);
     const client = new Client({
       webSocketFactory: () => socket as WebSocket,
       reconnectDelay: 5000,
