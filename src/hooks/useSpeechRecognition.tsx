@@ -9,8 +9,8 @@ interface UseSpeechRecognitionOptions {
 
 export const useSpeechRecognition = ({
   lang = 'es-PE',
-  interimResults = false,
-  continuous = false,
+  interimResults = true,
+  continuous = true,
 }: UseSpeechRecognitionOptions = {}) => {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');

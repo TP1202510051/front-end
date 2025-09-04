@@ -16,6 +16,7 @@ interface ChatInterfaceProps {
 }
 
 const ChatInterface = ({onCode, window, projectId}: ChatInterfaceProps) => {
+  const [response, setResponse] = useState<boolean>(false);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -136,6 +137,7 @@ const ChatInterface = ({onCode, window, projectId}: ChatInterfaceProps) => {
       },
     ]);
     setMessage('');
+    setResponse(true);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -150,6 +152,7 @@ const ChatInterface = ({onCode, window, projectId}: ChatInterfaceProps) => {
     try {
       const data = await getMessagesByWindowId(Number(window.id));
       setMessages(data.filter(msg => msg.type !== 'system'));
+      setResponse(false);
     } catch (error) {
       console.error('Error al obtener los mensajes', error);
     }
@@ -160,20 +163,14 @@ const ChatInterface = ({onCode, window, projectId}: ChatInterfaceProps) => {
   }, [window.id]);
 
   useEffect(() => {
-    if (isListening) {
-      console.log('[🗣️ Transcript final]:', transcript);
-      setMessage(transcript);
+    if (isListening && transcript.trim()) {
+      setMessage(prev => {
+        if (prev.endsWith(transcript)) return prev;
+        return prev + " " + transcript;
+      });
     }
   }, [isListening, transcript]);
 
-  useEffect(() => {
-    if (!isListening && transcript.trim()) {
-      console.log('[🗣️ Transcript final]:', transcript);
-      handleSendMessage(transcript);
-      setMessage(''); // limpia el input al terminar de dictar
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isListening, transcript]);
 
   return (
     <div className="bg-[#2C2C2C] text-white flex flex-col h-screen py-4">
@@ -219,46 +216,75 @@ const ChatInterface = ({onCode, window, projectId}: ChatInterfaceProps) => {
           </div>
         )}
       </div>
-      <div className="mt-4 mx-4 flex items-center gap-2">
-        <Button
-          type="button"
-          variant="ghost"
-          className="cursor-pointer"
-          onClick={() => {
-            if (isListening) {
-              stopListening();
-            } else {
-              startListening();
-            }
-          }}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill={isListening ? 'red' : 'none'}
-            viewBox="0 0 24 24"
-            strokeWidth="1.5"
-            stroke="currentColor"
-            className="size-6"
+      <div className='mt-4'>
+        {
+          response ? (
+            <div className='flex px-3 space-y-2 space-x-1 items-baseline content-center text-white'>
+              <div className='text-xs'>
+                Pensando
+              </div>
+              <div className='flex space-x-1 items-center text-white'>
+                <div className="animate-bounce [animation-delay:0s]">
+                  <svg width="5" height="5" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="18" cy="18" r="18" fill="white"/>
+                  </svg>
+                </div>
+                <div className="animate-bounce [animation-delay:0.2s]">
+                  <svg width="5" height="5" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="18" cy="18" r="18" fill="white"/>
+                  </svg>
+                </div>
+                <div className="animate-bounce [animation-delay:0.4s]">
+                  <svg width="5" height="5" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="18" cy="18" r="18" fill="white"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          ) : (<></>)
+        }
+        <div className="mx-4 flex items-center gap-2">
+          <Button
+            disabled={response}
+            type="button"
+            variant="ghost"
+            className="cursor-pointer"
+            onClick={() => {
+              if (isListening) {
+                stopListening();
+              } else {
+                startListening();
+              }
+            }}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"
-            />
-          </svg>
-        </Button>
-        <Input
-          placeholder="Explica la interfaz que deseas diseñar..."
-          className="flex-grow bg-transparent text-white p-2 rounded focus:outline-none"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyPress={handleKeyPress}
-        />
-        <Button type="button" variant="ghost" className="cursor-pointer"  onClick={() => handleSendMessage()}>
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
-          </svg>
-        </Button>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill={isListening ? 'red' : 'none'}
+              viewBox="0 0 24 24"
+              strokeWidth="1.5"
+              stroke="currentColor"
+              className="size-6"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"
+              />
+            </svg>
+          </Button>
+          <Input
+            placeholder="Explica la interfaz que deseas diseñar..."
+            className="flex-grow bg-transparent text-white p-2 rounded focus:outline-none"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyPress={handleKeyPress}
+          />
+          <Button type="button" variant="ghost" className="cursor-pointer" disabled={response}  onClick={() => handleSendMessage()}>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+            </svg>
+          </Button>
+        </div>
       </div>
     </div>
   );
