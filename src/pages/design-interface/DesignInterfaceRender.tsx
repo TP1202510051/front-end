@@ -18,6 +18,8 @@ import { updateProjectName, deleteProject } from '@/services/project.service';
 
 const DesignInterfaceRender: React.FC = () => {
   const navigate = useNavigate();
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [visible, setVisible] = useState<boolean>(false);
   const { projectId, projectName } = useParams<{ projectId: string; projectName: string }>();
   const [selectedWindow, setSelectedWindow] = useState<Window>();
   const [liveCode, setLiveCode] = useState<string>('');
@@ -28,11 +30,22 @@ const DesignInterfaceRender: React.FC = () => {
     console.log('Nuevo liveCode recibido:', liveCode);
   }, [liveCode]);
 
+  useEffect(() => {
+    if (!isSaving) {
+      setVisible(true);
+      const timer = setTimeout(() => {
+        setVisible(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [isSaving]);
+
   const handleUpdateName = async () => {
     try {
       if (!projectId) return;
       await updateProjectName(projectId, newProjectName);
       setIsDialogOpen(false);
+      if (setIsSaving) setIsSaving(false);
       navigate(`/design-interface/${projectId}/${newProjectName}`);
     } catch (error) {
       console.error('Error al actualizar nombre:', error);
@@ -75,7 +88,7 @@ const DesignInterfaceRender: React.FC = () => {
                   />
                 </div>
                 <DialogFooter className="pt-4 flex justify-between">
-                  <Button onClick={handleUpdateName} className="bg-green-600 hover:bg-green-700">
+                  <Button onClick={() => { handleUpdateName(); if (setIsSaving) setIsSaving(true); }} className="bg-green-600 hover:bg-green-700">
                     <Save className="mr-2 h-4 w-4" />
                     Guardar
                   </Button>
@@ -88,14 +101,30 @@ const DesignInterfaceRender: React.FC = () => {
             </Dialog>
           </div>
 
-          <ProductInterface projectId={projectId ?? ''} projectName={projectName ?? ''} />
+          <ProductInterface projectId={projectId ?? ''} projectName={projectName ?? ''} setIsSaving={setIsSaving} />
         </div>
 
         <div className="w-full flex-grow flex flex-col items-center justify-center bg-[#202123] p-4">
+            { isSaving ? (
+            <div className='left-0 w-full flex gap-1 items-center animate-pulse'>
+              <h1 className="text-xs">Saving...</h1>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75Z" />
+              </svg>
+            </div>
+            ) : (
+            <div className={`left-0 w-full flex gap-1 items-center transition-opacity duration-1000 ${visible ? "opacity-100" : "opacity-0"}`}>
+              <h1 className="text-xs">Saved</h1>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 3.75V16.5L12 14.25 7.5 16.5V3.75m9 0H18A2.25 2.25 0 0 1 20.25 6v12A2.25 2.25 0 0 1 18 20.25H6A2.25 2.25 0 0 1 3.75 18V6A2.25 2.25 0 0 1 6 3.75h1.5m9 0h-9" />
+              </svg>
+            </div>
+            )}
           <WindowInterface
             projectId={projectId ?? ''}
             webSocketCode={liveCode}
             onWindowSelect={setSelectedWindow}
+            setIsSaving={setIsSaving}
           />
         </div>
 
@@ -105,6 +134,7 @@ const DesignInterfaceRender: React.FC = () => {
               onCode={setLiveCode}
               window={selectedWindow}
               projectId={projectId ?? ''}
+              setIsSaving={setIsSaving}
             />
           )}
         </div>
