@@ -16,9 +16,10 @@ import type { Window } from '@/models/windowModel';
 interface WindowCreationDialogProps {
     onWindow: (win: Window) => void;
     projectId: string;
+    setIsSaving?: (isSaving: boolean) => void;
 }
 
-const WindowCreationDialog: React.FC<WindowCreationDialogProps> = ({onWindow, projectId}) => {
+const WindowCreationDialog: React.FC<WindowCreationDialogProps> = ({onWindow, projectId, setIsSaving}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [windowName, setWindowName] = useState<string>("");
   
@@ -29,6 +30,10 @@ const WindowCreationDialog: React.FC<WindowCreationDialogProps> = ({onWindow, pr
   const handleAccept = async () => {
     try {
       const result = await createWindow(Number(projectId), windowName);
+      if(result) {
+        console.log("Ventana creada con éxito:", result);
+        if (setIsSaving) setIsSaving(false);
+      }
       console.log("Ventana creada con éxito:", result);
 
         const newWindow: Window = {
@@ -66,7 +71,7 @@ const WindowCreationDialog: React.FC<WindowCreationDialogProps> = ({onWindow, pr
                   />
                 </div>
                 <DialogFooter className="pt-2 sm:justify-around">
-                  <Button type="submit" variant="secondary" className="cursor-pointer"  onClick={handleAccept}>
+                  <Button type="submit" variant="secondary" className="cursor-pointer"  onClick={() => { handleAccept(); if (setIsSaving) setIsSaving(true); }}>
                     Aceptar
                   </Button>
                     <DialogClose asChild>

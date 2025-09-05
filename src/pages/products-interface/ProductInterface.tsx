@@ -20,9 +20,10 @@ import { exportProject } from '@/services/project.service';
 interface ProductInterfaceProps {
   projectId: string;
   projectName: string;
+  setIsSaving?: (isSaving: boolean) => void;
 }
 
-const ProductInterface: React.FC<ProductInterfaceProps> = ({ projectId, projectName }) => {
+const ProductInterface: React.FC<ProductInterfaceProps> = ({ projectId, projectName, setIsSaving }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [categories, setCategories] = useState<Category[]>([]);
     const [categoryName, setCategoryName] = useState<string>("");
@@ -55,8 +56,11 @@ const ProductInterface: React.FC<ProductInterfaceProps> = ({ projectId, projectN
     const handleAccept = async () => {
         try {
             const result = await createCategory(Number(projectId), categoryName);
-            console.log("Categoría creada con éxito:", result);
-            
+            if(result) {
+              console.log("Categoría creada con éxito:", result);
+              if (setIsSaving) setIsSaving(false);
+            }
+
             setCategories(prev => [...prev, {
             id: result.id,
             categoryName: result.categoryName,
@@ -101,7 +105,7 @@ const ProductInterface: React.FC<ProductInterfaceProps> = ({ projectId, projectN
                   />
                 </div>
                 <DialogFooter className="pt-2 sm:justify-around">
-                  <Button type="submit" variant="secondary" className="cursor-pointer"  onClick={handleAccept}>
+                  <Button type="submit" variant="secondary" className="cursor-pointer"  onClick={() => { handleAccept(); if (setIsSaving) setIsSaving(true); }}>
                     Aceptar
                   </Button>
                   <Button type="button" variant="default" className="cursor-pointer"  onClick={() => setIsOpen(false)}>
@@ -114,7 +118,7 @@ const ProductInterface: React.FC<ProductInterfaceProps> = ({ projectId, projectN
               {categories.map((category) => (
                 <div key={category.id} className="pl-2 pt-2 rounded flex flex-col gap-2">
                   <div className='pl-4'>
-                    <ProductFormDialog categoryId={category.id ?? ''} categoryName={category.categoryName}/>
+                    <ProductFormDialog categoryId={category.id ?? ''} categoryName={category.categoryName} setIsSaving={setIsSaving}/>
                   </div>
                 </div>
           ))}
