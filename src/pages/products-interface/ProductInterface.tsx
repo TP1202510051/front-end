@@ -80,6 +80,11 @@ const ProductInterface: React.FC<ProductInterfaceProps> = ({ projectId, projectN
         fetchCategories();
     }, [projectId]);
 
+    const handleRemoveCategory = (categoryId: string) => {
+      setCategories(prev => prev.filter(c => c.id !== categoryId));
+    };
+
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex-grow flex flex-col overflow-y-auto pr-2">
@@ -118,7 +123,7 @@ const ProductInterface: React.FC<ProductInterfaceProps> = ({ projectId, projectN
               {categories.map((category) => (
                 <div key={category.id} className="pl-2 pt-2 rounded flex flex-col gap-2">
                   <div className='pl-4'>
-                    <ProductFormDialog categoryId={category.id ?? ''} categoryName={category.categoryName} setIsSaving={setIsSaving}/>
+                    <ProductFormDialog categoryId={category.id ?? ''} categoryName={category.categoryName} setIsSaving={setIsSaving} onDeleteCategory={handleRemoveCategory}/>
                   </div>
                 </div>
           ))}

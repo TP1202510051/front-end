@@ -12,16 +12,17 @@ import { Input } from "../ui/input"
 import { Button } from "../ui/button"
 import { createProduct, getProductsByCategoryId, updateProduct, deleteProduct } from "@/services/product.service"
 import type { Product } from '@/models/productModel';
-import { updateCategoryName } from "@/services/category.service";
+import { updateCategoryName, deleteCategory } from "@/services/category.service";
 import { uploadImageToFirebase } from "@/services/firebase.service"
 
 interface ProductDialogProps {
   categoryId: string;
   categoryName?: string;
   setIsSaving?: (isSaving: boolean) => void;
+  onDeleteCategory?: (categoryId: string) => void;
 }
 
-export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId, categoryName, setIsSaving }) => {
+export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId, categoryName, setIsSaving, onDeleteCategory }) => {
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [price, setPrice] = useState("")
@@ -115,6 +116,29 @@ export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId, ca
     setIsOpen(false);
   };
 
+  const handleDeleteProduct = async (productId: number) => {
+    try {
+      await deleteProduct(productId);
+      setProducts((prev) => prev.filter(p => p.id !== selectedProduct?.id));
+      if(setIsSaving) setIsSaving(false);
+      resetForm();
+    } catch (error) {
+      console.error("Error eliminando el producto:", error);
+    }
+  }
+
+  const handleDeleteCategory = async (categoryId: string) => {
+    try {
+      await deleteCategory(categoryId);
+      setProducts((prev) => prev.filter(p => p.categoryId !== categoryId));
+      setIsCategoryDialogOpen(false);
+      if(onDeleteCategory) onDeleteCategory(categoryId);
+      if(setIsSaving) setIsSaving(false);
+    } catch (error) {
+      console.error("Error eliminando la categoría:", error);
+    }
+  }
+
   useEffect(() => {
     setProducts([])
     fetchProducts()
@@ -125,6 +149,7 @@ export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId, ca
     try {
       await updateCategoryName(categoryId, editableCategoryName)
       setIsCategoryDialogOpen(false)
+      if (setIsSaving) setIsSaving(false);
     } catch (err) {
       console.error("Error actualizando la categoría:", err)
     }
@@ -147,7 +172,14 @@ export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId, ca
               onChange={(e) => setEditableCategoryName(e.target.value)}
             />
             <DialogFooter className="pt-4 flex justify-between">
-              <Button onClick={handleUpdateCategory} className="bg-green-600 hover:bg-green-700">
+              <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => {handleDeleteCategory(categoryId); if (setIsSaving) setIsSaving(true); }}
+                >
+                  Eliminar
+                </Button>
+              <Button onClick={() => { handleUpdateCategory(); if (setIsSaving) setIsSaving(true); }} className="bg-green-600 hover:bg-green-700">
                 <Save className="mr-2 h-4 w-4" /> Guardar
               </Button>
             </DialogFooter>
@@ -281,15 +313,7 @@ export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId, ca
                 <Button
                   type="button"
                   variant="destructive"
-                  onClick={async () => {
-                    try {
-                      await deleteProduct(Number(selectedProduct.id));
-                      setProducts((prev) => prev.filter(p => p.id !== selectedProduct.id));
-                      resetForm();
-                    } catch (error) {
-                      console.error("Error eliminando el producto:", error);
-                    }
-                  }}
+                  onClick={() => { if (selectedProduct.id) handleDeleteProduct(Number(selectedProduct.id)); if (setIsSaving) setIsSaving(true); }}
                 >
                   Eliminar
                 </Button>

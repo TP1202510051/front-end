@@ -4,10 +4,7 @@ import { BlankLayout } from './layouts/BlankLayout.tsx';
 import { DashboardLayout } from './layouts/DashboardLayout.tsx';
 import Dashboard from './pages/dashboard/Dashboard.tsx';
 import DesignInterfaceRender from './pages/design-interface/DesignInterfaceRender.tsx';
-import Home from './pages/home/Home';
 import NotFound from './pages/not-found/NotFound.tsx';
-import IconLayout from './layouts/IconLayout.tsx';
-import ChatInterface from './pages/chat-interface/ChatInterface.tsx';
 import PrivateRoute from './components/auth/PrivateRoute';
 import LoginPage from './pages/authentication/LoginPage';
 import RegisterPage from './pages/authentication/RegisterPage';
@@ -46,16 +43,6 @@ const router = createBrowserRouter([
         // La página de perfil también debe ser privada
         path: '/profile',
         Component: ProfilePage,
-      },
-    ],
-  },
-  {
-    element: <PrivateRoute LayoutComponent={IconLayout} />,
-    errorElement: <NotFound />,
-    children: [
-      {
-        path: '/chat-interface/:projectId',
-        Component: ChatInterface,
       },
     ],
   },
