@@ -20,7 +20,6 @@ const ComponentRenderer = ({ component }: { component: CanvasComponent }) => {
       return <ProductGrid {...component.props} />;
     default: {
       // Esto previene errores si se añade un nuevo tipo y no se maneja aquí
-      const _exhaustiveCheck: never = component;
       return null;
     }
   }

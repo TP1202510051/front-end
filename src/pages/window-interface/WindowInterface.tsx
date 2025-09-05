@@ -8,17 +8,16 @@ import {
   DialogContent,
   DialogFooter,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Save, Trash2, Pencil } from 'lucide-react';
+import { Save, Trash2 } from 'lucide-react';
 import WindowCreationDialog from '@/components/created-components/WindowCreationDialog';
 
 interface WindowInterfaceProps {
   projectId: string;
   webSocketCode?: string;
-  onWindowSelect: (window: Window) => void;
+  onWindowSelect: (window: Window | null) => void;
   setIsSaving?: (isSaving: boolean) => void;
 }
 
@@ -83,6 +82,7 @@ const WindowInterface: React.FC<WindowInterfaceProps> = ({
       setWindows((prev) =>
         prev.map((w) => (w.id === selectedWindowToEdit.id ? { ...w, windowName: newWindowName } : w))
       );
+      onWindowSelect({ ...selectedWindowToEdit, windowName: newWindowName });
       setIsDialogOpen(false);
       if (setIsSaving) setIsSaving(false);
     } catch (error) {
@@ -133,7 +133,7 @@ const WindowInterface: React.FC<WindowInterfaceProps> = ({
               <Save className="mr-2 h-4 w-4" />
               Guardar
             </Button>
-            <Button onClick={() => { handleDeleteWindow(); if (setIsSaving) setIsSaving(true); }} variant="destructive">
+            <Button onClick={() => { handleDeleteWindow(); if (setIsSaving) setIsSaving(true); onWindowSelect(null); }} variant="destructive">
               <Trash2 className="mr-2 h-4 w-4" />
               Eliminar
             </Button>

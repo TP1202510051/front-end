@@ -15,6 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Trash2, Save } from 'lucide-react';
 import { updateProjectName, deleteProject } from '@/services/project.service';
+import { UserNav } from '@/components/auth/UserNav';
 
 const DesignInterfaceRender: React.FC = () => {
   const navigate = useNavigate();
@@ -66,8 +67,8 @@ const DesignInterfaceRender: React.FC = () => {
     <div className="w-full h-screen flex flex-col bg-[#202123] overflow-hidden">
       <div className="flex flex-grow overflow-hidden">
         <div className="w-1/4 bg-[#2C2C2C] flex flex-col overflow-auto p-4 gap-3">
-          <Button className='p-6 bg-white rounded-4xl w-1/8'>
-          </Button>
+          <UserNav />
+          
           <div className="flex flex-row items-center justify-between mb-4">
             <h2 className="text-white font-bold text-xl">{projectName}</h2>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -108,14 +109,14 @@ const DesignInterfaceRender: React.FC = () => {
             { isSaving ? (
             <div className='left-0 w-full flex gap-1 items-center animate-pulse'>
               <h1 className="text-xs">Saving...</h1>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75Z" />
               </svg>
             </div>
             ) : (
             <div className={`left-0 w-full flex gap-1 items-center transition-opacity duration-1000 ${visible ? "opacity-100" : "opacity-0"}`}>
               <h1 className="text-xs">Saved</h1>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 3.75V16.5L12 14.25 7.5 16.5V3.75m9 0H18A2.25 2.25 0 0 1 20.25 6v12A2.25 2.25 0 0 1 18 20.25H6A2.25 2.25 0 0 1 3.75 18V6A2.25 2.25 0 0 1 6 3.75h1.5m9 0h-9" />
               </svg>
             </div>
@@ -123,7 +124,7 @@ const DesignInterfaceRender: React.FC = () => {
           <WindowInterface
             projectId={projectId ?? ''}
             webSocketCode={liveCode}
-            onWindowSelect={setSelectedWindow}
+            onWindowSelect={(window) => setSelectedWindow(window ?? undefined)}
             setIsSaving={setIsSaving}
           />
         </div>
