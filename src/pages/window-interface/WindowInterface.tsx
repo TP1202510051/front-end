@@ -19,12 +19,14 @@ interface WindowInterfaceProps {
   projectId: string;
   webSocketCode?: string;
   onWindowSelect: (window: Window) => void;
+  setIsSaving?: (isSaving: boolean) => void;
 }
 
 const WindowInterface: React.FC<WindowInterfaceProps> = ({
   projectId,
   webSocketCode,
-  onWindowSelect
+  onWindowSelect,
+  setIsSaving,
 }) => {
   const [windows, setWindows] = useState<Window[]>([]);
   const [liveCode, setLiveCode] = useState<string>('');
@@ -82,6 +84,7 @@ const WindowInterface: React.FC<WindowInterfaceProps> = ({
         prev.map((w) => (w.id === selectedWindowToEdit.id ? { ...w, windowName: newWindowName } : w))
       );
       setIsDialogOpen(false);
+      if (setIsSaving) setIsSaving(false);
     } catch (error) {
       console.error('Error al actualizar la ventana:', error);
     }
@@ -93,6 +96,7 @@ const WindowInterface: React.FC<WindowInterfaceProps> = ({
       await deleteWindow(selectedWindowToEdit.id.toString());
       setWindows((prev) => prev.filter((w) => w.id !== selectedWindowToEdit.id));
       setIsDialogOpen(false);
+      if (setIsSaving) setIsSaving(false);
     } catch (error) {
       console.error('Error al eliminar la ventana:', error);
     }
@@ -125,11 +129,11 @@ const WindowInterface: React.FC<WindowInterfaceProps> = ({
             />
           </div>
           <DialogFooter className="pt-4 flex justify-between">
-            <Button onClick={handleUpdateWindow} className="bg-green-600 hover:bg-green-700">
+            <Button onClick={() => { handleUpdateWindow(); if (setIsSaving) setIsSaving(true); }} className="bg-green-600 hover:bg-green-700">
               <Save className="mr-2 h-4 w-4" />
               Guardar
             </Button>
-            <Button onClick={handleDeleteWindow} variant="destructive">
+            <Button onClick={() => { handleDeleteWindow(); if (setIsSaving) setIsSaving(true); }} variant="destructive">
               <Trash2 className="mr-2 h-4 w-4" />
               Eliminar
             </Button>
@@ -154,6 +158,7 @@ const WindowInterface: React.FC<WindowInterfaceProps> = ({
         <WindowCreationDialog
           projectId={projectId}
           onWindow={(newWin) => setWindows((prev) => [...prev, newWin])}
+          setIsSaving={setIsSaving}
         />
       </div>
       <div className="flex flex-col w-full h-full">

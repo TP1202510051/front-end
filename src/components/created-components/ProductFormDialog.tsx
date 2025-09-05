@@ -18,9 +18,10 @@ import { uploadImageToFirebase } from "@/services/firebase.service"
 interface ProductDialogProps {
   categoryId: string;
   categoryName?: string;
+  setIsSaving?: (isSaving: boolean) => void;
 }
 
-export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId, categoryName }) => {
+export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId, categoryName, setIsSaving }) => {
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [price, setPrice] = useState("")
@@ -83,9 +84,17 @@ export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId, ca
       if (selectedProduct) {
         const updated = await updateProduct(Number(selectedProduct.id), payload);
         setProducts((prev) => prev.map(p => p.id === updated.id ? updated : p));
+        if(updated) {
+          console.log("Producto actualizado con éxito:", updated);
+          if (setIsSaving) setIsSaving(false);
+        }
       } else {
         const created = await createProduct(payload);
         setProducts((prev) => [...prev, created]);
+        if(created) {
+          console.log("Producto creado con éxito:", created);
+          if (setIsSaving) setIsSaving(false);
+        }
       }
 
       resetForm();
@@ -288,7 +297,7 @@ export const ProductFormDialog: React.FC<ProductDialogProps> = ({ categoryId, ca
               <DialogClose asChild>
                 <Button variant="outline">Cancelar</Button>
               </DialogClose>
-              <Button type="submit">Aceptar</Button>
+              <Button type="submit" onClick={() => { if (setIsSaving) setIsSaving(true); }}>Aceptar</Button>
             </DialogFooter>
           </form>
         </DialogContent>

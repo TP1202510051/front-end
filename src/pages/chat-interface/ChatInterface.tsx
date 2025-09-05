@@ -13,9 +13,10 @@ interface ChatInterfaceProps {
   onCode: (jsx: string) => void;
   window: Window;
   projectId: string;
+  setIsSaving?: (saving: boolean) => void;
 }
 
-const ChatInterface = ({onCode, window, projectId}: ChatInterfaceProps) => {
+const ChatInterface = ({onCode, window, projectId, setIsSaving}: ChatInterfaceProps) => {
   const [response, setResponse] = useState<boolean>(false);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -104,6 +105,9 @@ const ChatInterface = ({onCode, window, projectId}: ChatInterfaceProps) => {
             type: 'response',
           },
         ]);
+        if (msg) {
+          if (setIsSaving) setIsSaving(false);
+        }
       });
     };
       
@@ -119,6 +123,7 @@ const ChatInterface = ({onCode, window, projectId}: ChatInterfaceProps) => {
   const handleSendMessage = async (overridePrompt?: string) => {
     const toSend = (overridePrompt ?? message).trim();
     if (!toSend) return;
+    if (setIsSaving) setIsSaving(true);
 
     try {
       await createMessage(Number(window.id), toSend, Number(projectId));
@@ -279,7 +284,7 @@ const ChatInterface = ({onCode, window, projectId}: ChatInterfaceProps) => {
             onChange={(e) => setMessage(e.target.value)}
             onKeyPress={handleKeyPress}
           />
-          <Button type="button" variant="ghost" className="cursor-pointer" disabled={response}  onClick={() => handleSendMessage()}>
+          <Button type="button" variant="ghost" className="cursor-pointer" disabled={response}  onClick={() => { handleSendMessage()}}>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
             </svg>
