@@ -105,6 +105,7 @@ const ChatInterface = ({onCode, window, projectId, setIsSaving}: ChatInterfacePr
             type: 'response',
           },
         ]);
+        setResponse(false);
         if (msg) {
           if (setIsSaving) setIsSaving(false);
         }
