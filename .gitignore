@@ -23,3 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 .env
+.env.production
+Dockerfile
+.firebase/
+.firebase/*
+.firebase-tools.json
+.firebase-tools.rc
+.firebase-debug.log
+nginx.conf
