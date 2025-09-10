@@ -2,32 +2,52 @@
 // src/pages/ProfilePage.tsx
 
 import { useEffect, useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
 import { getUserProfile, updateUserProfile, uploadFileAndUpdateProfile } from "@/services/user.service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { auth } from "@/firebase";
 
 export default function ProfilePage() {
-  const { currentUser } = useAuth();
+  // const { currentUser } = useAuth();
+  const currentUser = auth.currentUser;
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [extraData, setExtraData] = useState<any>(null);
+
 
   // Estados para los archivos de imagen
   const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null);
   const [companyLogoFile, setCompanyLogoFile] = useState<File | null>(null);
 
   useEffect(() => {
+    // Si hay datos extra de GitHub, los cargamos
+    const stored = localStorage.getItem("user");
+    if (stored) {
+      setExtraData(JSON.parse(stored));
+    }
+  }, []);
+
+  // 2. Cargar perfil desde Firestore
+  useEffect(() => {
     if (currentUser) {
       getUserProfile(currentUser.uid).then((data) => {
-        setProfile(data);
+        // Fusionamos datos de Firebase con datos extra de GitHub (si existen)
+        const mergedProfile = {
+          ...data,
+          firstName: data?.firstName || extraData?.name?.split(" ")[0] || currentUser.displayName?.split(" ")[0],
+          lastName: data?.lastName || extraData?.name?.split(" ")[1] || currentUser.displayName?.split(" ")[1],
+          email: data?.email || currentUser.email || extraData?.email,
+          profilePictureUrl: data?.profilePictureUrl || currentUser.photoURL || extraData?.avatar_url,
+        };
+        setProfile(mergedProfile);
         setLoading(false);
       });
     }
-  }, [currentUser]);
+  }, [currentUser, extraData]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
