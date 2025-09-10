@@ -1,0 +1,12 @@
+runtime: nodejs20
+
+instance_class: F1  # opcional, clase de instancia económica
+
+handlers:
+  - url: /(.*)
+    static_files: dist/\1
+    upload: dist/(.*)
+
+  - url: /.*
+    static_files: dist/index.html
+    upload: dist/index.html
