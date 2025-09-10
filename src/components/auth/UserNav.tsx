@@ -33,6 +33,7 @@ export function UserNav() {
 
   const handleLogout = async () => {
     await logout();
+    localStorage.removeItem("user");
     navigate("/login");
   };
 
