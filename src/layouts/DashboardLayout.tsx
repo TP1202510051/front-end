@@ -15,6 +15,7 @@ import { useState } from 'react';
 import { createProject } from '../services/project.service';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'react-toastify';
 
 export const DashboardLayout = () => {
   const navigate = useNavigate();
@@ -38,8 +39,8 @@ export const DashboardLayout = () => {
       const result = await createProject(currentUser.uid, projectName);
       console.log('Proyecto creado con éxito:', result);
       setIsOpen(false);
+      toast.success('Proyecto ' + projectName + ' creado con éxito');
       setProjectName(''); // Limpiamos el input
-      // Usamos el ID del proyecto devuelto por el servicio para la navegación
       navigate(`/design-interface/${result}/${projectName}`);
     } catch (error) {
       console.error('Error al crear proyecto:', error);

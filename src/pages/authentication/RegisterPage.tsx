@@ -1,42 +1,27 @@
+import { AbstractifyLogo } from '@/assets/icons/AbstractifyLogo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-// import { register, testFirestoreWrite } from '@/services/auth.service';
-import { register } from '@/services/auth.service';
+import { useRegister } from "@/hooks/useRegister";
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-
-const AbstractifyLogo = () => (
-  <svg
-    width="48"
-    height="48"
-    viewBox="0 0 100 100"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      fillRule="evenodd"
-      clipRule="evenodd"
-      d="M50 0C22.3858 0 0 22.3858 0 50C0 77.6142 22.3858 100 50 100C77.6142 100 100 77.6142 100 50C100 22.3858 77.6142 0 50 0ZM25 75V25H37.5V50H62.5V25H75V75H62.5V50H37.5V75H25Z"
-      fill="white"
-    />
-  </svg>
-);
+import { login } from '@/utils/constants/navigations';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
 
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [companyName, setCompanyName] = useState('');
-  const [companyRuc, setCompanyRuc] = useState('');
-  const [companyAddress, setCompanyAddress] = useState('');
-  const [companyPhone, setCompanyPhone] = useState('');
+  const [formData, setFormData] = useState({
+  firstName: "",
+  lastName: "",
+  email: "",
+  password: "",
+  companyName: "",
+  companyRuc: "",
+  companyAddress: "",
+  companyPhone: "",
+});
 
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const { handleRegister, loading, error } = useRegister();
 
   useEffect(() => {
     document.documentElement.classList.add('dark');
@@ -45,37 +30,23 @@ export default function RegisterPage() {
     };
   }, []);
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setLoading(true);
-
     const userData = {
-      firstName,
-      lastName,
-      email,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
       company: {
-        name: companyName,
-        ruc: companyRuc,
-        address: companyAddress,
-        phone: companyPhone,
+        name: formData.companyName,
+        ruc: formData.companyRuc,
+        address: formData.companyAddress,
+        phone: formData.companyPhone,
       },
     };
 
-    const { error } = await register(userData, password);
-    setLoading(false);
-
-    if (error) {
-      if (error.code === 'auth/email-already-in-use') {
-        setError('Este correo electrónico ya está registrado.');
-      } else if (error.code === 'auth/weak-password') {
-        setError('La contraseña debe tener al menos 6 caracteres.');
-      } else {
-        setError('Ocurrió un error al crear la cuenta.');
-      }
-    } else {
-      alert('¡Registro exitoso! Ahora puedes iniciar sesión.');
-      navigate('/login');
+    const user = await handleRegister(userData, formData.password);
+    if (user) {
+      navigate(login);
     }
   };
 
@@ -89,7 +60,7 @@ export default function RegisterPage() {
               Completa el formulario para registrar tu empresa.
             </p>
           </div>
-          <form onSubmit={handleRegister} className="grid gap-4">
+          <form onSubmit={handleSubmit} className="grid gap-4">
             {/* --- Datos Personales --- */}
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
@@ -98,8 +69,8 @@ export default function RegisterPage() {
                   id="first-name"
                   placeholder="Juan"
                   required
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
+                  value={formData.firstName}
+                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                   className="bg-zinc-900 border-zinc-700 text-white focus:border-white"
                 />
               </div>
@@ -109,8 +80,8 @@ export default function RegisterPage() {
                   id="last-name"
                   placeholder="Pérez"
                   required
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
+                  value={formData.lastName}
+                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                   className="bg-zinc-900 border-zinc-700 text-white focus:border-white"
                 />
               </div>
@@ -122,8 +93,8 @@ export default function RegisterPage() {
                 type="email"
                 placeholder="nombre@empresa.com"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="bg-zinc-900 border-zinc-700 text-white focus:border-white"
               />
             </div>
@@ -133,8 +104,8 @@ export default function RegisterPage() {
                 id="password"
                 type="password"
                 required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 className="bg-zinc-900 border-zinc-700 text-white focus:border-white"
               />
             </div>
@@ -146,8 +117,8 @@ export default function RegisterPage() {
                   id="company-name"
                   placeholder="Textiles Andinos S.A.C."
                   required
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
+                  value={formData.companyName}
+                  onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
                   className="bg-zinc-900 border-zinc-700 text-white focus:border-white"
                 />
               </div>
@@ -157,8 +128,8 @@ export default function RegisterPage() {
                   id="company-ruc"
                   placeholder="20123456789"
                   required
-                  value={companyRuc}
-                  onChange={(e) => setCompanyRuc(e.target.value)}
+                  value={formData.companyRuc}
+                  onChange={(e) => setFormData({ ...formData, companyRuc: e.target.value })}
                   className="bg-zinc-900 border-zinc-700 text-white focus:border-white"
                 />
               </div>
@@ -168,8 +139,8 @@ export default function RegisterPage() {
                   id="company-phone"
                   placeholder="+51 987654321"
                   required
-                  value={companyPhone}
-                  onChange={(e) => setCompanyPhone(e.target.value)}
+                  value={formData.companyPhone}
+                  onChange={(e) => setFormData({ ...formData, companyPhone: e.target.value })}
                   className="bg-zinc-900 border-zinc-700 text-white focus:border-white"
                 />
               </div>
@@ -179,8 +150,8 @@ export default function RegisterPage() {
                   id="company-address"
                   placeholder="Av. Principal 123, Lima"
                   required
-                  value={companyAddress}
-                  onChange={(e) => setCompanyAddress(e.target.value)}
+                  value={formData.companyAddress}
+                  onChange={(e) => setFormData({ ...formData, companyAddress: e.target.value })}
                   className="bg-zinc-900 border-zinc-700 text-white focus:border-white"
                 />
               </div>
@@ -207,7 +178,7 @@ export default function RegisterPage() {
           <div className="mt-2 text-center text-sm">
             ¿Ya tienes una cuenta?{' '}
             <Link
-              to="/login"
+              to={login}
               className="underline font-semibold text-white hover:text-gray-300"
             >
               Inicia Sesión

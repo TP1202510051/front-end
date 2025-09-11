@@ -62,10 +62,10 @@ const ProductInterface: React.FC<ProductInterfaceProps> = ({ projectId, projectN
             }
 
             setCategories(prev => [...prev, {
-            id: result.id,
-            categoryName: result.categoryName,
-            projectId: String(result.projectId),
-            createdAt: result.createdAt,
+              id: result.id,
+              categoryName: result.categoryName,
+              projectId: String(result.projectId),
+              createdAt: result.createdAt,
             }]);
 
             setCategoryName("");
