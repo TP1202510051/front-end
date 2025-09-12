@@ -11,11 +11,11 @@ import { promptMap } from '@/utils/constants/promptMap';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { createMessage, getMessagesByWindowId } from '@/services/messaging.service';
 import type { Message } from '@/models/messageModel';
-import type { Window } from '@/models/windowModel';
+import type { AppWindow } from '@/models/windowModel';
 
 interface ChatInterfaceProps {
   onCode: (jsx: string) => void;
-  window: Window;
+  window: AppWindow;
   projectId: string;
   setIsSaving?: (saving: boolean) => void;
 }
@@ -86,8 +86,8 @@ export default function ChatInterface({ onCode, window, projectId, setIsSaving }
   };
 
   return (
-    <div className="bg-[#2C2C2C] text-white flex flex-col h-screen py-4">
-      <h1 className="text-2xl mb-4 text-center">{window.windowName}</h1>
+    <div className="bg-[#2C2C2C] text-white flex flex-col h-screen py-4 justify-between">
+      <h1 className="text-2xl mb-4 text-center">{window.name}</h1>
 
       <MessageList messages={messages} bottomRef={bottomRef} promptMap={promptMap} onPromptClick={handleSendMessage} />
 
