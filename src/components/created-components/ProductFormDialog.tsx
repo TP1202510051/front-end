@@ -136,7 +136,11 @@ export const ProductFormDialog: React.FC<ProductDialogProps> = ({
 
             <DialogFooter className="flex justify-end space-x-2">
               <DialogClose asChild>
-                <Button variant="outline">Cancelar</Button>
+                {
+                  selectedProduct ? (
+                    null
+                  ) : <Button variant="default">Cancelar</Button>
+                }
               </DialogClose>
             </DialogFooter>
           </DialogContent>

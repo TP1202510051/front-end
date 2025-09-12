@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { EditIcon, Save, Trash2 } from 'lucide-react';
+import { EditIcon } from 'lucide-react';
 import { updateProjectName, deleteProject } from '@/services/project.service';
 import { toast } from 'react-toastify';
 
@@ -69,11 +69,11 @@ export const ProjectHeader = ({ projectId, projectName, setIsSaving }: ProjectHe
             />
           </div>
           <DialogFooter className="pt-4 flex justify-between">
-            <Button onClick={handleUpdateName} className="bg-green-600 hover:bg-green-700">
-              <Save className="mr-2 h-4 w-4" /> Guardar
+            <Button onClick={handleUpdateName} variant={"primary"}>
+              Aceptar
             </Button>
             <Button onClick={handleDeleteProject} variant="destructive">
-              <Trash2 className="mr-2 h-4 w-4" /> Eliminar
+              Eliminar
             </Button>
           </DialogFooter>
         </DialogContent>

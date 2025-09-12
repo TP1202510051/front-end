@@ -1,10 +1,6 @@
-// src/components/auth/UserNav.tsx
-
-import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { logout } from "@/services/auth.service";
-import { getUserProfile } from "@/services/user.service";
 import { dashboard, profile as profileR, login, register } from "@/utils/constants/navigations";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -19,16 +15,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export function UserNav() {
-  const { currentUser } = useAuth();
+  const { firebaseUser, profile } = useAuth();
   const navigate = useNavigate();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [profile, setProfile] = useState<any>(null);
-
-  useEffect(() => {
-    if (currentUser) {
-      getUserProfile(currentUser.uid).then(setProfile);
-    }
-  }, [currentUser]);
 
   const handleLogout = async () => {
     await logout();
@@ -36,7 +24,7 @@ export function UserNav() {
     navigate("/login");
   };
 
-  if (!currentUser) {
+  if (!firebaseUser) {
     return (
       <div className="flex items-center gap-2">
         <Button asChild variant="outline">
@@ -71,7 +59,7 @@ export function UserNav() {
               {profile ? `${profile.firstName} ${profile.lastName}` : "Cargando..."}
             </p>
             <p className="text-xs leading-none text-muted-foreground">
-              {currentUser.email}
+              {firebaseUser.email}
             </p>
           </div>
         </DropdownMenuLabel>

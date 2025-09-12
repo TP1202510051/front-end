@@ -2,7 +2,6 @@ import {
   signInWithEmailAndPassword,
   signOut,
   createUserWithEmailAndPassword,
-  type AuthError,
 } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import type { UserProfileData } from '@/models/userProfileData';
@@ -12,14 +11,18 @@ import { AUTH_ERRORS } from '@/utils/constants/AUTH_ERRORS';
 import { getUserProfile } from './user.service';
 import { mapFirebaseUserToProfile } from '@/utils/mappers/user.mapper';
 import { mapFirebaseError } from '@/utils/mappers/mapFirebaseError';
+import type { AuthResult } from '@/models/authResult';
+import { getAuth, sendPasswordResetEmail } from "firebase/auth";
+import { toast } from "react-toastify";
 
 // --- Función de Login ---
-export const loginWithEmail = async (email: string, password: string) => {
+export const loginWithEmail = async (email: string, password: string): Promise<AuthResult | string> => {
   try {
     const result = await signInWithEmailAndPassword(auth, email, password);
+    const idToken = await result.user.getIdToken();
     const profile = await getUserProfile(result.user.uid);
-    const profileMapped: UserProfileData = profile as UserProfileData ?? mapFirebaseUserToProfile(result.user);
-    return profileMapped;
+    const profileMapped: UserProfileData = profile ?? mapFirebaseUserToProfile(result.user);
+    return { user: profileMapped, idToken, error: null };
   } catch (error: unknown) {
     let message = AUTH_ERRORS.default;
     if (error instanceof Error && error.message.includes('popup-closed')) {
@@ -31,11 +34,13 @@ export const loginWithEmail = async (email: string, password: string) => {
   }
 };
 
-export const loginWithGoogle = async (): Promise<UserProfileData | string> => {
+export const loginWithGoogle = async (): Promise<AuthResult | string> => {
   try {
     const result = await signInWithPopup(auth, googleProvider);
+    const idToken = await result.user.getIdToken();
     const profile = await getUserProfile(result.user.uid);
-    return (profile as UserProfileData) ?? mapFirebaseUserToProfile(result.user);
+    const profileMapped = profile ?? mapFirebaseUserToProfile(result.user);
+    return { user: profileMapped, idToken, error: null };
   } catch (error: unknown) {
     let message = AUTH_ERRORS.default;
     if (error instanceof Error && error.message.includes("popup-closed-by-user")) {
@@ -44,16 +49,16 @@ export const loginWithGoogle = async (): Promise<UserProfileData | string> => {
       message = AUTH_ERRORS.network;
     }
 
-    // lanzamos el error en lugar de retornarlo
     throw new Error(message);
   }
 };
 
-export const loginWithGithub = async () => {
+export const loginWithGithub = async (): Promise<AuthResult | string> => {
     try {
     const result = await signInWithPopup(auth, githubProvider);
     const profile = await getUserProfile(result.user.uid);
-    return (profile as UserProfileData) ?? mapFirebaseUserToProfile(result.user);
+    const idToken = await result.user.getIdToken();
+    return { user: profile ?? mapFirebaseUserToProfile(result.user), idToken, error: null };
   } catch (error: unknown) {
     let message = AUTH_ERRORS.default;
     if (error instanceof Error && error.message.includes('popup-closed')) {
@@ -64,13 +69,13 @@ export const loginWithGithub = async () => {
     throw new Error(message);
   }
 };
-// --- Función de Logout ---
-export const logout = async () => {
+
+export const logout = async (): Promise<{ error: string | null }> => {
   try {
     await signOut(auth);
     return { error: null };
   } catch (error) {
-    return { error: error as AuthError };
+    return { error: mapFirebaseError(error) };
   }
 };
 
@@ -93,3 +98,16 @@ export async function register(userData: UserProfileData, password: string) {
     return { user: null, error: message };
   }
 }
+
+export const sendRecoveryEmail = async (email: string) => {
+  const auth = getAuth();
+  try {
+    const response = await sendPasswordResetEmail(auth, email);
+    console.log(response);
+    toast.success("Se envió un enlace de recuperación a tu correo.");
+  } catch (error) {
+    if (error instanceof Error) {
+      toast.error(`Error: ${error.message}`);
+    }
+  }
+};

@@ -24,7 +24,7 @@ export const CreateProjectDialog = () => {
           Nuevo Proyecto
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-dashboard rounded-sm border-gray-700">
+      <DialogContent className="bg-[#2C2C2C] rounded-sm border-gray-700 text-white">
         <DialogTitle>Ingrese nombre del nuevo proyecto</DialogTitle>
         <div className="mt-4">
           <Input
@@ -35,7 +35,7 @@ export const CreateProjectDialog = () => {
           />
         </div>
         <DialogFooter>
-          <Button onClick={handleAccept} disabled={!projectName.trim() || loading}>
+          <Button variant="primary" onClick={handleAccept} disabled={!projectName.trim() || loading}>
             Aceptar
           </Button>
           <Button variant="default" onClick={() => setIsOpen(false)}>

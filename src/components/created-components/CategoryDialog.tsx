@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { Dialog, DialogTrigger, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Save } from "lucide-react";
 import { updateCategoryName, deleteCategory } from "@/services/category.service";
+import { toast } from "react-toastify";
 
 interface Props {
   categoryId: string;
@@ -22,7 +22,7 @@ export const CategoryDialog: React.FC<Props> = ({ categoryId, categoryName, setI
       await updateCategoryName(categoryId, editableCategoryName);
       setIsCategoryDialogOpen(false);
     } catch (err) {
-      console.error("Error actualizando la categoría:", err);
+      toast.error(`Error actualizando la categoría: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setIsSaving?.(false);
     }
@@ -35,7 +35,7 @@ export const CategoryDialog: React.FC<Props> = ({ categoryId, categoryName, setI
       setIsCategoryDialogOpen(false);
       onDeleteCategory?.(categoryId);
     } catch (err) {
-      console.error("Error eliminando la categoría:", err);
+      toast.error(`Error eliminando la categoría: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setIsSaving?.(false);
     }
@@ -52,10 +52,10 @@ export const CategoryDialog: React.FC<Props> = ({ categoryId, categoryName, setI
         <DialogTitle className="text-lg">Editar Categoría</DialogTitle>
         <Input className="mt-4 text-white bg-[#2C2C2C]" value={editableCategoryName} onChange={(e) => setEditableCategoryName(e.target.value)} />
         <DialogFooter className="pt-4 flex justify-between">
-          <Button type="button" variant="destructive" onClick={handleDelete}>Eliminar</Button>
-          <Button onClick={handleUpdate} className="bg-green-600 hover:bg-green-700">
-            <Save className="mr-2 h-4 w-4" /> Guardar
+          <Button onClick={handleUpdate} variant={"primary"}>
+            Aceptar
           </Button>
+          <Button type="button" variant="destructive" onClick={handleDelete}>Eliminar</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

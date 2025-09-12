@@ -5,20 +5,24 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AbstractifyLogo } from '@/assets/icons/AbstractifyLogo';
 import { loginWithGoogle, loginWithGithub, loginWithEmail } from '@/services/auth.service';
-import type { UserProfileData } from '@/models/userProfileData';
 import { Spinner } from '@/assets/icons/LoadingSpinner';
 import { dashboard, register } from '@/utils/constants/navigations';
 import { toast } from "react-toastify";
+import type { AuthResult } from '@/models/authResult';
+import { useAuth } from '@/contexts/AuthContext';
+import { auth } from '@/firebase';
+import RecoverPassword from '@/components/created-components/RecoveryPassword';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+    const { setAuth } = useAuth();
 
   type Provider = 'google' | 'github';
 
-  const providerStrategy: Record<Provider, () => Promise<string | UserProfileData>> = {
+  const providerStrategy: Record<Provider, () => Promise<string | AuthResult>> = {
     google: loginWithGoogle,
     github: loginWithGithub,
   };
@@ -51,12 +55,24 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const user = await loginWithEmail(email, password);
-      if (user) {
-        navigate(dashboard);
+      const result = await loginWithEmail(email, password);
+
+      if (typeof result === "string") {
+        toast.error(result);
+        return;
       }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+
+      const { user, idToken, error } = result;
+
+      if (!error && user && idToken) {
+        const firebaseUser = auth.currentUser;
+        setAuth(firebaseUser, user, idToken);
+        navigate(dashboard);
+      } else if (error) {
+        toast.error(error);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
       toast.error(message);
     } finally {
       setLoading(false);
@@ -135,6 +151,11 @@ export default function LoginPage() {
                   {loading ? 'Cargando...' : 'Iniciar Sesión'}
                 </Button>
               </form>
+            </div>
+            <div>
+              <p className="text-sm text-center text-muted-foreground"> ¿Olvidaste tu contraseña?{' '}
+                <RecoverPassword />
+              </p>
             </div>
           </div>
           <div className="mt-4 text-center text-sm">

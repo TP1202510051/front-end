@@ -2,6 +2,7 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../firebase";
 import type { UserProfileData } from "@/models/userProfileData";
+import { toast } from "react-toastify";
 
 export const getUserProfile = async (uid: string): Promise<UserProfileData | null> => {
   if (!uid) return null;
@@ -16,7 +17,7 @@ export const updateUserProfile = async (uid: string, data: Partial<UserProfileDa
     await updateDoc(userDocRef, data);
     return { success: true };
   } catch (error) {
-    console.error("Error updating user profile:", error);
+    toast.error(`Error updating user profile: ${error instanceof Error ? error.message : String(error)}`);
     return { success: false, error };
   }
 };
@@ -36,7 +37,7 @@ export const uploadFileAndUpdateProfile = async (uid: string, file: File, fieldN
 
         return { success: true, url: downloadURL };
     } catch (error) {
-        console.error("Error uploading file:", error);
+        toast.error(`Error uploading file: ${error instanceof Error ? error.message : String(error)}`);
         return { success: false, error };
     }
 };

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getWindowsByProjectId, updateWindowName, deleteWindow } from '@/services/windows.service';
 import type { AppWindow } from '@/models/windowModel';
+import { toast } from 'react-toastify';
 
 export function useWindows(projectId: string, setIsSaving?: (saving: boolean) => void) {
   const [windows, setWindows] = useState<AppWindow[]>([]);
@@ -12,7 +13,7 @@ export function useWindows(projectId: string, setIsSaving?: (saving: boolean) =>
         const data = await getWindowsByProjectId(Number(projectId));
         setWindows(data);
       } catch (err) {
-        console.error('Error al obtener ventanas:', err);
+        toast.error(`Error al obtener ventanas: ${err instanceof Error ? err.message : String(err)}`);
       }
     };
     loadWindows();
