@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Client, type IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import type { Message } from '@/models/messageModel';
+import { toast } from 'react-toastify';
 
 export function useChatSocket(
   windowId: string,
@@ -24,7 +25,7 @@ export function useChatSocket(
         try {
           parsed = JSON.parse(msg.body);
         } catch {
-          console.error('No es JSON válido:', msg.body);
+          toast.error(`No es JSON válido: ${msg.body}`);
               return;
             }
     

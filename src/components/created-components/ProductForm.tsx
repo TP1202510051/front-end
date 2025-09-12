@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Product } from "@/models/productModel";
 import { uploadImageToFirebase } from "@/services/firebase.service";
+import { toast } from "react-toastify";
 
 interface Props {
   name: string;
@@ -85,7 +86,7 @@ export const ProductForm: React.FC<Props> = ({
 
       await onSave(payload);
     } catch (err) {
-      console.error("Error guardando producto:", err);
+      toast.error(`Error guardando producto: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setIsSaving?.(false);
     }
@@ -204,12 +205,12 @@ export const ProductForm: React.FC<Props> = ({
       </div>
 
       <div className="flex justify-end space-x-2">
+        <Button type="submit" variant="primary">Aceptar</Button>
         {onDelete && (
           <Button type="button" variant="destructive" onClick={onDelete}>
             Eliminar
           </Button>
         )}
-        <Button type="submit">Aceptar</Button>
       </div>
     </form>
   );

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getLatestCodeByWindowId } from '@/services/code.service';
+import { toast } from 'react-toastify';
 
 export function useLiveCode(webSocketCode?: string) {
   const [liveCode, setLiveCode] = useState('');
@@ -13,7 +14,7 @@ export function useLiveCode(webSocketCode?: string) {
       const data = await getLatestCodeByWindowId(Number(windowId));
       setLiveCode(data?.code ?? '');
     } catch (err) {
-      console.error('Error al obtener código:', err);
+      toast.error(`Error al obtener código: ${err instanceof Error ? err.message : String(err)}`);
     }
   }, []);
 

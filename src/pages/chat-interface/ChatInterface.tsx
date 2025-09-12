@@ -12,6 +12,7 @@ import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { createMessage, getMessagesByWindowId } from '@/services/messaging.service';
 import type { Message } from '@/models/messageModel';
 import type { AppWindow } from '@/models/windowModel';
+import { toast } from 'react-toastify';
 
 interface ChatInterfaceProps {
   onCode: (jsx: string) => void;
@@ -38,7 +39,7 @@ export default function ChatInterface({ onCode, window, projectId, setIsSaving }
         setMessages(data.filter(msg => msg.type !== 'system'));
         setResponse(false);
       } catch (error) {
-        console.error('Error al obtener los mensajes', error);
+        toast.error(`Error al obtener los mensajes: ${error instanceof Error ? error.message : String(error)}`);
       }
     };
 
@@ -77,7 +78,7 @@ export default function ChatInterface({ onCode, window, projectId, setIsSaving }
       setMessage('');
       setResponse(true);
     } catch (error) {
-      console.error('Error al crear mensaje', error);
+      toast.error(`Error al crear mensaje: ${error instanceof Error ? error.message : String(error)}`);
     }
   };
 

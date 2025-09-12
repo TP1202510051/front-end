@@ -9,7 +9,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Save, Trash2 } from 'lucide-react';
 import WindowCreationDialog from '@/components/created-components/WindowCreationDialog';
 import { EditIcon } from '@/assets/icons/EditIcon';
 
@@ -70,14 +69,14 @@ const WindowInterface: React.FC<WindowInterfaceProps> = ({
         </div>
       )}
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen} >
+        <DialogContent className="bg-[var(--dashboard-background)] rounded-sm outline-none text-white">
           <DialogTitle>Editar nombre</DialogTitle>
           <Input value={newWindowName} onChange={(e) => setNewWindowName(e.target.value)} />
           <DialogFooter>
-            <Button onClick={handleUpdateWindow}><Save className="mr-2 h-4 w-4" />Guardar</Button>
+            <Button onClick={handleUpdateWindow} variant={"primary"}>Guardar</Button>
             <Button onClick={handleDeleteWindow} variant="destructive">
-              <Trash2 className="mr-2 h-4 w-4" />Eliminar
+              Eliminar
             </Button>
           </DialogFooter>
         </DialogContent>

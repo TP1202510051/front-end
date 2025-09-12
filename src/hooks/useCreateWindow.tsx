@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { createWindow } from '@/services/windows.service';
 import type { AppWindow } from '@/models/windowModel';
+import { toast } from 'react-toastify';
 
 export function useCreateWindow(projectId: string, setIsSaving?: (saving: boolean) => void) {
   const [isOpen, setIsOpen] = useState(false);
@@ -20,7 +21,7 @@ export function useCreateWindow(projectId: string, setIsSaving?: (saving: boolea
         projectId: result.projectId.toString(),
       };
     } catch (err) {
-      console.error('Error al crear ventana:', err);
+      toast.error(`Error al crear ventana: ${err instanceof Error ? err.message : String(err)}`);
       return null;
     } finally {
       setIsSaving?.(false);

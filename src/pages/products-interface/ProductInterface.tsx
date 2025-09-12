@@ -16,6 +16,7 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { exportProject } from '@/services/project.service';
+import { toast } from 'react-toastify';
 
 interface ProductInterfaceProps {
   projectId: string;
@@ -34,13 +35,13 @@ const ProductInterface: React.FC<ProductInterfaceProps> = ({ projectId, projectN
 
     const handleExport = async () => {
       if (!projectId || !projectName) {
-        console.error("Project ID o Project Name no encontrado.");
+        toast.error("Project ID o Project Name no encontrado.");
         return;
       }
       try {
         await exportProject(projectId, projectName);
       } catch (error) {
-        console.error('Failed to export project:', error);
+        toast.error(`Failed to export project: ${error instanceof Error ? error.message : String(error)}`);
       }
     };
 
@@ -49,7 +50,7 @@ const ProductInterface: React.FC<ProductInterfaceProps> = ({ projectId, projectN
             const data = await getCategoriesByProjectId(Number(projectId));
             setCategories(data);
         } catch (error) {
-            console.error('Error al obtener las categorías', error);
+            toast.error(`Error al obtener las categorías: ${error instanceof Error ? error.message : String(error)}`);
         }
     };
 
@@ -57,7 +58,6 @@ const ProductInterface: React.FC<ProductInterfaceProps> = ({ projectId, projectN
         try {
             const result = await createCategory(Number(projectId), categoryName);
             if(result) {
-              console.log("Categoría creada con éxito:", result);
               if (setIsSaving) setIsSaving(false);
             }
 
@@ -71,7 +71,7 @@ const ProductInterface: React.FC<ProductInterfaceProps> = ({ projectId, projectN
             setCategoryName("");
             setIsOpen(false);
         } catch (error) {
-            console.error("Error al crear categoría:", error);
+            toast.error(`Error al crear categoría: ${error instanceof Error ? error.message : String(error)}`);
         }
         };
 

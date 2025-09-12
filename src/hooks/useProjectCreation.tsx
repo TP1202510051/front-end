@@ -6,22 +6,22 @@ import { toast } from 'react-toastify';
 
 export const useProjectCreation = () => {
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
+  const { firebaseUser } = useAuth();
   const [loading, setLoading] = useState(false);
 
   const createNewProject = async (name: string) => {
-    if (!currentUser) {
+    if (!firebaseUser) {
         toast.error('Debes iniciar sesión para crear un proyecto.');
         return;
     }
     try {
     setLoading(true);
-      const result = await createProject(currentUser.uid, name);
+      const result = await createProject(firebaseUser.uid, name);
       toast.success('Proyecto creado con éxito!');
       navigate(`/design-interface/${result}/${name}`);
     } catch (error) {
       toast.error('Error al crear el proyecto');
-      console.error('Error al crear proyecto:', error);
+      toast.error(`Error al crear proyecto: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setLoading(false);
     }

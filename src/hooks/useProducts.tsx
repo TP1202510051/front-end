@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { getProductsByCategoryId, createProduct, updateProduct, deleteProduct } from "@/services/product.service";
 import type { Product } from "@/models/productModel";
+import { toast } from "react-toastify";
 
 export function useProducts(categoryId: string, setIsSaving?: (s: boolean) => void) {
   const [products, setProducts] = useState<Product[]>([]);
@@ -10,7 +11,7 @@ export function useProducts(categoryId: string, setIsSaving?: (s: boolean) => vo
       const data = await getProductsByCategoryId(Number(categoryId));
       setProducts(data);
     } catch (err) {
-      console.error("Error al obtener los productos:", err);
+      toast.error(`Error al obtener los productos: ${err instanceof Error ? err.message : String(err)}`);
     }
   }, [categoryId]);
 
