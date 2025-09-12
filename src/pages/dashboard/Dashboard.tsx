@@ -31,7 +31,7 @@ const Dashboard = () => {
               <DashboardCard
                 key={project.id}
                 id={project.id}
-                title={project.projectName ?? 'Proyecto sin nombre'}
+                title={project.name ?? 'Proyecto sin nombre'}
                 lastEdited={project.lastEdited ?? project.createdAt}
                 imageUrl={project.imageUrl ?? 'https://i.imgur.com/SBpn2o8.png'}
               />

@@ -1,48 +1,39 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// src/pages/ProfilePage.tsx
-
 import { useEffect, useState } from "react";
-import { getUserProfile, updateUserProfile, uploadFileAndUpdateProfile } from "@/services/user.service";
+import { getUserProfile, updateUserProfile } from "@/services/user.service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { auth } from "@/firebase";
+import type { UserProfileData } from "@/models/userProfileData";
+import { mergeProfile } from "@/utils/mappers/profile.mapper";
+import { toast } from "react-toastify";
+import { Spinner } from "@/assets/icons/LoadingSpinner";
+import { buildUpdatePayload } from "@/utils/mappers/buildUserToSave.mapper";
+import { uploadFiles } from "@/utils/helpers/uploadFiles";
 
 export default function ProfilePage() {
-  // const { currentUser } = useAuth();
   const currentUser = auth.currentUser;
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<UserProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [extraData, setExtraData] = useState<any>(null);
-
-
-  // Estados para los archivos de imagen
+  const [extraData, setExtraData] = useState<UserProfileData | null>(null);
   const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null);
   const [companyLogoFile, setCompanyLogoFile] = useState<File | null>(null);
 
   useEffect(() => {
-    // Si hay datos extra de GitHub, los cargamos
     const stored = localStorage.getItem("user");
     if (stored) {
       setExtraData(JSON.parse(stored));
     }
   }, []);
 
-  // 2. Cargar perfil desde Firestore
   useEffect(() => {
     if (currentUser) {
       getUserProfile(currentUser.uid).then((data) => {
-        // Fusionamos datos de Firebase con datos extra de GitHub (si existen)
-        const mergedProfile = {
-          ...data,
-          firstName: data?.firstName || extraData?.name?.split(" ")[0] || currentUser.displayName?.split(" ")[0],
-          lastName: data?.lastName || extraData?.name?.split(" ")[1] || currentUser.displayName?.split(" ")[1],
-          email: data?.email || currentUser.email || extraData?.email,
-          profilePictureUrl: data?.profilePictureUrl || currentUser.photoURL || extraData?.avatar_url,
-        };
+        const mergedProfile = mergeProfile(data, extraData, currentUser);
         setProfile(mergedProfile);
         setLoading(false);
       });
@@ -51,7 +42,6 @@ export default function ProfilePage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
-    // Manejar campos anidados (empresa)
     if (id.startsWith('company.')) {
         const field = id.split('.')[1];
         setProfile((prev: any) => ({
@@ -78,26 +68,15 @@ export default function ProfilePage() {
     setSaving(true);
 
     try {
-      // 1. Actualizar los datos de texto
-      const textDataToUpdate = {
-        firstName: profile.firstName,
-        lastName: profile.lastName,
-        company: profile.company
-      };
-      await updateUserProfile(currentUser.uid, textDataToUpdate);
+      const payload = buildUpdatePayload(profile);
+      await updateUserProfile(currentUser.uid, payload);
 
-      // 2. Subir la foto de perfil si se seleccionó una nueva
-      if (profilePictureFile) {
-        await uploadFileAndUpdateProfile(currentUser.uid, profilePictureFile, 'profilePictureUrl');
-      }
+      await uploadFiles(currentUser.uid, [
+      { file: profilePictureFile, field: "profilePictureUrl" as const },
+      { file: companyLogoFile, field: "companyLogoUrl" as const },
+      ]);
 
-      // 3. Subir el logo de la empresa si se seleccionó uno nuevo
-      if (companyLogoFile) {
-        await uploadFileAndUpdateProfile(currentUser.uid, companyLogoFile, 'companyLogoUrl');
-      }
-      
-      alert("¡Perfil actualizado con éxito!");
-      // Opcional: Recargar los datos o simplemente limpiar los estados de los archivos
+      toast.success("¡Perfil actualizado con éxito!");
       setProfilePictureFile(null);
       setCompanyLogoFile(null);
 
@@ -109,7 +88,7 @@ export default function ProfilePage() {
     }
   };
 
-  if (loading) return <div>Cargando perfil...</div>;
+  if (loading) return <Spinner text="Cargando perfil..." />;
   if (!profile) return <div>No se pudo cargar el perfil.</div>;
 
   return (
@@ -154,7 +133,7 @@ export default function ProfilePage() {
             <h3 className="text-lg font-semibold">Datos de la Empresa</h3>
              <div className="flex items-center gap-4">
               <Avatar className="h-20 w-20 rounded-md">
-                <AvatarImage src={profile.company?.companyLogoUrl} alt="Logo de la empresa" />
+                <AvatarImage src={profile.company?.logoUrl} alt="Logo de la empresa" />
                 <AvatarFallback>{profile.company?.name?.[0]}</AvatarFallback>
               </Avatar>
               <div className="grid gap-1.5">

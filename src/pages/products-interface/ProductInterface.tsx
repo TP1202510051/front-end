@@ -62,10 +62,10 @@ const ProductInterface: React.FC<ProductInterfaceProps> = ({ projectId, projectN
             }
 
             setCategories(prev => [...prev, {
-            id: result.id,
-            categoryName: result.categoryName,
-            projectId: String(result.projectId),
-            createdAt: result.createdAt,
+              id: result.id,
+              name: result.name,
+              projectId: String(result.projectId),
+              createdAt: result.createdAt,
             }]);
 
             setCategoryName("");
@@ -123,7 +123,7 @@ const ProductInterface: React.FC<ProductInterfaceProps> = ({ projectId, projectN
               {categories.map((category) => (
                 <div key={category.id} className="pl-2 pt-2 rounded flex flex-col gap-2">
                   <div className='pl-4'>
-                    <ProductFormDialog categoryId={category.id ?? ''} categoryName={category.categoryName} setIsSaving={setIsSaving} onDeleteCategory={handleRemoveCategory}/>
+                    <ProductFormDialog categoryId={category.id ?? ''} categoryName={category.name} setIsSaving={setIsSaving} onDeleteCategory={handleRemoveCategory}/>
                   </div>
                 </div>
           ))}

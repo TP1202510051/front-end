@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { logout } from "@/services/auth.service";
 import { getUserProfile } from "@/services/user.service";
-
+import { dashboard, profile as profileR, login, register } from "@/utils/constants/navigations";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,7 +25,6 @@ export function UserNav() {
   const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
-    // Si hay un usuario, buscamos su perfil para obtener nombre y foto
     if (currentUser) {
       getUserProfile(currentUser.uid).then(setProfile);
     }
@@ -37,21 +36,19 @@ export function UserNav() {
     navigate("/login");
   };
 
-  // Si no hay usuario, mostramos los botones de Login/Registro
   if (!currentUser) {
     return (
       <div className="flex items-center gap-2">
         <Button asChild variant="outline">
-          <Link to="/login">Iniciar Sesión</Link>
+          <Link to={login}>Iniciar Sesión</Link>
         </Button>
         <Button asChild>
-          <Link to="/register">Registrarse</Link>
+          <Link to={register}>Registrarse</Link>
         </Button>
       </div>
     );
   }
 
-  // Si hay un usuario, mostramos el menú desplegable
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -81,12 +78,12 @@ export function UserNav() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <Link to="/profile">
+            <Link to={profileR}>
               Perfil
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link to="/dashboard">
+            <Link to={dashboard}>
               Dashboard
             </Link>
           </DropdownMenuItem>
