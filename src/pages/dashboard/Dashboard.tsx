@@ -2,7 +2,6 @@ import DashboardCard from '@/components/ui/dashboard-card';
 import type { Project } from '@/models/projectModel';
 import { getProjectsByUserId } from '@/services/project.service';
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'react-toastify';
 import { useOutletContext } from 'react-router';
 import { Spinner } from '@/assets/icons/LoadingSpinner';
@@ -13,16 +12,13 @@ interface OutletContext {
 
 const Dashboard = () => {
   const [projects, setProjects] = useState<Project[]>([]);
-  const { firebaseUser } = useAuth();
   const { searchTerm } = useOutletContext<OutletContext>();
   const [ loadingProjects, setLoadingProjects ] = useState(false);
 
   const fetchProjects = async () => {
-    if (!firebaseUser?.uid) return;
     setLoadingProjects(true);
     try {
-      const data = await getProjectsByUserId(firebaseUser.uid);
-      console.log(data);
+      const data = await getProjectsByUserId();
       setProjects(data);
     } catch (error) {
       toast.error(`Error al obtener los proyectos: ${error instanceof Error ? error.message : String(error)}`);

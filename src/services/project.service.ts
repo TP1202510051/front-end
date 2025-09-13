@@ -1,5 +1,5 @@
 import type { Project } from "@/models/projectModel";
-import axios from "axios";
+import api from "@/utils/interceptors/authInterceptor";
 import { handleApiError } from "@/utils/handlers/errorHandler";
 
 interface ProjectRequest {
@@ -11,7 +11,7 @@ interface ProjectAnswerResponse {
   answer: number;
 }
 
-const apiUrl = `${import.meta.env.VITE_API_BASE_URL}/projects`;
+const apiUrl = "/projects";
 
 export const createProject = async (
   userId: string,
@@ -19,33 +19,27 @@ export const createProject = async (
 ): Promise<ProjectAnswerResponse> => {
   try {
     const requestPayload: ProjectRequest = { userId, name };
-    const response = await axios.post<ProjectAnswerResponse>(apiUrl, requestPayload, {
-      headers: { "Content-Type": "application/json" },
-    });
-    return response.data;
+    const { data } = await api.post<ProjectAnswerResponse>(apiUrl, requestPayload);
+    return data;
   } catch (error) {
     handleApiError(error);
     throw error;
   }
 };
 
-export const getProjectsByUserId = async (userId: string): Promise<Project[]> => {
+export const getProjectsByUserId = async (): Promise<Project[]> => {
   try {
-    const response = await axios.get<Project[]>(`${apiUrl}/user/${userId}`);
-    return response.data;
+    const { data } = await api.get<Project[]>(`${apiUrl}/user`);
+    return data;
   } catch (error) {
-    // caso silencioso: usuario sin proyectos
     handleApiError(error, ["NO_PROJECTS"]);
     throw error;
   }
 };
 
-export const exportProject = async (
-  projectId: string,
-  projectName: string
-): Promise<void> => {
+export const exportProject = async (projectId: string, projectName: string): Promise<void> => {
   try {
-    const response = await axios.get(`${apiUrl}/${projectId}/download`, {
+    const response = await api.get(`${apiUrl}/${projectId}/download`, {
       responseType: "blob",
     });
 
@@ -78,11 +72,7 @@ export const updateProjectName = async (
   newName: string
 ): Promise<void> => {
   try {
-    await axios.put(
-      `${apiUrl}/${projectId}`,
-      { name: newName },
-      { headers: { "Content-Type": "application/json" } }
-    );
+    await api.put(`${apiUrl}/${projectId}`, { name: newName });
   } catch (error) {
     handleApiError(error);
     throw error;
@@ -91,7 +81,7 @@ export const updateProjectName = async (
 
 export const deleteProject = async (projectId: string): Promise<void> => {
   try {
-    await axios.delete(`${apiUrl}/${projectId}`);
+    await api.delete(`${apiUrl}/${projectId}`);
   } catch (error) {
     handleApiError(error);
     throw error;

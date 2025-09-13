@@ -4,10 +4,9 @@ import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase";
 import type { UserProfileData } from "@/models/userProfileData";
 
-// Definimos el tipo para el valor del contexto
 interface AuthContextType {
-  firebaseUser: User | null;           // Usuario Firebase
-  profile: UserProfileData | null;     // Usuario de negocio
+  firebaseUser: User | null;
+  profile: UserProfileData | null;
   idToken: string | null;
   loading: boolean;
   setAuth: (
