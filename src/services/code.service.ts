@@ -1,15 +1,15 @@
 import type { Code } from "@/models/codeModel";
-import axios from "axios";
+import api from "@/utils/interceptors/authInterceptor";
 import { handleApiError } from "@/utils/handlers/errorHandler";
 
-const apiUrl = `${import.meta.env.VITE_API_BASE_URL}/codes`;
+const apiUrl = "/codes";
 
 export const getLatestCodeByWindowId = async (
   windowId: number
 ): Promise<Code> => {
   try {
-    const response = await axios.get<Code>(`${apiUrl}/windows/latest/${windowId}`);
-    return response.data;
+    const { data } = await api.get<Code>(`${apiUrl}/windows/latest/${windowId}`);
+    return data;
   } catch (error) {
     handleApiError(error, ["NO_CODE_FOUND"]);
     throw error;

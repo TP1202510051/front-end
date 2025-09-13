@@ -1,3 +1,4 @@
+import api from "@/utils/interceptors/authInterceptor";
 import axios from "axios";
 import { handleApiError } from "@/utils/handlers/errorHandler";
 import type { Message } from "@/models/messageModel";
@@ -13,7 +14,7 @@ interface Response {
 }
 
 const apiBroker = import.meta.env.VITE_CLOUD_RUN_URL;
-const apiUrl = `${import.meta.env.VITE_API_BASE_URL}/messages`;
+const apiUrl = "/messages";
 
 export const createMessage = async (
   windowId: number,
@@ -38,10 +39,10 @@ export const getMessagesByWindowId = async (
   windowId: number
 ): Promise<Message[]> => {
   try {
-    const response = await axios.get<Message[]>(`${apiUrl}/${windowId}`);
-    return response.data;
+    const { data } = await api.get<Message[]>(`${apiUrl}/${windowId}`);
+    return data;
   } catch (error) {
-    handleApiError(error, ["NO_MESSAGES"]); 
+    handleApiError(error, ["NO_MESSAGES"]);
     throw error;
   }
 };

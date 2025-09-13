@@ -1,11 +1,6 @@
 import type { AppWindow } from "@/models/windowModel";
-import axios from "axios";
+import api from "@/utils/interceptors/authInterceptor";
 import { handleApiError } from "@/utils/handlers/errorHandler";
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
-  headers: { "Content-Type": "application/json" },
-});
 
 export interface CreateWindowRequest {
   name: string;
@@ -25,8 +20,8 @@ export const createWindow = async (
 ): Promise<WindowResponse> => {
   try {
     const payload: CreateWindowRequest = { name, projectId };
-    const resp = await api.post<WindowResponse>("/windows", payload);
-    return resp.data;
+    const { data } = await api.post<WindowResponse>("/windows", payload);
+    return data;
   } catch (error) {
     handleApiError(error);
     throw error;
@@ -37,8 +32,8 @@ export const getWindowsByProjectId = async (
   projectId: number
 ): Promise<AppWindow[]> => {
   try {
-    const response = await api.get<AppWindow[]>(`/windows/project/${projectId}`);
-    return response.data;
+    const { data } = await api.get<AppWindow[]>(`/windows/project/${projectId}`);
+    return data;
   } catch (error) {
     handleApiError(error, ["NO_WINDOWS"]);
     throw error;
@@ -50,8 +45,7 @@ export const updateWindowName = async (
   name: string
 ): Promise<void> => {
   try {
-    const payload = { name };
-    await api.put(`/windows/${windowId}`, payload);
+    await api.put(`/windows/${windowId}`, { name });
   } catch (error) {
     handleApiError(error);
     throw error;
