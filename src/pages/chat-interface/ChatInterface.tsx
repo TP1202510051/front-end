@@ -43,14 +43,13 @@ export default function ChatInterface({ onCode, window, projectId, setIsSaving }
       }
     };
 
-    setMessages([]); // limpiar para evitar mezcla
+    setMessages([]);
     fetchMessages();
   }, [window.id]);
 
   useEffect(() => {
   if (isListening && transcript.trim()) {
     setMessage(prev => {
-      // Evitar duplicar texto
       if (prev.endsWith(transcript)) return prev;
       return prev + ' ' + transcript;
     });
@@ -110,6 +109,7 @@ export default function ChatInterface({ onCode, window, projectId, setIsSaving }
           className="flex-grow bg-transparent text-white p-2 rounded focus:outline-none"
           value={message}
           onChange={e => setMessage(e.target.value)}
+          disabled={response}
           onKeyPress={handleKeyPress}
         />
 

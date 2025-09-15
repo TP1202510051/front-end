@@ -30,6 +30,10 @@ const WindowCreationDialog: React.FC<WindowCreationDialogProps> = ({
     setIsOpen(false);
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') handleAccept();
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -50,6 +54,7 @@ const WindowCreationDialog: React.FC<WindowCreationDialogProps> = ({
             className="w-full p-2 text-white rounded border focus:outline-none selection:bg-gray-700/50"
             value={windowName}
             onChange={(e) => setWindowName(e.target.value)}
+            onKeyDown={handleKeyPress}
           />
         </div>
 
