@@ -16,6 +16,10 @@ export const CreateProjectDialog = () => {
     setIsOpen(false);
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') handleAccept();
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -32,6 +36,7 @@ export const CreateProjectDialog = () => {
             value={projectName}
             onChange={(e) => setProjectName(e.target.value)}
             disabled={loading}
+            onKeyDown={handleKeyPress}
           />
         </div>
         <DialogFooter>

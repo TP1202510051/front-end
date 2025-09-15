@@ -6,12 +6,16 @@ import { Button } from "@/components/ui/button";
 
 export default function RecoverPassword() {
   const [email, setEmail] = useState("");
-    const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await sendRecoveryEmail(email);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') handleSubmit(e);
   };
 
   return (
@@ -33,6 +37,7 @@ export default function RecoverPassword() {
                     className="w-full p-2 text-white rounded border focus:outline-none selection:bg-gray-700/50"
                     onChange={(e) => setEmail(e.target.value)}
                     value={email}
+                    onKeyDown={handleKeyPress}
                   />
                 </div>
                 <DialogFooter className="pt-2 sm:justify-around">

@@ -41,6 +41,10 @@ export const CategoryDialog: React.FC<Props> = ({ categoryId, categoryName, setI
     }
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') handleUpdate();
+  };
+
   return (
     <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
       <DialogTrigger asChild>
@@ -50,7 +54,7 @@ export const CategoryDialog: React.FC<Props> = ({ categoryId, categoryName, setI
       </DialogTrigger>
       <DialogContent className="bg-[#1E1E1E] text-white rounded-md w-[90vw] max-w-md">
         <DialogTitle className="text-lg">Editar Categoría</DialogTitle>
-        <Input className="mt-4 text-white bg-[#2C2C2C]" value={editableCategoryName} onChange={(e) => setEditableCategoryName(e.target.value)} />
+        <Input className="mt-4 text-white bg-[#2C2C2C]" value={editableCategoryName} onChange={(e) => setEditableCategoryName(e.target.value)} onKeyDown={handleKeyPress} />
         <DialogFooter className="pt-4 flex justify-between">
           <Button onClick={handleUpdate} variant={"primary"}>
             Aceptar
