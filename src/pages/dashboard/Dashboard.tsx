@@ -4,7 +4,7 @@ import { getProjectsByUserId } from '@/services/project.service';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useOutletContext } from 'react-router';
-import { Spinner } from '@/assets/icons/LoadingSpinner';
+import { DashboardSkeleton } from '@/components/skeletons/DashboardSkeleton';
 
 interface OutletContext {
   searchTerm: string;
@@ -40,7 +40,9 @@ const Dashboard = () => {
           {loadingProjects ? 
             (
               <>
-                <Spinner text='Cargando proyectos...' />
+                <DashboardSkeleton />
+                <DashboardSkeleton />
+                <DashboardSkeleton />
               </>
             ):(
               <>{filteredProjects.length > 0 ? (

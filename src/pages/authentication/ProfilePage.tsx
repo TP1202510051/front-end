@@ -13,6 +13,7 @@ import { toast } from "react-toastify";
 import { Spinner } from "@/assets/icons/LoadingSpinner";
 import { buildUpdatePayload } from "@/utils/mappers/buildUserToSave.mapper";
 import { uploadFiles } from "@/utils/helpers/uploadFiles";
+import { ProfileSkeleton } from "@/components/skeletons/ProfileSkeleton";
 
 export default function ProfilePage() {
   const currentUser = auth.currentUser;
@@ -88,7 +89,7 @@ export default function ProfilePage() {
     }
   };
 
-  if (loading) return <Spinner text="Cargando perfil..." />;
+  if (loading) return <ProfileSkeleton />;
   if (!profile) return <div>No se pudo cargar el perfil.</div>;
 
   return (

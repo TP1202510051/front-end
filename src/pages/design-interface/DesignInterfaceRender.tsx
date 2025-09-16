@@ -23,7 +23,7 @@ const DesignInterfaceRender: React.FC = () => {
           setIsSaving={setIsSaving}
         />
 
-        <div className="w-full flex-grow flex flex-col items-center justify-center bg-[#cacaca] p-4">
+        <div className="w-full flex-grow flex flex-col items-center justify-center bg-[var(--dashboard-background)] p-4">
           <SavingStatus isSaving={isSaving} />
           <WindowInterface
             projectId={projectId ?? ''}

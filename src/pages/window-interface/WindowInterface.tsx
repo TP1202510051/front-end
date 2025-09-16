@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import WindowCreationDialog from '@/components/created-components/WindowCreationDialog';
 import { EditIcon } from '@/assets/icons/EditIcon';
+import { RenderSkeleton } from '@/components/skeletons/RenderSkeleton';
 
 interface WindowInterfaceProps {
   projectId: string;
@@ -31,18 +32,27 @@ const WindowInterface: React.FC<WindowInterfaceProps> = ({
   const [newWindowName, setNewWindowName] = useState('');
 
   const [isFirstWindow, setIsFirstWindow] = useState(false);
+  const [loadingCode, setLoadingCode] = useState(false);
 
   useEffect(() => {
     setIsFirstWindow(windows.length === 0);
   }, [windows]);
 
+  const fetchWithLoading = async (winId: string) => {
+    setLoadingCode(true);
+    try {
+      await fetchCode(winId);
+    } finally {
+      setLoadingCode(false);
+    }
+  };
+
   const handleSelectWindow = (win: AppWindow) => {
     setSelectedWindow(win);
     onWindowSelect(win);
     setLiveCode('');
-    fetchCode(win.id);
+    fetchWithLoading(win.id);
   };
-
   const handleUpdateWindow = async () => {
     if (!selectedWindowToEdit) return;
     const updated = await updateWindow(selectedWindowToEdit, newWindowName);
@@ -90,7 +100,7 @@ const WindowInterface: React.FC<WindowInterfaceProps> = ({
         </DialogContent>
       </Dialog>
 
-      <div className="p-3 bg-[#2C2C2C] flex items-center mt-2 top-0 start-85 rounded-lg fixed"> 
+      <div className="p-3 bg-[#2C2C2C] flex items-center mt-2 top-0 start-85 rounded-lg absolute z-10"> 
         {windows.map((win) => (
           <div key={win.id} className="flex flex-col items-center gap-1 mx-2 justify-center">
             <button
@@ -111,17 +121,21 @@ const WindowInterface: React.FC<WindowInterfaceProps> = ({
 
       <div className="flex flex-col w-full h-full">
         <main className="flex-1 overflow-auto p-10 box-border">
-          {liveCode ? (
-            <JsxParser
-              jsx={normalizeJSX(liveCode)}
-              renderInWrapper={false}
-              allowUnknownElements
-              showWarnings
-              bindings={{ Array, Math, Date, JSON }}
-            />
-          ) : (
-            <p className="text-gray-500">Aquí se mostrará…</p>
-          )}
+          {
+            loadingCode ? (
+              <RenderSkeleton />
+            ) : liveCode ? (
+              <JsxParser
+                jsx={normalizeJSX(liveCode)}
+                renderInWrapper={false}
+                allowUnknownElements
+                showWarnings
+                bindings={{ Array, Math, Date, JSON }}
+              />
+            ) : (
+              <p className="text-gray-500">Aquí se mostrará…</p>
+            )
+          }
         </main>
       </div>
     </>
