@@ -1,3 +1,5 @@
+import { AbstractifyLogo } from '@/assets/icons/AbstractifyLogo';
+import { useAuth } from '@/contexts/AuthContext';
 import type { Message } from '@/models/messageModel';
 
 interface MessageListProps {
@@ -8,6 +10,7 @@ interface MessageListProps {
 }
 
 export function MessageList({ messages, bottomRef, promptMap, onPromptClick }: MessageListProps) {
+  const { firebaseUser } = useAuth();
   if (messages.length === 0) {
     return (
       <div className="grid grid-cols-1 gap-4 w-full px-4">
@@ -34,7 +37,9 @@ export function MessageList({ messages, bottomRef, promptMap, onPromptClick }: M
           }`}
         >
           <div className="text-xs font-semibold mb-1">
-            {msg.type === 'prompt' ? 'User' : 'Abstractify'}
+            {msg.type === 'prompt' ? 
+            <div className='flex items-center gap-2 justify-end'>User <img src={firebaseUser?.photoURL ?? undefined} alt="" className='w-6 h-6 rounded-full'/></div> : 
+            <div className='flex items-center gap-2'><AbstractifyLogo width={24} height={24} />Abstractify</div>}
           </div>
           {msg.content}
         </div>

@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export function UserNav() {
-  const { firebaseUser, profile } = useAuth();
+  const { firebaseUser } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -43,11 +43,11 @@ export function UserNav() {
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10">
             <AvatarImage
-              src={profile?.profilePictureUrl}
-              alt={profile?.firstName || "Usuario"}
+              src={firebaseUser?.photoURL ?? undefined}
+              alt={firebaseUser?.displayName || "Usuario"}
             />
             <AvatarFallback>
-              {profile ? `${profile.firstName?.[0] || ''}${profile.lastName?.[0] || ''}` : "U"}
+              {firebaseUser ? `${firebaseUser.displayName?.[0] || ''}` : "U"}
             </AvatarFallback>
           </Avatar>
         </Button>
@@ -56,10 +56,10 @@ export function UserNav() {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">
-              {profile ? `${profile.firstName} ${profile.lastName}` : "Cargando..."}
+              {firebaseUser ? `${firebaseUser.displayName}` : "Cargando..."}
             </p>
             <p className="text-xs leading-none text-muted-foreground">
-              {firebaseUser.email}
+              {firebaseUser?.email}
             </p>
           </div>
         </DropdownMenuLabel>

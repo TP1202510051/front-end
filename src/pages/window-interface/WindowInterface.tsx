@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import JsxParser from 'react-jsx-parser';
 import { useWindows } from '@/hooks/useWindows';
 import { useLiveCode } from '@/hooks/useLiveCodes';
@@ -30,6 +30,12 @@ const WindowInterface: React.FC<WindowInterfaceProps> = ({
   const [selectedWindowToEdit, setSelectedWindowToEdit] = useState<AppWindow | null>(null);
   const [newWindowName, setNewWindowName] = useState('');
 
+  const [isFirstWindow, setIsFirstWindow] = useState(false);
+
+  useEffect(() => {
+    setIsFirstWindow(windows.length === 0);
+  }, [windows]);
+
   const handleSelectWindow = (win: AppWindow) => {
     setSelectedWindow(win);
     onWindowSelect(win);
@@ -51,6 +57,7 @@ const WindowInterface: React.FC<WindowInterfaceProps> = ({
     setIsDialogOpen(false);
   };
 
+
   return (
     <>
       {selectedWindow && (
@@ -61,6 +68,7 @@ const WindowInterface: React.FC<WindowInterfaceProps> = ({
               setSelectedWindowToEdit(selectedWindow);
               setNewWindowName(selectedWindow.name);
               setIsDialogOpen(true);
+              setSelectedWindow(null);
             }}
           >
             <EditIcon />
@@ -82,11 +90,11 @@ const WindowInterface: React.FC<WindowInterfaceProps> = ({
         </DialogContent>
       </Dialog>
 
-      <div className="p-3 bg-[#2C2C2C] flex items-center justify-center mb-4 absolute bottom-0 rounded-lg">
+      <div className="p-3 bg-[#2C2C2C] flex items-center mt-2 top-0 start-85 rounded-lg fixed"> 
         {windows.map((win) => (
-          <div key={win.id} className="flex flex-col items-center gap-1 mx-2 w-full">
+          <div key={win.id} className="flex flex-col items-center gap-1 mx-2 justify-center">
             <button
-              className="bg-[#202123] text-white rounded-lg px-4 py-2 hover:bg-[#343540]"
+              className="inline-flex items-center bg-[#202123] text-white rounded-lg px-4 py-2 hover:bg-[#343540]"
               onClick={() => handleSelectWindow(win)}
             >
               {win.name}
@@ -97,6 +105,7 @@ const WindowInterface: React.FC<WindowInterfaceProps> = ({
           projectId={projectId}
           onWindow={(newWin) => setWindows((prev) => [...prev, newWin])}
           setIsSaving={setIsSaving}
+          first={isFirstWindow}
         />
       </div>
 

@@ -23,7 +23,7 @@ export default function RecoverPassword() {
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
                 <Button variant="link" className="text-sm text-white underline font-semibold hover:text-gray-300" onClick={() => setIsOpen(true)}>
-                    Recuperar Contraseña
+                     ¿Olvidaste tu contraseña?
                 </Button>
             </DialogTrigger>
             <DialogContent className="bg-[var(--dashboard-background)] rounded-sm outline-none">
