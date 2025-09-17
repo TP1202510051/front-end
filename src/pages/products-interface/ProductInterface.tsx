@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { exportProject } from '@/services/project.service';
 import { toast } from 'react-toastify';
+import { CategorySkeleton } from '@/components/skeletons/CategorySkeleton';
 
 interface ProductInterfaceProps {
   projectId: string;
@@ -84,6 +85,9 @@ const ProductInterface: React.FC<ProductInterfaceProps> = ({ projectId, projectN
       setCategories(prev => prev.filter(c => c.id !== categoryId));
     };
 
+    if (!categories) {
+      return <CategorySkeleton />;
+    }
 
   return (
     <div className="flex flex-col h-full">

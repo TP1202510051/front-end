@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useWindows } from "@/hooks/useWindows";
 import type { AppWindow } from "@/models/windowModel";
+import { WindowSkeleton } from "@/components/skeletons/WindowSkeleton";
 
 interface WindowSidebarProps {
   projectId: string;
@@ -32,13 +33,11 @@ export const WindowSidebar: React.FC<WindowSidebarProps> = ({
   const [selectedWindow, setSelectedWindow] = useState<AppWindow | null>(null);
   const [newWindowName, setNewWindowName] = useState("");
 
-  // Crear nueva ventana
   const handleCreateWindow = (win: AppWindow) => {
     setWindows((prev) => [...prev, win]);
     onSelect(win);
   };
 
-  // Guardar cambios
   const handleUpdateWindow = async () => {
     if (!selectedWindow) return;
     const updated = await updateWindow(selectedWindow, newWindowName);
@@ -46,13 +45,14 @@ export const WindowSidebar: React.FC<WindowSidebarProps> = ({
     setIsDialogOpen(false);
   };
 
-  // Eliminar
   const handleDeleteWindow = async () => {
     if (!selectedWindow) return;
     await removeWindow(selectedWindow);
     onSelect(null);
     setIsDialogOpen(false);
   };
+
+  if(!windows) return <WindowSkeleton />;
 
   return (
     <div className="flex flex-col">
