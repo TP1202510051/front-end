@@ -88,7 +88,7 @@ export const ProductFormDialog: React.FC<ProductDialogProps> = ({
 
   return (
     <>
-      <span className="flex items-center content-center gap-2 text-white justify-between border-b-2 border-[#343540] pb-2 w-full">
+      <span className="flex items-center content-center gap-2 justify-between border-b-2 border-border pb-2 w-full ">
         <CategoryDialog
           categoryId={categoryId}
           categoryName={categoryName}
@@ -103,7 +103,7 @@ export const ProductFormDialog: React.FC<ProductDialogProps> = ({
             </Button>
           </DialogTrigger>
 
-          <DialogContent className="w-[90vw] max-w-none bg-[#1E1E1E] text-white">
+          <DialogContent className="w-[90vw] max-w-none bg-[var(--dialog-background)] text-[var(--dialog-foreground)]">
             <DialogTitle className="text-lg font-semibold">
               {selectedProduct ? "Editar Producto" : "Crear Producto"}
             </DialogTitle>
@@ -139,7 +139,7 @@ export const ProductFormDialog: React.FC<ProductDialogProps> = ({
                 {
                   selectedProduct ? (
                     null
-                  ) : <Button variant="default">Cancelar</Button>
+                  ) : <Button variant="inverseLight">Cancelar</Button>
                 }
               </DialogClose>
             </DialogFooter>

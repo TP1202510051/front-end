@@ -106,11 +106,11 @@ export const ProductForm: React.FC<Props> = ({
             <img
               src={imageUrl}
               alt="preview"
-              className="w-full h-full object-cover opacity-50"
+              className="w-full h-full object-cover"
             />
           )}
-          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-            <Upload className="size-8 text-white" />
+          <div className="absolute inset-0 transition-opacity flex items-center justify-center pointer-events-none">
+            <Upload className="size-8" />
           </div>
           <input
             type="file"
@@ -122,23 +122,23 @@ export const ProductForm: React.FC<Props> = ({
 
         <div className="flex-1 grid grid-cols-3 gap-4">
           <div className="col-span-3">
-            <label className="block mb-1 text-sm font-medium text-white">
+            <label className="block mb-1 text-sm font-medium">
               Nombre
             </label>
             <Input
               placeholder="Nombre..."
-              className="text-white"
+              className=""
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
           </div>
           <div>
-            <label className="block mb-1 text-sm font-medium text-white">
+            <label className="block mb-1 text-sm font-medium">
               Precio
             </label>
             <Input
               placeholder="Precio..."
-              className="text-white"
+              className=""
               value={price}
               onChange={(e) => setPrice(e.target.value)}
             />
@@ -149,13 +149,13 @@ export const ProductForm: React.FC<Props> = ({
             </label>
             <Input
               placeholder="Descuento..."
-              className="text-white"
+              className=""
               value={discount}
               onChange={(e) => setDiscount(e.target.value)}
             />
           </div>
           <div>
-            <label className="block mb-1 text-sm font-medium text-white">
+            <label className="block mb-1 text-sm font-medium">
               Categoría
             </label>
           </div>
@@ -163,12 +163,12 @@ export const ProductForm: React.FC<Props> = ({
       </div>
 
       <div>
-        <label className="block mb-1 text-sm font-medium text-white">
+        <label className="block mb-1 text-sm font-medium">
           Descripción
         </label>
         <textarea
           rows={4}
-          className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-base placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] outline-none transition-shadow text-white"
+          className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-base placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] outline-none transition-shadow"
           placeholder="Descripción..."
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -176,7 +176,7 @@ export const ProductForm: React.FC<Props> = ({
       </div>
 
       <div>
-        <label className="block mb-1 text-sm font-medium text-white">
+        <label className="block mb-1 text-sm font-medium">
           Tallas
         </label>
         <div className="space-y-2">
@@ -184,7 +184,7 @@ export const ProductForm: React.FC<Props> = ({
             <div key={idx} className="flex items-center gap-2">
               <Input
                 placeholder="Talla..."
-                className="text-white flex-1"
+                className="flex-1"
                 value={size}
                 onChange={(e) => handleSizeChange(idx, e.target.value)}
               />
@@ -196,7 +196,7 @@ export const ProductForm: React.FC<Props> = ({
                   size="icon"
                   className="p-1"
                 >
-                  <Plus className="h-4 w-4 text-white" />
+                  <Plus className="h-4 w-4" />
                 </Button>
               )}
             </div>
@@ -205,7 +205,7 @@ export const ProductForm: React.FC<Props> = ({
       </div>
 
       <div className="flex justify-end space-x-2">
-        <Button type="submit" variant="primary">Aceptar</Button>
+        <Button type="submit" variant="inverseDark">Aceptar</Button>
         {onDelete && (
           <Button type="button" variant="destructive" onClick={onDelete}>
             Eliminar

@@ -10,9 +10,9 @@ import { auth } from "@/firebase";
 import type { UserProfileData } from "@/models/userProfileData";
 import { mergeProfile } from "@/utils/mappers/profile.mapper";
 import { toast } from "react-toastify";
-import { Spinner } from "@/assets/icons/LoadingSpinner";
 import { buildUpdatePayload } from "@/utils/mappers/buildUserToSave.mapper";
 import { uploadFiles } from "@/utils/helpers/uploadFiles";
+import { ProfileSkeleton } from "@/components/skeletons/ProfileSkeleton";
 
 export default function ProfilePage() {
   const currentUser = auth.currentUser;
@@ -88,15 +88,15 @@ export default function ProfilePage() {
     }
   };
 
-  if (loading) return <Spinner text="Cargando perfil..." />;
+  if (loading) return <ProfileSkeleton />;
   if (!profile) return <div>No se pudo cargar el perfil.</div>;
 
   return (
     <div className="container mx-auto p-4">
       <Card>
-        <CardHeader>
-          <CardTitle>Mi Perfil</CardTitle>
-          <CardDescription>Actualiza tu información personal y la de tu empresa.</CardDescription>
+        <CardHeader >
+          <CardTitle className="text-2xl">Mi Perfil</CardTitle>
+          <CardDescription className="text-lg">Actualiza tu información personal y la de tu empresa.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
           {/* SECCIÓN DATOS PERSONALES */}
@@ -132,7 +132,7 @@ export default function ProfilePage() {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Datos de la Empresa</h3>
              <div className="flex items-center gap-4">
-              <Avatar className="h-20 w-20 rounded-md">
+              <Avatar className="h-20 w-20 rounded-full bg-primary">
                 <AvatarImage src={profile.company?.logoUrl} alt="Logo de la empresa" />
                 <AvatarFallback>{profile.company?.name?.[0]}</AvatarFallback>
               </Avatar>
@@ -161,7 +161,7 @@ export default function ProfilePage() {
             </div>
           </div>
           
-          <Button onClick={handleSaveChanges} disabled={saving}>
+          <Button onClick={handleSaveChanges} disabled={saving} variant="inverseDark">
             {saving ? "Guardando..." : "Guardar Cambios"}
           </Button>
         </CardContent>

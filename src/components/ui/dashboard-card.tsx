@@ -13,7 +13,7 @@ const DashboardCard = ({ id, imageUrl, title, lastEdited }: DashboardCardProps) 
   return (
     <Link to={`/design-interface/${id}/${title}`} className="block h-full">
       <Card
-        className="w-full py-0 gap-0 overflow-hidden rounded-lg bg-[var(--card-background)]/40 backdrop-blur-sm border border-white/10 
+        className="w-full py-0 gap-0 overflow-hidden rounded-lg bg-[var(--card-background)] backdrop-blur-sm border border-[var(--card-background)]*80
       hover:border-sky-400 hover:scale-105 transition-all duration-300 cursor-pointer"
       >
         <CardContent className="p-0">
@@ -21,8 +21,8 @@ const DashboardCard = ({ id, imageUrl, title, lastEdited }: DashboardCardProps) 
         </CardContent>
 
         <CardFooter className="flex flex-col flex-grow items-start p-4 pt-2 .lato-regular">
-          <div className="text-md text-white">{title}</div>
-          <div className="flex items-center gap-2 text-xs mt-auto text-gray-400 mt-1">
+          <div className="text-md text-[var(--card-foreground)]">{title}</div>
+          <div className="flex items-center gap-2 text-xs mt-auto text-[var(--card-foreground)]/40">
             <Clock className="h-3 w-3" />
             <span>{lastEdited}</span>
           </div>

@@ -145,7 +145,7 @@ export default function LoginPage() {
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-white text-black hover:bg-gray-200 font-semibold cursor-pointer"
+                  className="w-full bg-white text-black hover:bg-gray-200 hover:text-black font-semibold cursor-pointer"
                   disabled={loading}
                 >
                   {loading ? 'Cargando...' : 'Iniciar Sesión'}
@@ -153,7 +153,7 @@ export default function LoginPage() {
               </form>
             </div>
             <div>
-              <p className="text-sm text-center text-muted-foreground"> ¿Olvidaste tu contraseña?{' '}
+              <p className="text-sm text-center text-muted-foreground">
                 <RecoverPassword />
               </p>
             </div>
@@ -178,7 +178,7 @@ export default function LoginPage() {
         ></div>
         <div className="relative z-10 text-center text-white">
           <div className="flex justify-center mb-4">
-            <AbstractifyLogo />
+            <AbstractifyLogo width={180} height={180} />
           </div>
           <h2 className="text-4xl font-bold mb-2">Abstractify</h2>
           <p className="text-xl text-zinc-400">

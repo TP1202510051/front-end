@@ -16,7 +16,7 @@ export const SavingStatus = ({ isSaving }: SavingStatusProps) => {
   }, [isSaving]);
 
   return isSaving ? (
-    <div className="left-0 w-full flex gap-1 items-center animate-pulse">
+    <div className="left-0 w-full flex gap-1 items-center animate-pulse text-[var(--dashboard-foreground)]">
       <h1 className="text-xs">Saving...</h1>
     </div>
   ) : (
