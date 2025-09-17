@@ -43,6 +43,15 @@ const Dashboard = () => {
                 <DashboardSkeleton />
                 <DashboardSkeleton />
                 <DashboardSkeleton />
+                <DashboardSkeleton />
+                <DashboardSkeleton />
+                <DashboardSkeleton />
+                <DashboardSkeleton />
+                <DashboardSkeleton />
+                <DashboardSkeleton />
+                <DashboardSkeleton />
+                <DashboardSkeleton />
+                <DashboardSkeleton />
               </>
             ):(
               <>{filteredProjects.length > 0 ? (

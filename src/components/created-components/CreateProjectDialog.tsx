@@ -23,12 +23,12 @@ export const CreateProjectDialog = () => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="hover:bg-gray-700 transition-colors cursor-pointer">
+        <Button variant="inverseDark" className="transition-colors cursor-pointer">
           <Plus className="mr-2 h-4 w-4" />
           Nuevo Proyecto
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-[#2C2C2C] rounded-sm border-gray-700 text-white">
+      <DialogContent className="bg-primary rounded-sm border-primary-foreground/60 text-primary-foreground ">
         <DialogTitle>Ingrese nombre del nuevo proyecto</DialogTitle>
         <div className="mt-4">
           <Input
@@ -37,13 +37,14 @@ export const CreateProjectDialog = () => {
             onChange={(e) => setProjectName(e.target.value)}
             disabled={loading}
             onKeyDown={handleKeyPress}
+            className='text-primary-foreground border-primary-foreground/40 w-full'
           />
         </div>
         <DialogFooter>
-          <Button variant="primary" onClick={handleAccept} disabled={!projectName.trim() || loading}>
+          <Button variant="inverseDark" onClick={handleAccept} disabled={!projectName.trim() || loading}>
             Aceptar
           </Button>
-          <Button variant="default" onClick={() => setIsOpen(false)}>
+          <Button variant="inverseLight" onClick={() => setIsOpen(false)}>
             Cancelar
           </Button>
         </DialogFooter>

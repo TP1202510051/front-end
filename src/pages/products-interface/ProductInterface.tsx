@@ -88,7 +88,7 @@ const ProductInterface: React.FC<ProductInterfaceProps> = ({ projectId, projectN
   return (
     <div className="flex flex-col h-full">
       <div className="flex-grow flex flex-col overflow-y-auto pr-2">
-          <div className='py-2 gap-2 flex items-center content-center text-white justify-between border-b-2 border-t-2 border-[#343540]'>
+          <div className='py-2 gap-2 flex items-center content-center justify-between border-b-2 border-t-2 border-[#343540]'>
             <span className="text-lg font-semibold">Categorias</span>
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
               <DialogTrigger asChild>
@@ -96,24 +96,24 @@ const ProductInterface: React.FC<ProductInterfaceProps> = ({ projectId, projectN
                   <Plus className="" />
                 </Button>
               </DialogTrigger>
-              <DialogContent className="bg-[var(--dashboard-background)] rounded-sm outline-none">
-                <DialogTitle className="text-white .lato-regular">
+              <DialogContent className="rounded-sm outline-none bg-[var(--dialog-background)] text-[var(--dialog-foreground)] w-[90vw] max-w-md">
+                <DialogTitle className=".lato-regular">
                   Ingrese nombre de la nueva categoria
                 </DialogTitle>
                 <div className="mt-4">
                   <Input
                     id="link"
                     placeholder="Nombre..."
-                    className="w-full p-2 text-white rounded border focus:outline-none selection:bg-gray-700/50"
+                    className="w-full p-2 rounded border focus:outline-none selection:bg-gray-700/50"
                     onChange={handleInputChange}
                     value={categoryName}
                   />
                 </div>
                 <DialogFooter className="pt-2 sm:justify-around">
-                  <Button type="submit" variant="secondary" className="cursor-pointer"  onClick={() => { handleAccept(); if (setIsSaving) setIsSaving(true); }}>
+                  <Button type="submit" variant="inverseDark" className="cursor-pointer"  onClick={() => { handleAccept(); if (setIsSaving) setIsSaving(true); }}>
                     Aceptar
                   </Button>
-                  <Button type="button" variant="default" className="cursor-pointer"  onClick={() => setIsOpen(false)}>
+                  <Button type="button" variant="inverseLight" className="cursor-pointer"  onClick={() => setIsOpen(false)}>
                     Cancelar
                   </Button>
                 </DialogFooter>

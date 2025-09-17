@@ -48,15 +48,15 @@ export const CategoryDialog: React.FC<Props> = ({ categoryId, categoryName, setI
   return (
     <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" className="flex-1 justify-start text-white font-medium px-2 py-1 hover:bg-[#343540] hover:text-white truncate">
+        <Button variant="design" className="flex-1 justify-start font-medium px-2 py-1 truncate">
           {editableCategoryName}
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-[#1E1E1E] text-white rounded-md w-[90vw] max-w-md">
+      <DialogContent className="bg-[var(--dialog-background)] text-[var(--dialog-foreground)] rounded-md w-[90vw] max-w-md">
         <DialogTitle className="text-lg">Editar Categoría</DialogTitle>
-        <Input className="mt-4 text-white bg-[#2C2C2C]" value={editableCategoryName} onChange={(e) => setEditableCategoryName(e.target.value)} onKeyDown={handleKeyPress} />
+        <Input className="mt-4 text-[var(--dialog-foreground)] bg-[var(--dialog-background)]" value={editableCategoryName} onChange={(e) => setEditableCategoryName(e.target.value)} onKeyDown={handleKeyPress} />
         <DialogFooter className="pt-4 flex justify-between">
-          <Button onClick={handleUpdate} variant={"primary"}>
+          <Button onClick={handleUpdate} variant={"inverseDark"}>
             Aceptar
           </Button>
           <Button type="button" variant="destructive" onClick={handleDelete}>Eliminar</Button>
