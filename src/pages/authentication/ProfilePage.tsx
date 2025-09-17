@@ -94,9 +94,9 @@ export default function ProfilePage() {
   return (
     <div className="container mx-auto p-4">
       <Card>
-        <CardHeader>
-          <CardTitle>Mi Perfil</CardTitle>
-          <CardDescription>Actualiza tu información personal y la de tu empresa.</CardDescription>
+        <CardHeader >
+          <CardTitle className="text-2xl">Mi Perfil</CardTitle>
+          <CardDescription className="text-lg">Actualiza tu información personal y la de tu empresa.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
           {/* SECCIÓN DATOS PERSONALES */}
