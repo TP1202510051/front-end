@@ -52,24 +52,24 @@ export const ProjectHeader = ({ projectId, projectName, setIsSaving }: ProjectHe
 
   return (
     <div className="flex flex-row items-center justify-between mb-4">
-      <h2 className="text-white font-bold text-xl">{projectName}</h2>
+      <h2 className=" font-bold text-xl">{projectName}</h2>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogTrigger asChild>
           <Button variant="ghost" size="icon" aria-label="Editar proyecto">
             <EditIcon />
           </Button>
         </DialogTrigger>
-        <DialogContent className="bg-[#2C2C2C] text-white rounded">
+        <DialogContent className="rounded bg-[var(--dialog-background)] text-[var(--dialog-foreground)]">
           <DialogTitle>Editar nombre del proyecto</DialogTitle>
           <div className="mt-4">
             <Input
               value={newProjectName}
               onChange={(e) => setNewProjectName(e.target.value)}
-              className="text-white bg-[#1a1a1a] border border-gray-600"
+              className="border border-gray-600"
             />
           </div>
           <DialogFooter className="pt-4 flex justify-between">
-            <Button onClick={handleUpdateName} variant={"primary"}>
+            <Button onClick={handleUpdateName} variant={"inverseDark"}>
               Aceptar
             </Button>
             <Button onClick={handleDeleteProject} variant="destructive">

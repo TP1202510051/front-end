@@ -13,9 +13,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ThemeToggle } from "../created-components/ThemeToggle";
 
 export function UserNav() {
-  const { firebaseUser, profile } = useAuth();
+  const { firebaseUser } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -41,25 +42,31 @@ export function UserNav() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-          <Avatar className="h-10 w-10">
-            <AvatarImage
-              src={profile?.profilePictureUrl}
-              alt={profile?.firstName || "Usuario"}
-            />
-            <AvatarFallback>
-              {profile ? `${profile.firstName?.[0] || ''}${profile.lastName?.[0] || ''}` : "U"}
-            </AvatarFallback>
-          </Avatar>
+          {
+            firebaseUser.photoURL ? (
+              <Avatar className="h-10 w-10">
+                <AvatarImage
+                  src={firebaseUser?.photoURL ?? undefined}
+                  alt={firebaseUser?.displayName || "Usuario"}
+                />
+                <AvatarFallback>
+                  {firebaseUser ? `${firebaseUser.displayName?.[0] || ''}` : "U"}
+                </AvatarFallback>
+              </Avatar> 
+          ) : (
+            <div className="h-10 w-10 relative flex size-8 shrink-0 overflow-hidden rounded-full bg-[var(--pulse)] animate-pulse" />
+            )
+          }
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">
-              {profile ? `${profile.firstName} ${profile.lastName}` : "Cargando..."}
+              {firebaseUser ? `${firebaseUser.displayName}` : "Cargando..."}
             </p>
             <p className="text-xs leading-none text-muted-foreground">
-              {firebaseUser.email}
+              {firebaseUser?.email}
             </p>
           </div>
         </DropdownMenuLabel>
@@ -74,6 +81,11 @@ export function UserNav() {
             <Link to={dashboard}>
               Dashboard
             </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem >
+            <div>
+              <ThemeToggle />
+            </div>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

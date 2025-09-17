@@ -12,12 +12,14 @@ interface WindowCreationDialogProps {
   onWindow: (win: AppWindow) => void;
   projectId: string;
   setIsSaving?: (isSaving: boolean) => void;
+  first?: boolean;
 }
 
 const WindowCreationDialog: React.FC<WindowCreationDialogProps> = ({
   onWindow,
   projectId,
   setIsSaving,
+  first,
 }) => {
   const { isOpen, setIsOpen, windowName, setWindowName, create } =
     useCreateWindow(projectId, setIsSaving);
@@ -37,8 +39,16 @@ const WindowCreationDialog: React.FC<WindowCreationDialogProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button type="button" variant="ghost" size="icon" className="p-1">
-          <Plus className="h-4 w-4" />
+        <Button
+          type="button"
+          variant="primary"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg"
+        >
+          {first ? (
+            'Empieza creando una ventana'
+          ) : (
+            <Plus className="h-4 w-4" />
+          )}
         </Button>
       </DialogTrigger>
 

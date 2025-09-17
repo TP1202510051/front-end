@@ -86,7 +86,7 @@ export default function ChatInterface({ onCode, window, projectId, setIsSaving }
   };
 
   return (
-    <div className="bg-[#2C2C2C] text-white flex flex-col h-screen py-4 justify-between">
+    <div className="bg-[var(--sidebar)] text-[var(--sidebar-foreground)] flex flex-col h-screen py-4 justify-between">
       <h1 className="text-2xl mb-4 text-center">{window.name}</h1>
 
       <MessageList messages={messages} bottomRef={bottomRef} promptMap={promptMap} onPromptClick={handleSendMessage} />
@@ -106,7 +106,7 @@ export default function ChatInterface({ onCode, window, projectId, setIsSaving }
 
         <Input
           placeholder="Explica la interfaz que deseas diseñar..."
-          className="flex-grow bg-transparent text-white p-2 rounded focus:outline-none"
+          className="flex-grow bg-transparent p-2 rounded placeholder:text-[var(--sidebar-foreground)] focus:outline-none border-[var(--sidebar-foreground)] focus:border-[var(--sidebar-primary)] focus:ring-1 focus:ring-[var(--sidebar-ring)]"
           value={message}
           onChange={e => setMessage(e.target.value)}
           disabled={response}
