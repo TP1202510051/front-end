@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { useWindows } from "@/hooks/useWindows";
 import type { AppWindow } from "@/models/windowModel";
 import { WindowSkeleton } from "@/components/skeletons/WindowSkeleton";
+import { createWindow } from "@/services/windows.service";
 
 interface WindowSidebarProps {
   projectId: string;
@@ -35,6 +36,7 @@ export const WindowSidebar: React.FC<WindowSidebarProps> = ({
 
   const handleCreateWindow = (win: AppWindow) => {
     setWindows((prev) => [...prev, win]);
+    createWindow(Number(win.projectId), win.name);
     onSelect(win);
   };
 
