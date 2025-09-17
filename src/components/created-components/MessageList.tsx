@@ -1,6 +1,7 @@
 import { AbstractifyLogo } from '@/assets/icons/AbstractifyLogo';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Message } from '@/models/messageModel';
+import { Button } from '../ui/button';
 
 interface MessageListProps {
   messages: Message[];
@@ -15,13 +16,14 @@ export function MessageList({ messages, bottomRef, promptMap, onPromptClick }: M
     return (
       <div className="grid grid-cols-1 gap-4 w-full px-4">
         {promptMap.map(({ mini, full }, idx) => (
-          <button
+          <Button
             key={idx}
             onClick={() => onPromptClick(full)}
-            className="bg-[#20212c] text-white py-14 px-4 rounded-lg hover:bg-[#3c3d49] transition w-full truncate text-left"
+            className="py-14 px-4 rounded-lg transition w-full truncate text-left"
+            variant="inverseDark"
           >
             {mini}
-          </button>
+          </Button>
         ))}
       </div>
     );

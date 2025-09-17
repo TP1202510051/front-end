@@ -88,7 +88,7 @@ const ProductInterface: React.FC<ProductInterfaceProps> = ({ projectId, projectN
   return (
     <div className="flex flex-col h-full">
       <div className="flex-grow flex flex-col overflow-y-auto pr-2">
-          <div className='py-2 gap-2 flex items-center content-center justify-between border-b-2 border-t-2 border-[#343540]'>
+          <div className='py-2 gap-2 flex items-center content-center justify-between border-b-2 border-t-2 border-border'>
             <span className="text-lg font-semibold">Categorias</span>
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
               <DialogTrigger asChild>

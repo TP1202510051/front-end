@@ -88,7 +88,7 @@ export const ProductFormDialog: React.FC<ProductDialogProps> = ({
 
   return (
     <>
-      <span className="flex items-center content-center gap-2 justify-between border-b-2 border-[#343540] pb-2 w-full ">
+      <span className="flex items-center content-center gap-2 justify-between border-b-2 border-border pb-2 w-full ">
         <CategoryDialog
           categoryId={categoryId}
           categoryName={categoryName}
