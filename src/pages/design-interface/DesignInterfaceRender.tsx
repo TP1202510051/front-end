@@ -50,9 +50,9 @@ const DesignInterfaceRender: React.FC = () => {
       </div>
 
       <div
-        className={`absolute top-0 right-0 h-full w-1/3 bg-[var(--nav-background)] shadow-lg border-l border-border z-50 flex flex-col transform transition-transform duration-300 ${
-          showChat ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`absolute top-0 right-0 h-full bg-[var(--nav-background)] shadow-lg border-l border-border z-50 flex flex-col transform transition-all duration-300
+          ${showChat ? "translate-x-0 w-1/3 opacity-100 pointer-events-auto" : "translate-x-full w-0 opacity-0 pointer-events-none"}
+        `}
       >
         <div className="justify-end w-full p-4 flex absolute">
           <button
@@ -75,6 +75,7 @@ const DesignInterfaceRender: React.FC = () => {
           )}
         </div>
       </div>
+
     </div>
   );
 };
