@@ -30,20 +30,43 @@ export function MessageList({ messages, bottomRef, promptMap, onPromptClick }: M
   }
 
   return (
-    <div className="flex-1 overflow-y-auto flex flex-col space-y-2 px-4">
-      {messages.map(msg => (
+    <div className="flex-1 overflow-y-auto flex flex-col space-y-3 px-4 py-2">
+      {messages.map((msg) => (
         <div
           key={msg.id}
-          className={`bg-transparent p-3 max-w-xs border-b-2 border-[#343540] break-words whitespace-pre-wrap rounded ${
-            msg.type === 'prompt' ? 'self-end text-right' : 'self-start text-left'
+          className={`flex items-end gap-2 ${
+            msg.type === "prompt" ? "justify-end" : "justify-start"
           }`}
         >
-          <div className="text-xs font-semibold mb-1">
-            {msg.type === 'prompt' ? 
-            <div className='flex items-center gap-2 justify-end'>User <img src={firebaseUser?.photoURL ?? undefined} alt="" className='w-6 h-6 rounded-full'/></div> : 
-            <div className='flex items-center gap-2'><AbstractifyLogo width={24} height={24} />Abstractify</div>}
+          {msg.type !== "prompt" && (
+            <AbstractifyLogo width={28} height={28} />
+          )}
+          <div
+            className={`max-w-xs px-4 py-2 rounded-2xl text-sm break-words whitespace-pre-wrap
+              ${
+                msg.type === "prompt"
+                  ? "bg-[var(--primary)] text-[var(--primary-foreground)] rounded-br-none"
+                  : "bg-[var(--accent)] text-[var(--accent-foreground)] rounded-bl-none"
+              }`}
+          >
+            <div
+              className={`text-xs font-semibold mb-1 ${
+                msg.type === "prompt" ? "text-right" : "text-left"
+              }`}
+            >
+              {msg.type === "prompt"
+                ? firebaseUser?.displayName ?? "User"
+                : "Abstractify"}
+            </div>
+            <div>{msg.content}</div>
           </div>
-          {msg.content}
+          {msg.type === "prompt" && (
+            <img
+              src={firebaseUser?.photoURL ?? undefined}
+              alt="user avatar"
+              className="w-7 h-7 rounded-full"
+            />
+          )}
         </div>
       ))}
       <div ref={bottomRef} />
