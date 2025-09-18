@@ -30,7 +30,13 @@ export const EditingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setShowChat(true);
     },
     openWindow: (win) => {
-      setTarget({ kind: "window", id: String(win.id), name: win.name, window: win });
+      // win.id ya es el real del backend
+      setTarget({
+        kind: "window",
+        id: String(win.id),
+        name: win.name,
+        window: win,
+      });
       setShowChat(true);
     },
     openComponent: (id, opts) => {
@@ -40,9 +46,9 @@ export const EditingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
       setTarget({
         kind: "component",
-        id, // este debe ser el id real del componente
+        id, // este es el id real del componente
         name: opts?.name,
-        windowId: opts.windowId, // 👈 windowId is guaranteed to exist here
+        windowId: opts.windowId, // windowId real del backend
       });
       setShowChat(true);
     },

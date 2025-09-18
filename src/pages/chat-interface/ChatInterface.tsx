@@ -41,7 +41,6 @@ export default function ChatInterface({ onCode, projectId, setIsSaving, target }
         } else if (target.kind === "window") {
           data = await getMessagesByWindowId(Number(target.id));
         } else if (target.kind === "component" && target.id) {
-          console.log("Fetching messages for component", target.id);
           data = await getMessagesByComponentId(Number(target.id));
         }
         setMessages(data.filter(msg => msg.type !== "system"));
@@ -71,28 +70,15 @@ export default function ChatInterface({ onCode, projectId, setIsSaving, target }
     if (setIsSaving) setIsSaving(true);
 
     try {
-      if (target.kind === "project") {
-          await createMessage({
-            message: toSend,
-            projectId: projectId,
-            windowId: null,
-            componentId: null,
-          });
-        } else if (target.kind === "window") {
-          await createMessage({
-            message: toSend,
-            projectId,
-            windowId: target.id,       // ✅ id real de ventana
-            componentId: null,
-          });
-        } else if (target.kind === "component") {
-          await createMessage({
-            message: toSend,
-            projectId,
-            windowId: target.windowId, // ✅ ventana real asociada
-            componentId: target.id,    // ✅ componente real
-          });
-        }
+      await createMessage({
+        message: toSend,
+        projectId,
+        ...(target.kind === "window" && { windowId: target.id }),
+        ...(target.kind === "component" && { 
+          windowId: target.windowId, 
+          componentId: target.id 
+        }),
+      });
 
       setMessages(prev => [
         ...prev,

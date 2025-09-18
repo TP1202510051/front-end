@@ -19,11 +19,9 @@ const apiUrl = "/messages";
 
 export const createMessage = async (payload: MessageRequest): Promise<Response> => {
   try {
-    console.log("Sending message payload:", payload);
     const response = await axios.post<Response>(apiBroker, payload, {
       headers: { "Content-Type": "application/json" },
     });
-    console.log("Received response:", response.data);
     return response.data;
   } catch (error) {
     handleApiError(error);
