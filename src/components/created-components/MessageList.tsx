@@ -31,9 +31,9 @@ export function MessageList({ messages, bottomRef, promptMap, onPromptClick }: M
 
   return (
     <div className="flex-1 overflow-y-auto flex flex-col space-y-3 px-4 py-2">
-      {messages.map((msg) => (
+      {messages.map((msg, index) => (
         <div
-          key={msg.id}
+          key={msg.id ?? `msg-${index}`}
           className={`flex items-end gap-2 ${
             msg.type === "prompt" ? "justify-end" : "justify-start"
           }`}

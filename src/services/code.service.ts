@@ -15,3 +15,19 @@ export const getLatestCodeByWindowId = async (
     throw error;
   }
 };
+
+const apiUrl2 = "/component-codes";
+
+export const getLatestCodeByComponentId = async (
+  componentId: number
+): Promise<Code> => {
+  try {
+    const { data } = await api.get<Code>(
+      `${apiUrl2}/component/latest/${componentId}`
+    );
+    return data;
+  } catch (error) {
+    handleApiError(error, ["NO_COMPONENT_CODE_FOUND"]);
+    throw error;
+  }
+};

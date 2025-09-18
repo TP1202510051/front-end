@@ -1,4 +1,3 @@
-// src/components/created-components/WindowSidebar.tsx
 import React, { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -34,11 +33,24 @@ export const WindowSidebar: React.FC<WindowSidebarProps> = ({
   const [selectedWindow, setSelectedWindow] = useState<AppWindow | null>(null);
   const [newWindowName, setNewWindowName] = useState("");
 
-  const handleCreateWindow = (win: AppWindow) => {
-    setWindows((prev) => [...prev, win]);
-    createWindow(Number(win.projectId), win.name);
-    onSelect(win);
-  };
+  const handleCreateWindow = async () => {
+  try {
+    if (!newWindowName.trim()) return;
+
+    const win = await createWindow(Number(projectId), newWindowName);
+
+    setWindows((prev) => [
+      ...prev,
+      { ...win, projectId: String(win.projectId) } as AppWindow,
+    ]);
+    onSelect({ ...win, projectId: String(win.projectId) } as AppWindow);
+
+    setIsDialogOpen(false);
+    setNewWindowName("");
+  } catch (error) {
+    console.error("❌ Error creando ventana:", error);
+  }
+};
 
   const handleUpdateWindow = async () => {
     if (!selectedWindow) return;
@@ -116,14 +128,7 @@ export const WindowSidebar: React.FC<WindowSidebarProps> = ({
               <>
                 <Button
                 variant="inverseDark"
-                onClick={() =>
-                  handleCreateWindow({
-                    id: Date.now().toString(),
-                    name: newWindowName,
-                    projectId,
-                    createdAt: new Date().toISOString(),
-                  } as AppWindow)
-                }
+                onClick={handleCreateWindow}
               >
                 Aceptar
               </Button>

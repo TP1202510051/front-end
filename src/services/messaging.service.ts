@@ -5,8 +5,9 @@ import type { Message } from "@/models/messageModel";
 
 interface MessageRequest {
   message: string;
-  windowId: number;
-  projectId: number;
+  projectId?: string | null;
+  windowId?: string | null;
+  componentId?: string | null;
 }
 
 interface Response {
@@ -16,18 +17,11 @@ interface Response {
 const apiBroker = import.meta.env.VITE_CLOUD_RUN_URL;
 const apiUrl = "/messages";
 
-export const createMessage = async (
-  windowId: number,
-  message: string,
-  projectId: number
-): Promise<Response> => {
+export const createMessage = async (payload: MessageRequest): Promise<Response> => {
   try {
-    const requestPayload: MessageRequest = { message, windowId, projectId };
-
-    const response = await axios.post<Response>(apiBroker, requestPayload, {
+    const response = await axios.post<Response>(apiBroker, payload, {
       headers: { "Content-Type": "application/json" },
     });
-
     return response.data;
   } catch (error) {
     handleApiError(error);
@@ -39,7 +33,31 @@ export const getMessagesByWindowId = async (
   windowId: number
 ): Promise<Message[]> => {
   try {
-    const { data } = await api.get<Message[]>(`${apiUrl}/${windowId}`);
+    const { data } = await api.get<Message[]>(`${apiUrl}/window/${windowId}`);
+    return data;
+  } catch (error) {
+    handleApiError(error, ["NO_MESSAGES"]);
+    throw error;
+  }
+};
+
+export const getMessagesByProjectId = async (
+  projectId: number
+): Promise<Message[]> => {
+  try {
+    const { data } = await api.get<Message[]>(`${apiUrl}/project/${projectId}`);
+    return data;
+  } catch (error) {
+    handleApiError(error, ["NO_MESSAGES"]);
+    throw error;
+  }
+};
+
+export const getMessagesByComponentId = async (
+  componentId: number
+): Promise<Message[]> => {
+  try {
+    const { data } = await api.get<Message[]>(`${apiUrl}/component/${componentId}`);
     return data;
   } catch (error) {
     handleApiError(error, ["NO_MESSAGES"]);

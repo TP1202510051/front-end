@@ -9,19 +9,19 @@ import { MicIcon } from '@/assets/icons/MicIcon';
 import { SendIcon } from '@/assets/icons/SendIcon';
 import { promptMap } from '@/utils/constants/promptMap';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
-import { createMessage, getMessagesByWindowId } from '@/services/messaging.service';
+import { createMessage, getMessagesByWindowId, getMessagesByComponentId, getMessagesByProjectId } from '@/services/messaging.service';
 import type { Message } from '@/models/messageModel';
-import type { AppWindow } from '@/models/windowModel';
 import { toast } from 'react-toastify';
+
 
 interface ChatInterfaceProps {
   onCode: (jsx: string) => void;
-  window: AppWindow;
   projectId: string;
   setIsSaving?: (saving: boolean) => void;
+  target: { kind: "project" | "window" | "component"; id: string; name?: string; windowId?: string };
 }
 
-export default function ChatInterface({ onCode, window, projectId, setIsSaving }: ChatInterfaceProps) {
+export default function ChatInterface({ onCode, projectId, setIsSaving, target }: ChatInterfaceProps) {
   const [response, setResponse] = useState(false);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -29,32 +29,39 @@ export default function ChatInterface({ onCode, window, projectId, setIsSaving }
 
   const { isListening, transcript, startListening, stopListening } = useSpeechRecognition();
 
-  useChatSocket(window.id, onCode, setMessages, setResponse, setIsSaving);
+  useChatSocket(target, onCode, setMessages, setResponse, setIsSaving);
   useAutoScroll(bottomRef, [messages]);
 
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const data = await getMessagesByWindowId(Number(window.id));
-        setMessages(data.filter(msg => msg.type !== 'system'));
+        let data: Message[] = [];
+        if (target.kind === "project") {
+          data = await getMessagesByProjectId(Number(target.id));
+        } else if (target.kind === "window") {
+          data = await getMessagesByWindowId(Number(target.id));
+        } else if (target.kind === "component" && target.id) {
+          data = await getMessagesByComponentId(Number(target.id));
+        }
+        setMessages(data.filter(msg => msg.type !== "system"));
         setResponse(false);
       } catch (error) {
-        toast.error(`Error al obtener los mensajes: ${error instanceof Error ? error.message : String(error)}`);
+        toast.error(`Error al obtener mensajes: ${error instanceof Error ? error.message : String(error)}`);
       }
     };
 
     setMessages([]);
     fetchMessages();
-  }, [window.id]);
+  }, [target]);
 
   useEffect(() => {
-  if (isListening && transcript.trim()) {
-    setMessage(prev => {
-      if (prev.endsWith(transcript)) return prev;
-      return prev + ' ' + transcript;
-    });
-  }
-}, [isListening, transcript]);
+    if (isListening && transcript.trim()) {
+      setMessage(prev => {
+        if (prev.endsWith(transcript)) return prev;
+        return prev + ' ' + transcript;
+      });
+    }
+  }, [isListening, transcript]);
 
   const handleSendMessage = async (overridePrompt?: string) => {
     const toSend = (overridePrompt ?? message).trim();
@@ -63,21 +70,36 @@ export default function ChatInterface({ onCode, window, projectId, setIsSaving }
     if (setIsSaving) setIsSaving(true);
 
     try {
-      await createMessage(Number(window.id), toSend, Number(projectId));
+      await createMessage({
+        message: toSend,
+        projectId,
+        ...(target.kind === "window" && { windowId: target.id }),
+        ...(target.kind === "component" && { 
+          windowId: target.windowId, 
+          componentId: target.id 
+        }),
+      });
+
       setMessages(prev => [
         ...prev,
         {
-          id: Date.now().toString(),
           content: toSend,
-          createdAt: Date.now().toString(),
-          windowId: window.id,
-          type: 'prompt',
-        },
+          createdAt: new Date().toISOString(),
+          type: "prompt",
+          projectId: Number(projectId),
+          windowId: target.kind === "window"
+            ? Number(target.id)
+            : target.kind === "component"
+            ? Number(target.windowId)
+            : undefined,
+          componentId: target.kind === "component" ? Number(target.id) : undefined,
+        } as Message,
       ]);
-      setMessage('');
-      setResponse(true);
     } catch (error) {
       toast.error(`Error al crear mensaje: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setMessage('');
+      setResponse(true);
     }
   };
 
@@ -87,7 +109,7 @@ export default function ChatInterface({ onCode, window, projectId, setIsSaving }
 
   return (
     <div className="bg-[var(--sidebar)] text-[var(--sidebar-foreground)] flex flex-col h-screen py-4 justify-between">
-      <h1 className="text-2xl mb-4 text-center">{window.name}</h1>
+      <h1 className="text-2xl mb-4 text-center">{target.name ?? target.kind}</h1>
 
       <MessageList messages={messages} bottomRef={bottomRef} promptMap={promptMap} onPromptClick={handleSendMessage} />
 

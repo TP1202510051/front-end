@@ -15,6 +15,8 @@ import { EditIcon } from "@/assets/icons/EditIcon";
 import { RenderSkeleton } from "@/components/skeletons/RenderSkeleton";
 import { useWindows } from "@/hooks/useWindows";
 import { MessageCircle } from "lucide-react";
+import { useEditing } from "@/contexts/EditingContext";
+import ComponentWrapper from "@/components/created-components/ComponentWrapper"; 
 
 interface WindowInterfaceProps {
   projectId: string;
@@ -25,17 +27,16 @@ interface WindowInterfaceProps {
   setShowChat: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const WindowInterface: React.FC<WindowInterfaceProps> = ({
+const CodeInterface: React.FC<WindowInterfaceProps> = ({
   projectId,
   webSocketCode,
   onWindowSelect,
   setIsSaving,
   selectedWindow,
-  setShowChat,
 }) => {
   const { updateWindow, removeWindow } = useWindows(projectId, setIsSaving);
   const { liveCode, fetchCode, setLiveCode } = useLiveCode(webSocketCode);
-
+  const { openWindow } = useEditing();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newWindowName, setNewWindowName] = useState("");
   const [loadingCode, setLoadingCode] = useState(false);
@@ -83,7 +84,7 @@ const WindowInterface: React.FC<WindowInterfaceProps> = ({
             Editar ventana
           </Button>
           <Button
-            onClick={() => setShowChat((prev) => !prev)}
+            onClick={() => openWindow(selectedWindow)}
             variant="inverseDark"
             disabled={!selectedWindow}
           >
@@ -123,6 +124,17 @@ const WindowInterface: React.FC<WindowInterfaceProps> = ({
             allowUnknownElements
             showWarnings
             bindings={{ Array, Math, Date, JSON }}
+            components={{
+              ComponentWrapper: (props: Record<string, unknown>) => (
+                <ComponentWrapper
+                  id={String(props.id ?? "")}
+                  name={String(props.name ?? "")}
+                  windowId={selectedWindow?.id ?? 0}
+                >
+                  {props.children as React.ReactNode}
+                </ComponentWrapper>
+              ),
+            }}
           />
         ) : (
           <p className="text-gray-500">Selecciona una ventana para ver su contenido…</p>
@@ -132,4 +144,4 @@ const WindowInterface: React.FC<WindowInterfaceProps> = ({
   );
 };
 
-export default WindowInterface;
+export default CodeInterface;
