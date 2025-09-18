@@ -3,10 +3,10 @@ export interface UserProfileData {
   lastName: string;
   email: string;
   company: {
-    name: string;
-    ruc: string;
-    address: string;
-    phone: string;
+    name?: string;
+    ruc?: string;
+    address?: string;
+    phone?: string;
     logoUrl?: string;
   };
   profilePictureUrl?: string;
