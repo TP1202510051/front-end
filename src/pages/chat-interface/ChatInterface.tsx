@@ -7,7 +7,9 @@ import { MessageList } from '@/components/created-components/MessageList';
 import { ThinkingIndicator } from '@/assets/icons/ThinkingIcon';
 import { MicIcon } from '@/assets/icons/MicIcon';
 import { SendIcon } from '@/assets/icons/SendIcon';
-import { promptMap } from '@/utils/constants/promptMap';
+import { promptMapWindows } from '@/utils/constants/promptMapWindows';
+import { promptMapComponents } from '@/utils/constants/promptMapComponents';
+import { promptMapProject } from '@/utils/constants/promptMapProject';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { createMessage, getMessagesByWindowId, getMessagesByComponentId, getMessagesByProjectId } from '@/services/messaging.service';
 import type { Message } from '@/models/messageModel';
@@ -26,6 +28,7 @@ export default function ChatInterface({ onCode, projectId, setIsSaving, target }
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [promptMap, setPromptMap] = useState<{ mini: string; full: string }[]>([]);
 
   const { isListening, transcript, startListening, stopListening } = useSpeechRecognition();
 
@@ -38,10 +41,13 @@ export default function ChatInterface({ onCode, projectId, setIsSaving, target }
         let data: Message[] = [];
         if (target.kind === "project") {
           data = await getMessagesByProjectId(Number(target.id));
+          setPromptMap(promptMapProject);
         } else if (target.kind === "window") {
           data = await getMessagesByWindowId(Number(target.id));
+          setPromptMap(promptMapWindows);
         } else if (target.kind === "component" && target.id) {
           data = await getMessagesByComponentId(Number(target.id));
+          setPromptMap(promptMapComponents);
         }
         setMessages(data.filter(msg => msg.type !== "system"));
         setResponse(false);
