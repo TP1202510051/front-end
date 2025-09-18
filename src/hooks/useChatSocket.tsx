@@ -4,9 +4,16 @@ import SockJS from 'sockjs-client';
 import type { Message } from '@/models/messageModel';
 import { toast } from 'react-toastify';
 import { getAuth } from 'firebase/auth';
+import { normalizeJSX } from "@/utils/handlers/jsxUtils";
+
+interface Target {
+  kind: "project" | "window" | "component";
+  id: string;
+  windowId?: string;
+}
 
 export function useChatSocket(
-  windowId: string,
+  target: Target,
   onCode: (jsx: string) => void,
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
   setResponse: React.Dispatch<React.SetStateAction<boolean>>,
@@ -22,37 +29,47 @@ export function useChatSocket(
     });
 
     client.onConnect = () => {
-      client.subscribe(`/topic/conversation/${windowId}`, (msg: IMessage) => {
-        let parsed: { code: string; message: string };
+      let topic = "";
+      if (target.kind === "project") {
+        topic = `/topic/project-conversation/${target.id}`;
+      } else if (target.kind === "window") {
+        topic = `/topic/conversation/${target.id}`;
+      } else if (target.kind === "component") {
+        topic = `/topic/component-conversation/${target.id}`;
+      }
+
+      client.subscribe(topic, (msg: IMessage) => {
         try {
-          parsed = JSON.parse(msg.body);
+          const parsed: { code: string; message: string } = JSON.parse(msg.body);
+
+          onCode(normalizeJSX(parsed.code));
+
+          setMessages(prev => [
+            ...prev,
+            {
+              content: parsed.message,
+              createdAt: new Date().toISOString(),
+              type: "response",
+              projectId: target.kind === "project" ? Number(target.id) : undefined,
+              windowId: target.kind === "window"
+                ? Number(target.id)
+                : target.kind === "component"
+                ? Number(target.windowId)
+                : undefined,
+              componentId: target.kind === "component"
+                ? Number(target.id)
+                : undefined,
+            } as Message,
+          ]);
+
+          setResponse(false);
+          if (msg && setIsSaving) setIsSaving(false);
         } catch {
           toast.error(`No es JSON válido: ${msg.body}`);
-          return;
         }
-
-        const jsxOnly = parsed.code
-          .replace(/import[\s\S]*?from ['"][\s\S]*?['"];?/g, '')
-          .replace(/export\s+default\s+\w+\s*;?/, '');
-
-        onCode(jsxOnly);
-
-        setMessages(prev => [
-          ...prev,
-          {
-            id: Date.now().toString(),
-            content: parsed.message,
-            createdAt: Date.now().toString(),
-            windowId: windowId,
-            type: 'response',
-          },
-        ]);
-        setResponse(false);
-        if (msg && setIsSaving) setIsSaving(false);
       });
     };
 
-    // Agregar token antes de activar
     const auth = getAuth();
     auth.currentUser?.getIdToken().then(token => {
       if (token) {
@@ -64,5 +81,5 @@ export function useChatSocket(
     return () => {
       client.deactivate();
     };
-  }, [windowId, onCode, setMessages, setResponse, setIsSaving]);
+  }, [target, onCode, setMessages, setResponse, setIsSaving]);
 }

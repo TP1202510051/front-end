@@ -1,4 +1,3 @@
-// src/components/created-components/WindowSidebar.tsx
 import React, { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
