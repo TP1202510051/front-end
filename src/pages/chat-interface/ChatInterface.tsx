@@ -114,7 +114,7 @@ export default function ChatInterface({ onCode, projectId, setIsSaving, target }
   };
 
   return (
-    <div className="bg-[var(--sidebar)] text-[var(--sidebar-foreground)] flex flex-col h-screen py-4 justify-between">
+    <div className="bg-[var(--sidebar)] text-[var(--sidebar-foreground)] flex flex-col h-full py-4 justify-between">
       <h1 className="text-2xl mb-4 text-center">{target.name ?? target.kind}</h1>
 
       <MessageList messages={messages} bottomRef={bottomRef} promptMap={promptMap} onPromptClick={handleSendMessage} />
