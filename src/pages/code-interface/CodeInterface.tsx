@@ -60,12 +60,10 @@ const CodeInterface: React.FC<WindowInterfaceProps> = ({
   };
 
   return (
-    <div className="flex flex-col w-full h-full text-[var(--dashboard-foreground)]">
+    <div className="flex flex-col w-full h-full text-[var(--dialog-foreground)]">
       {selectedWindow && (
-        <div className="w-full flex justify-between">
-          <div>
-            {liveCode ? <p>Presiona un componente para editarlo</p> : <p></p>}
-          </div>
+        <div className={`w-full flex items-center ${liveCode ? "justify-between" : "justify-end"}`}>
+          {liveCode ? "Selecciona un componente para editarlo" : ""}
           <Button
             variant="inverseDark"
             onClick={() => {
@@ -76,9 +74,9 @@ const CodeInterface: React.FC<WindowInterfaceProps> = ({
             <EditIcon />
             Editar ventana
           </Button>
+
         </div>
       )}
-
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="bg-[var(--dialog-background)] rounded-sm outline-none w-[90vw] max-w-md">
           <DialogTitle>Editar nombre</DialogTitle>
@@ -90,7 +88,6 @@ const CodeInterface: React.FC<WindowInterfaceProps> = ({
             <Button onClick={handleUpdateWindow} variant="inverseDark">
               Aceptar
             </Button>
-
           </DialogFooter>
         </DialogContent>
       </Dialog>

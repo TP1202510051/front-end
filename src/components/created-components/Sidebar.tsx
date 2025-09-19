@@ -2,12 +2,12 @@ import { UserNav } from '@/components/auth/UserNav';
 import ProductInterface from '@/pages/products-interface/ProductInterface';
 import { ProjectHeader } from './ProjectHeader';
 import { WindowSidebar } from '@/components/created-components/WindowSidebar';
-import { ComponentSidebar } from '@/components/created-components/ComponentSidebar';
+// import { ComponentSidebar } from '@/components/created-components/ComponentSidebar';
 import type { AppWindow } from '@/models/windowModel';
 // import { useEditing } from '@/contexts/EditingContext';
 // import { Button } from '../ui/button';
 // import { MessageCircle } from 'lucide-react';
-import { useState } from 'react';
+// import { useState } from 'react';
 
 interface SidebarProps {
   projectId: string;
@@ -18,11 +18,11 @@ interface SidebarProps {
 
 export const Sidebar = ({ projectId, projectName, setIsSaving, onSelectWindow }: SidebarProps) => {
   // const { openProject } = useEditing();
-  const [selectedWindowId, setSelectedWindowId] = useState<string | null>(null);
+  // const [selectedWindowId, setSelectedWindowId] = useState<string | null>(null);
 
   const handleSelectWindow = (win: AppWindow | null) => {
     onSelectWindow(win);
-    setSelectedWindowId(win ? win.id : null);
+    // setSelectedWindowId(win ? win.id : null);
   };
 
   return (

@@ -14,6 +14,8 @@ import { WindowSkeleton } from "@/components/skeletons/WindowSkeleton";
 import { createWindow } from "@/services/windows.service";
 import { Trash } from "lucide-react";
 import { toast } from "react-toastify";
+import { MessageCircle } from "lucide-react";
+import { useEditing } from "@/contexts/EditingContext";
 
 interface WindowSidebarProps {
   projectId: string;
@@ -35,6 +37,7 @@ export const WindowSidebar: React.FC<WindowSidebarProps> = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedWindow, setSelectedWindow] = useState<AppWindow | null>(null);
   const [newWindowName, setNewWindowName] = useState("");
+  const { openWindow } = useEditing();
 
   const handleCreateWindow = async () => {
   try {
@@ -104,6 +107,15 @@ export const WindowSidebar: React.FC<WindowSidebarProps> = ({
           >
             {win.name}
           </Button>
+            <Button
+              onClick={() => openWindow(win)}
+              variant="inverseDark"
+              disabled={false}
+            >
+              <div className="flex items-center gap-2">
+                <MessageCircle className="h-4 w-4" />
+              </div>
+            </Button>
             <Button onClick={() => {
               setSelectedWindow(win);
               setIsDeleteDialogOpen(true);
