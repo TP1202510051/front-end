@@ -50,7 +50,7 @@ const CodeInterface: React.FC<WindowInterfaceProps> = ({
       }
     };
     load();
-  }, [selectedWindow]);
+  }, [selectedWindow, fetchCode, setLiveCode]);
 
   const handleUpdateWindow = async () => {
     if (!selectedWindow) return;
