@@ -4,9 +4,9 @@ import { ProjectHeader } from './ProjectHeader';
 import { WindowSidebar } from '@/components/created-components/WindowSidebar';
 import { ComponentSidebar } from '@/components/created-components/ComponentSidebar';
 import type { AppWindow } from '@/models/windowModel';
-import { useEditing } from '@/contexts/EditingContext';
-import { Button } from '../ui/button';
-import { MessageCircle } from 'lucide-react';
+// import { useEditing } from '@/contexts/EditingContext';
+// import { Button } from '../ui/button';
+// import { MessageCircle } from 'lucide-react';
 import { useState } from 'react';
 
 interface SidebarProps {
@@ -17,7 +17,7 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ projectId, projectName, setIsSaving, onSelectWindow }: SidebarProps) => {
-  const { openProject } = useEditing();
+  // const { openProject } = useEditing();
   const [selectedWindowId, setSelectedWindowId] = useState<string | null>(null);
 
   const handleSelectWindow = (win: AppWindow | null) => {
@@ -30,14 +30,14 @@ export const Sidebar = ({ projectId, projectName, setIsSaving, onSelectWindow }:
       <UserNav />
       <ProjectHeader projectId={projectId} projectName={projectName} setIsSaving={setIsSaving} />
 
-      <Button
+      {/* <Button
         variant="inverseDark"
         className="flex items-center gap-2"
         onClick={() => openProject(projectId, projectName)}
       >
         <MessageCircle className="h-4 w-4" />
         Chat Proyecto
-      </Button>
+      </Button> */}
 
       <WindowSidebar
         projectId={projectId}
@@ -45,7 +45,7 @@ export const Sidebar = ({ projectId, projectName, setIsSaving, onSelectWindow }:
         setIsSaving={setIsSaving}
       />
 
-      {selectedWindowId && <ComponentSidebar windowId={selectedWindowId} />}
+      {/* {selectedWindowId && <ComponentSidebar windowId={selectedWindowId} />} */}
 
       <ProductInterface projectId={projectId} projectName={projectName} setIsSaving={setIsSaving} />
     </div>

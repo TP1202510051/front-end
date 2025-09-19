@@ -32,7 +32,7 @@ const DesignInterfaceRender: React.FC = () => {
         />
 
         <div className="w-full flex-grow flex flex-col items-center justify-center bg-[var(--dashboard-background)] p-4 relative">
-          <div className="w-full flex justify-between items-center mb-4">
+          <div className="w-full flex justify-between items-center">
             <SavingStatus isSaving={isSaving} />
           </div>
           <CodeInterface

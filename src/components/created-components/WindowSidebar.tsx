@@ -12,6 +12,8 @@ import { useWindows } from "@/hooks/useWindows";
 import type { AppWindow } from "@/models/windowModel";
 import { WindowSkeleton } from "@/components/skeletons/WindowSkeleton";
 import { createWindow } from "@/services/windows.service";
+import { Trash } from "lucide-react";
+import { toast } from "react-toastify";
 
 interface WindowSidebarProps {
   projectId: string;
@@ -30,6 +32,7 @@ export const WindowSidebar: React.FC<WindowSidebarProps> = ({
   );
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedWindow, setSelectedWindow] = useState<AppWindow | null>(null);
   const [newWindowName, setNewWindowName] = useState("");
 
@@ -48,7 +51,7 @@ export const WindowSidebar: React.FC<WindowSidebarProps> = ({
     setIsDialogOpen(false);
     setNewWindowName("");
   } catch (error) {
-    console.error("❌ Error creando ventana:", error);
+    toast.error(`❌ Error creando ventana: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
 
@@ -63,7 +66,7 @@ export const WindowSidebar: React.FC<WindowSidebarProps> = ({
     if (!selectedWindow) return;
     await removeWindow(selectedWindow);
     onSelect(null);
-    setIsDialogOpen(false);
+    setIsDeleteDialogOpen(false);
   };
 
   if(!windows) return <WindowSkeleton />;
@@ -87,10 +90,11 @@ export const WindowSidebar: React.FC<WindowSidebarProps> = ({
 
       <div className="flex flex-col gap-2">
         {windows.map((win) => (
-          <Button
+          <div className="flex flex-row items-center gap-2" key={win.id}>
+            <Button
             key={win.id}
             variant="design"
-            className="justify-start"
+            className="flex-1 justify-start"
             onClick={() => onSelect(win)}
             onDoubleClick={() => {
               setSelectedWindow(win);
@@ -100,6 +104,13 @@ export const WindowSidebar: React.FC<WindowSidebarProps> = ({
           >
             {win.name}
           </Button>
+            <Button onClick={() => {
+              setSelectedWindow(win);
+              setIsDeleteDialogOpen(true);
+            }} variant="destructive" >
+              <Trash />
+            </Button>
+          </div>
         ))}
       </div>
 
@@ -120,9 +131,6 @@ export const WindowSidebar: React.FC<WindowSidebarProps> = ({
                 <Button variant="inverseDark" onClick={handleUpdateWindow}>
                   Aceptar
                 </Button>
-                <Button variant="destructive" onClick={handleDeleteWindow}>
-                  Eliminar
-                </Button>
               </>
             ) : (
               <>
@@ -137,6 +145,26 @@ export const WindowSidebar: React.FC<WindowSidebarProps> = ({
                 </Button>
               </>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="bg-[var(--dialog-background)] text-[var(--dialog-foreground)] rounded-md w-[90vw] max-w-sm">
+          <DialogTitle>¿Eliminar ventana?</DialogTitle>
+          <p className="mt-2 text-sm">
+            Esta acción no se puede deshacer. Se eliminará la ventana{" "}
+            <strong>{selectedWindow?.name}</strong>.
+          </p>
+          <DialogFooter className="pt-4 flex justify-end gap-2">
+            <Button
+              variant="inverseLight"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteWindow}>
+              Eliminar
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

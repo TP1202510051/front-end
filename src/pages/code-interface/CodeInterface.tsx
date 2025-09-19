@@ -14,8 +14,6 @@ import { Button } from "@/components/ui/button";
 import { EditIcon } from "@/assets/icons/EditIcon";
 import { RenderSkeleton } from "@/components/skeletons/RenderSkeleton";
 import { useWindows } from "@/hooks/useWindows";
-import { MessageCircle } from "lucide-react";
-import { useEditing } from "@/contexts/EditingContext";
 import ComponentWrapper from "@/components/created-components/ComponentWrapper"; 
 
 interface WindowInterfaceProps {
@@ -34,9 +32,8 @@ const CodeInterface: React.FC<WindowInterfaceProps> = ({
   setIsSaving,
   selectedWindow,
 }) => {
-  const { updateWindow, removeWindow } = useWindows(projectId, setIsSaving);
+  const { updateWindow } = useWindows(projectId, setIsSaving);
   const { liveCode, fetchCode, setLiveCode } = useLiveCode(webSocketCode);
-  const { openWindow } = useEditing();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newWindowName, setNewWindowName] = useState("");
   const [loadingCode, setLoadingCode] = useState(false);
@@ -62,17 +59,13 @@ const CodeInterface: React.FC<WindowInterfaceProps> = ({
     setIsDialogOpen(false);
   };
 
-  const handleDeleteWindow = async () => {
-    if (!selectedWindow) return;
-    await removeWindow(selectedWindow);
-    onWindowSelect(null);
-    setIsDialogOpen(false);
-  };
-
   return (
-    <div className="flex flex-col w-full h-full">
+    <div className="flex flex-col w-full h-full text-[var(--dashboard-foreground)]">
       {selectedWindow && (
-        <div className="w-full flex justify-end gap-3">
+        <div className="w-full flex justify-between">
+          <div>
+            {liveCode ? <p>Presiona un componente para editarlo</p> : <p></p>}
+          </div>
           <Button
             variant="inverseDark"
             onClick={() => {
@@ -83,21 +76,11 @@ const CodeInterface: React.FC<WindowInterfaceProps> = ({
             <EditIcon />
             Editar ventana
           </Button>
-          <Button
-            onClick={() => openWindow(selectedWindow)}
-            variant="inverseDark"
-            disabled={!selectedWindow}
-          >
-            <div className="flex items-center gap-2">
-              <MessageCircle className="h-4 w-4" />
-              Chat: {selectedWindow.name}
-            </div>
-          </Button>
         </div>
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-[var(--dialog-background)] rounded-sm outline-none text-[var(--dialog-foreground)] w-[90vw] max-w-md">
+        <DialogContent className="bg-[var(--dialog-background)] rounded-sm outline-none w-[90vw] max-w-md">
           <DialogTitle>Editar nombre</DialogTitle>
           <Input
             value={newWindowName}
@@ -107,9 +90,7 @@ const CodeInterface: React.FC<WindowInterfaceProps> = ({
             <Button onClick={handleUpdateWindow} variant="inverseDark">
               Aceptar
             </Button>
-            <Button onClick={handleDeleteWindow} variant="destructive">
-              Eliminar
-            </Button>
+
           </DialogFooter>
         </DialogContent>
       </Dialog>
