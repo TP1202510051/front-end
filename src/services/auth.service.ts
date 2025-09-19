@@ -87,7 +87,6 @@ export async function register(userData: UserProfileData, password: string) {
     const profileData = {
       ...userData,
       uid: user.uid,
-      profilePictureUrl: '',
       companyLogoUrl: '',
     };
 

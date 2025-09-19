@@ -1,6 +1,6 @@
-export const promptMap: { mini: string; full: string }[] = [
+export const promptMapWindows: { mini: string; full: string }[] = [
     {
-      mini: 'Tienda sencilla',
+      mini: 'Página básica de tienda online: cabecera con logo y menú (Inicio, Tienda, Contacto), sección de productos en tarjetas (foto, nombre, precio) y pie de página con info de empresa y contactos.',
       full: `
   Me gustaría una página de tienda online muy básica:
   - Una cabecera con el logo y un menú (Inicio, Tienda, Contacto).
@@ -9,7 +9,7 @@ export const promptMap: { mini: string; full: string }[] = [
   `.trim()
     },
     {
-      mini: 'Tienda con carrito',
+      mini: 'Tienda online con: cabecera y pie simples, productos en tarjetas (foto, nombre, precio, botón “añadir al carrito”), y carrito visible con lista, cantidades y total (solo apariencia).',
       full: `
   Necesito una tienda donde se pueda “añadir al carrito”:
   - Muestra los productos con su foto, nombre y precio.
@@ -19,7 +19,7 @@ export const promptMap: { mini: string; full: string }[] = [
   `.trim()
     },
     {
-      mini: 'Checkout de pago',
+      mini: 'Sección de pago: formulario con datos de facturación y tarjeta, validación con mensajes de error, botón “Pagar” que lleva a página de confirmación (solo apariencia), cabecera y pie discretos.',
       full: `
   Quiero la parte de pago de la tienda:
   - Un formulario para ingresar datos de facturación (nombre, dirección) y datos de tarjeta.
@@ -29,13 +29,13 @@ export const promptMap: { mini: string; full: string }[] = [
   `.trim()
     },
     {
-      mini: 'Gestión de inventario',
+      mini: 'Sección de productos: lista con foto, nombre y precio, barra de búsqueda o filtro, botones “Editar” y “Eliminar” (solo apariencia), y botones “Ver” y “Añadir al carrito” (solo apariencia).',
       full: `
-  Necesito una vista para controlar existencias:
-  - Muestra una lista de productos con su foto, nombre y cantidad disponible.
-  - Un espacio para buscar o filtrar productos.
+  Necesito una sección para mostrar productos:
+  - Lista de productos con foto, nombre y precio.
+  - Barra de búsqueda o filtro.
   - Botones para “Editar” o “Eliminar” cada producto (solo apariencia).
-  - Añade una cabecera y un pie de página sencillos.
+  - Botones “Ver” o “Añadir al carrito” en cada producto (solo apariencia).
   `.trim()
     },
   ];

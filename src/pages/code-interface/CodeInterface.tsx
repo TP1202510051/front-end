@@ -90,7 +90,7 @@ const CodeInterface: React.FC<WindowInterfaceProps> = ({
           >
             <div className="flex items-center gap-2">
               <MessageCircle className="h-4 w-4" />
-              Chat
+              Chat: {selectedWindow.name}
             </div>
           </Button>
         </div>

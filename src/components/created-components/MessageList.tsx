@@ -14,15 +14,17 @@ export function MessageList({ messages, bottomRef, promptMap, onPromptClick }: M
   const { firebaseUser } = useAuth();
   if (messages.length === 0) {
     return (
-      <div className="grid grid-cols-1 gap-4 w-full px-4">
+      <div className="grid grid-cols-1 gap-4 px-4">
         {promptMap.map(({ mini, full }, idx) => (
           <Button
             key={idx}
             onClick={() => onPromptClick(full)}
-            className="py-14 px-4 rounded-lg transition w-full truncate text-left"
+            className="w-full min-h-16 px-4 py-14 rounded-lg transition text-left whitespace-normal"
             variant="inverseDark"
           >
-            {mini}
+            <span className="block w-full whitespace-normal break-words [overflow-wrap:anywhere] leading-snug text-pretty">
+              {mini}
+            </span>
           </Button>
         ))}
       </div>

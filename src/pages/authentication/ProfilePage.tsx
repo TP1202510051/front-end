@@ -64,29 +64,30 @@ export default function ProfilePage() {
   };
 
   const handleSaveChanges = async () => {
-    if (!currentUser || !profile) return;
-    setSaving(true);
+  if (!currentUser || !profile) return;
+  setSaving(true);
 
-    try {
-      const payload = buildUpdatePayload(profile);
-      await updateUserProfile(currentUser.uid, payload);
+  try {
+    const payload = buildUpdatePayload(profile);
+    await updateUserProfile(currentUser.uid, payload);
 
-      await uploadFiles(currentUser.uid, [
-      { file: profilePictureFile, field: "profilePictureUrl" as const },
-      { file: companyLogoFile, field: "companyLogoUrl" as const },
-      ]);
+    const uploaded = await uploadFiles(currentUser.uid, [
+      { file: profilePictureFile, field: "profilePictureUrl" },
+      { file: companyLogoFile, field: "company.logoUrl" },
+    ]);
+    console.log("📂 Resultados de subida:", uploaded);
 
-      toast.success("¡Perfil actualizado con éxito!");
-      setProfilePictureFile(null);
-      setCompanyLogoFile(null);
+    setProfile((prev) => (prev ? { ...prev, ...uploaded } : prev));
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
-      alert("Error al actualizar el perfil.");
-    } finally {
-      setSaving(false);
-    }
-  };
+    toast.success("¡Perfil actualizado con éxito!");
+    setProfilePictureFile(null);
+    setCompanyLogoFile(null);
+  } catch (error) {
+    toast.error("Error al actualizar el perfil." + (error instanceof Error ? error.message : String(error)));
+  } finally {
+    setSaving(false);
+  }
+};
 
   if (loading) return <ProfileSkeleton />;
   if (!profile) return <div>No se pudo cargar el perfil.</div>;
