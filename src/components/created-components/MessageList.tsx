@@ -14,7 +14,7 @@ export function MessageList({ messages, bottomRef, promptMap, onPromptClick }: M
   const { firebaseUser } = useAuth();
   if (messages.length === 0) {
     return (
-      <div className="grid grid-cols-1 gap-4 px-4">
+      <div className="h-full overflow-y-auto space-y-4 px-4">
         {promptMap.map(({ mini, full }, idx) => (
           <Button
             key={idx}
