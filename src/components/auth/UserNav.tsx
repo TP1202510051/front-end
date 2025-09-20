@@ -14,9 +14,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "../created-components/ThemeToggle";
+import { useProfileData } from "@/hooks/useProfileData";
 
 export function UserNav() {
   const { firebaseUser } = useAuth();
+  const { profile } = useProfileData();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -38,60 +40,53 @@ export function UserNav() {
     );
   }
 
+  const pictureUrl = profile?.profilePictureUrl || firebaseUser.photoURL || undefined;
+  const displayName =
+    profile?.firstName && profile?.lastName
+      ? `${profile.firstName} ${profile.lastName}`
+      : firebaseUser.displayName || "Usuario";
+  const fallback =
+    profile?.firstName?.[0] && profile?.lastName?.[0]
+      ? `${profile.firstName[0]}${profile.lastName[0]}`
+      : firebaseUser.displayName?.[0] || "U";
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-          {
-            firebaseUser.photoURL ? (
-              <Avatar className="h-10 w-10">
-                <AvatarImage
-                  src={firebaseUser?.photoURL ?? undefined}
-                  alt={firebaseUser?.displayName || "Usuario"}
-                />
-                <AvatarFallback>
-                  {firebaseUser ? `${firebaseUser.displayName?.[0] || ''}` : "U"}
-                </AvatarFallback>
-              </Avatar> 
+          {pictureUrl ? (
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={pictureUrl} alt={displayName} />
+              <AvatarFallback>{fallback}</AvatarFallback>
+            </Avatar>
           ) : (
-            <div className="h-10 w-10 relative flex size-8 shrink-0 overflow-hidden rounded-full bg-[var(--pulse)] animate-pulse" />
-            )
-          }
+            <div className="h-10 w-10 relative flex shrink-0 overflow-hidden rounded-full bg-[var(--pulse)] animate-pulse" />
+          )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">
-              {firebaseUser ? `${firebaseUser.displayName}` : "Cargando..."}
-            </p>
+            <p className="text-sm font-medium leading-none">{displayName}</p>
             <p className="text-xs leading-none text-muted-foreground">
-              {firebaseUser?.email}
+              {profile?.email || firebaseUser.email}
             </p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <Link to={profileR}>
-              Perfil
-            </Link>
+            <Link to={profileR}>Perfil</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link to={dashboard}>
-              Dashboard
-            </Link>
+            <Link to={dashboard}>Dashboard</Link>
           </DropdownMenuItem>
-          <DropdownMenuItem >
-            <div>
-              <ThemeToggle />
-            </div>
+          <DropdownMenuItem>
+            <ThemeToggle />
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout}>
-          Cerrar sesión
-        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleLogout}>Cerrar sesión</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
