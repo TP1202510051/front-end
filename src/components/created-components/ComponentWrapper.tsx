@@ -15,7 +15,7 @@ const ComponentWrapper: React.FC<ComponentWrapperProps> = ({ id, name = "", wind
 
   return (
     <div className="flex w-full gap-2">
-      <Button variant={"inverseDark"} className={`rounded-full h-10 ${selectedId === id ? "visible" : "invisible"}`} onClick={(e) => {
+      <Button className={`rounded-full bg-black text-white h-12 ${selectedId === id ? "visible" : "invisible"}`} onClick={(e) => {
         e.stopPropagation();
         openComponent(id ?? "", { name, windowId: windowId.toString() });
       }}>
@@ -26,8 +26,8 @@ const ComponentWrapper: React.FC<ComponentWrapperProps> = ({ id, name = "", wind
           e.stopPropagation();
           selectComponent(id ?? ""); 
         }}
-        className={`flex-1 relative group border hover:shadow-md hover:border-[var(--dashboard-foreground)] cursor-pointer 
-          ${selectedId === id ? "border-[var(--dashboard-foreground)] animate-pulse" : "border-transparent"}`}
+        className={`flex-1 relative group border hover:border-8 hover:shadow-md hover:border-blue-500 cursor-pointer 
+          ${selectedId === id ? "border-blue-500 border-4 animate-pulse" : "border-transparent"}`}
       >
         {children}
       </div>

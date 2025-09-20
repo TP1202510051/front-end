@@ -12,10 +12,9 @@ import { useWindows } from "@/hooks/useWindows";
 import type { AppWindow } from "@/models/windowModel";
 import { WindowSkeleton } from "@/components/skeletons/WindowSkeleton";
 import { createWindow } from "@/services/windows.service";
-import { Trash } from "lucide-react";
 import { toast } from "react-toastify";
-import { MessageCircle } from "lucide-react";
 import { useEditing } from "@/contexts/EditingContext";
+import { WindowDropDownMenu } from "./WindowDropDownMenu";
 
 interface WindowSidebarProps {
   projectId: string;
@@ -91,40 +90,27 @@ export const WindowSidebar: React.FC<WindowSidebarProps> = ({
         </Button>
       </div>
 
-      <div className="flex flex-col gap-2">
-        {windows.map((win) => (
-          <div className="flex flex-row items-center gap-2" key={win.id}>
-            <Button
-            key={win.id}
-            variant="design"
-            className="flex-1 justify-start"
-            onClick={() => onSelect(win)}
-            onDoubleClick={() => {
-              setSelectedWindow(win);
-              setNewWindowName(win.name);
-              setIsDialogOpen(true);
-            }}
-          >
-            {win.name}
-          </Button>
-            <Button
-              onClick={() => openWindow(win)}
-              variant="inverseDark"
-              disabled={false}
-            >
-              <div className="flex items-center gap-2">
-                <MessageCircle className="h-4 w-4" />
-              </div>
-            </Button>
-            <Button onClick={() => {
-              setSelectedWindow(win);
-              setIsDeleteDialogOpen(true);
-            }} variant="destructive" >
-              <Trash />
-            </Button>
-          </div>
-        ))}
-      </div>
+    <div className="flex flex-col gap-2">
+      {windows.map((win) => (
+        <WindowDropDownMenu
+          key={win.id}
+          win={win}
+          onSelect={onSelect}
+          onEdit={(w) => {
+            setSelectedWindow(w);
+            setNewWindowName(w.name);
+            setIsDialogOpen(true);
+          }}
+          onDelete={(w) => {
+            setSelectedWindow(w);
+            setIsDeleteDialogOpen(true);
+          }}
+          onOpenChat={(w) => {
+            openWindow(w);
+          }}
+        />
+      ))}
+    </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="bg-[var(--dialog-background)] text-[var(--dialog-foreground)] rounded-md w-[90vw] max-w-md">

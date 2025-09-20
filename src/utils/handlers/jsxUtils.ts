@@ -1,15 +1,14 @@
 export const normalizeJSX = (raw: string) => {
   let code = raw.trim();
 
-  // Normalizar ComponentWrapper (asegura mayúscula)
   code = code
     .replace(/<\s*componentwrapper/gi, "<ComponentWrapper")
     .replace(/<\/\s*componentwrapper\s*>/gi, "</ComponentWrapper>");
 
-  // Envolver en fragmento si no empieza con <> ni es un nodo válido
-  if (!(code.startsWith("<>") || /^<[^/][\s\S]*>[\s\S]*<\/[^>]+>$/.test(code))) {
-    code = `<>${code}</>`;
+  // Si ya empieza con <> o con un único nodo raíz, lo dejas
+  if (code.startsWith("<>") || code.startsWith("<ComponentWrapper") || code.startsWith("<div")) {
+    return code;
   }
 
-  return code;
+  return `<>${code}</>`;
 };

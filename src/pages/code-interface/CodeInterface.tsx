@@ -1,7 +1,5 @@
 import React, { useState } from "react";
-import JsxParser from "react-jsx-parser";
 import { useLiveCode } from "@/hooks/useLiveCodes";
-import { normalizeJSX } from "@/utils/handlers/jsxUtils";
 import type { AppWindow } from "@/models/windowModel";
 import {
   Dialog,
@@ -11,10 +9,9 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { EditIcon } from "@/assets/icons/EditIcon";
 import { RenderSkeleton } from "@/components/skeletons/RenderSkeleton";
 import { useWindows } from "@/hooks/useWindows";
-import ComponentWrapper from "@/components/created-components/ComponentWrapper"; 
+import IframeRenderer from "@/components/renderers/IframeRenderer";
 
 interface WindowInterfaceProps {
   projectId: string;
@@ -61,22 +58,6 @@ const CodeInterface: React.FC<WindowInterfaceProps> = ({
 
   return (
     <div className="flex flex-col w-full h-full text-[var(--dialog-foreground)]">
-      {selectedWindow && (
-        <div className={`w-full flex items-center ${liveCode ? "justify-between" : "justify-end"}`}>
-          {liveCode ? "Selecciona un componente para editarlo" : ""}
-          <Button
-            variant="inverseDark"
-            onClick={() => {
-              setNewWindowName(selectedWindow.name);
-              setIsDialogOpen(true);
-            }}
-          >
-            <EditIcon />
-            Editar ventana
-          </Button>
-
-        </div>
-      )}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="bg-[var(--dialog-background)] rounded-sm outline-none w-[90vw] max-w-md">
           <DialogTitle>Editar nombre</DialogTitle>
@@ -92,28 +73,11 @@ const CodeInterface: React.FC<WindowInterfaceProps> = ({
         </DialogContent>
       </Dialog>
 
-      <main className="flex-1 overflow-auto p-10 box-border">
+      <main className="flex-1 overflow-auto p-10 box-border min-h-[500px]">
         {loadingCode ? (
           <RenderSkeleton />
         ) : liveCode ? (
-          <JsxParser
-            jsx={normalizeJSX(liveCode)}
-            renderInWrapper={false}
-            allowUnknownElements
-            showWarnings
-            bindings={{ Array, Math, Date, JSON }}
-            components={{
-              ComponentWrapper: (props: Record<string, unknown>) => (
-                <ComponentWrapper
-                  id={String(props.id ?? "")}
-                  name={String(props.name ?? "")}
-                  windowId={selectedWindow?.id ?? 0}
-                >
-                  {props.children as React.ReactNode}
-                </ComponentWrapper>
-              ),
-            }}
-          />
+          <IframeRenderer code={liveCode} selectedWindow={selectedWindow} />
         ) : (
           <p className="text-gray-500">Selecciona una ventana para ver su contenido…</p>
         )}
