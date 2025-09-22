@@ -1,0 +1,171 @@
+import React, { useState } from "react";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { useWindows } from "@/hooks/useWindows";
+import type { AppWindow } from "@/models/windowModel";
+import { WindowSkeleton } from "@/components/skeletons/WindowSkeleton";
+import { createWindow } from "@/services/windows.service";
+import { toast } from "react-toastify";
+import { useEditing } from "@/contexts/EditingContext";
+import { WindowDropDownMenu } from "./WindowDropDownMenu";
+
+interface WindowSidebarProps {
+  projectId: string;
+  onSelect: (win: AppWindow | null) => void;
+  setIsSaving?: (saving: boolean) => void;
+}
+
+export const WindowSidebar: React.FC<WindowSidebarProps> = ({
+  projectId,
+  onSelect,
+  setIsSaving,
+}) => {
+  const { windows, setWindows, updateWindow, removeWindow } = useWindows(
+    projectId,
+    setIsSaving
+  );
+
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedWindow, setSelectedWindow] = useState<AppWindow | null>(null);
+  const [newWindowName, setNewWindowName] = useState("");
+  const { openWindow } = useEditing();
+
+  const handleCreateWindow = async () => {
+  try {
+    if (!newWindowName.trim()) return;
+
+    const win = await createWindow(Number(projectId), newWindowName);
+
+    setWindows((prev) => [
+      ...prev,
+      { ...win, projectId: String(win.projectId) } as AppWindow,
+    ]);
+    onSelect({ ...win, projectId: String(win.projectId) } as AppWindow);
+
+    setIsDialogOpen(false);
+    setNewWindowName("");
+  } catch (error) {
+    toast.error(`❌ Error creando ventana: ${error instanceof Error ? error.message : String(error)}`);
+  }
+};
+
+  const handleUpdateWindow = async () => {
+    if (!selectedWindow) return;
+    const updated = await updateWindow(selectedWindow, newWindowName);
+    if (updated) onSelect(updated);
+    setIsDialogOpen(false);
+  };
+
+  const handleDeleteWindow = async () => {
+    if (!selectedWindow) return;
+    await removeWindow(selectedWindow);
+    onSelect(null);
+    setIsDeleteDialogOpen(false);
+  };
+
+  if(!windows) return <WindowSkeleton />;
+
+  return (
+    <div className="flex flex-col">
+      <div className="flex items-center justify-between border-b-2 border-border border-t-2 py-2 mb-2">
+        <span className="text-lg font-semibold">Ventanas</span>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            setSelectedWindow(null);
+            setNewWindowName("");
+            setIsDialogOpen(true);
+          }}
+        >
+          <Plus />
+        </Button>
+      </div>
+
+    <div className="flex flex-col gap-2">
+      {windows.map((win) => (
+        <WindowDropDownMenu
+          key={win.id}
+          win={win}
+          onSelect={onSelect}
+          onEdit={(w) => {
+            setSelectedWindow(w);
+            setNewWindowName(w.name);
+            setIsDialogOpen(true);
+          }}
+          onDelete={(w) => {
+            setSelectedWindow(w);
+            setIsDeleteDialogOpen(true);
+          }}
+          onOpenChat={(w) => {
+            openWindow(w);
+          }}
+        />
+      ))}
+    </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="bg-[var(--dialog-background)] text-[var(--dialog-foreground)] rounded-md w-[90vw] max-w-md">
+          <DialogTitle>
+            {selectedWindow ? "Editar ventana" : "Nueva ventana"}
+          </DialogTitle>
+          <Input
+            value={newWindowName}
+            onChange={(e) => setNewWindowName(e.target.value)}
+            placeholder="Nombre de la ventana"
+            className="mt-4"
+          />
+          <DialogFooter className="pt-4 flex justify-between">
+            {selectedWindow ? (
+              <>
+                <Button variant="inverseDark" onClick={handleUpdateWindow}>
+                  Aceptar
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                variant="inverseDark"
+                onClick={handleCreateWindow}
+              >
+                Aceptar
+              </Button>
+                <Button type="button" variant="inverseLight" className="cursor-pointer"  onClick={() => setIsDialogOpen(false)}>
+                    Cancelar
+                </Button>
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="bg-[var(--dialog-background)] text-[var(--dialog-foreground)] rounded-md w-[90vw] max-w-sm">
+          <DialogTitle>¿Eliminar ventana?</DialogTitle>
+          <p className="mt-2 text-sm">
+            Esta acción no se puede deshacer. Se eliminará la ventana{" "}
+            <strong>{selectedWindow?.name}</strong>.
+          </p>
+          <DialogFooter className="pt-4 flex justify-end gap-2">
+            <Button
+              variant="inverseLight"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteWindow}>
+              Eliminar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};

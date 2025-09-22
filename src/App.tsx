@@ -9,6 +9,9 @@ import PrivateRoute from './components/auth/PrivateRoute';
 import LoginPage from './pages/authentication/LoginPage';
 import RegisterPage from './pages/authentication/RegisterPage';
 import ProfilePage from './pages/authentication/ProfilePage';
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { EditingProvider } from './contexts/EditingContext.tsx';
 
 const router = createBrowserRouter([
   // --- Rutas Públicas ---
@@ -62,7 +65,21 @@ function App() {
   return (
     <div className="min-h-screen text-white">
       <main>
-        <RouterProvider router={router} />
+        <EditingProvider>
+          <RouterProvider router={router} />
+          <ToastContainer
+          position="top-right"
+          autoClose={5000} // 5s
+          hideProgressBar={false}
+          newestOnTop={true}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="dark" // o "light"
+        />
+        </EditingProvider>
       </main>
     </div>
   );

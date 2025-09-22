@@ -1,6 +1,6 @@
 export interface Project {
     id: string;
-    projectName: string;
+    name: string;
     userId: number;
     createdAt: string;
     lastEdited: string | null;

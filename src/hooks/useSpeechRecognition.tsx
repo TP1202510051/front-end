@@ -1,5 +1,5 @@
-// src/hooks/useSpeechRecognition.ts
 import { useEffect, useRef, useState } from 'react';
+import { toast } from 'react-toastify';
 
 interface UseSpeechRecognitionOptions {
   lang?: string;
@@ -15,13 +15,17 @@ export const useSpeechRecognition = ({
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const warnedRef = useRef(false);
 
   useEffect(() => {
     const SpeechRecognitionConstructor =
       window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognitionConstructor) {
-      console.error('SpeechRecognition API not supported in this browser.');
+      if (!warnedRef.current) {
+        toast.error("SpeechRecognition API not supported in this browser.");
+        warnedRef.current = true;
+      }
       return;
     }
 
@@ -39,7 +43,7 @@ export const useSpeechRecognition = ({
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      console.error('Speech recognition error:', event.error);
+      toast.error(`Speech recognition error: ${event.error}`);
     };
 
     recognition.onend = () => {

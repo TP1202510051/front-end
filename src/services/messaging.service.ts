@@ -1,10 +1,13 @@
-import type { Message } from '@/models/messageModel';
-import axios from 'axios';
+import api from "@/utils/interceptors/authInterceptor";
+import axios from "axios";
+import { handleApiError } from "@/utils/handlers/errorHandler";
+import type { Message } from "@/models/messageModel";
 
 interface MessageRequest {
   message: string;
-  windowId: number;
-  projectId: number;
+  projectId?: string | null;
+  windowId?: string | null;
+  componentId?: string | null;
 }
 
 interface Response {
@@ -12,41 +15,52 @@ interface Response {
 }
 
 const apiBroker = import.meta.env.VITE_CLOUD_RUN_URL;
+const apiUrl = "/messages";
 
-export const createMessage = async (windowId: number, message: string, projectId: number): Promise<Response> => {
+export const createMessage = async (payload: MessageRequest): Promise<Response> => {
   try {
-    const requestPayload: MessageRequest = {
-      message,
-      windowId,
-      projectId,
-    };
-
-    console.log("Enviando solicitud con:", requestPayload);
-
-    const response = await axios.post<Response>(apiBroker, requestPayload, {
-      headers: {
-        'Content-Type': 'application/json',
-      }
+    const response = await axios.post<Response>(apiBroker, payload, {
+      headers: { "Content-Type": "application/json" },
     });
-
-    console.log("Respuesta del backend:", response.data);
     return response.data;
   } catch (error) {
-    console.error("Error creando el proyecto:", error);
+    handleApiError(error);
     throw error;
   }
 };
 
-const apiUrl = `${import.meta.env.VITE_API_BASE_URL}/messages`; 
+export const getMessagesByWindowId = async (
+  windowId: number
+): Promise<Message[]> => {
+  try {
+    const { data } = await api.get<Message[]>(`${apiUrl}/window/${windowId}`);
+    return data;
+  } catch (error) {
+    handleApiError(error, ["NO_MESSAGES"]);
+    throw error;
+  }
+};
 
+export const getMessagesByProjectId = async (
+  projectId: number
+): Promise<Message[]> => {
+  try {
+    const { data } = await api.get<Message[]>(`${apiUrl}/project/${projectId}`);
+    return data;
+  } catch (error) {
+    handleApiError(error, ["NO_MESSAGES"]);
+    throw error;
+  }
+};
 
-export const getMessagesByWindowId = async (windowId: number): Promise<Message[]> => {
-    try {
-      const response = await axios.get<Message[]>(`${apiUrl}/${windowId}`);
-      console.log("mensajes obtenidos:", response.data);
-      return response.data;
-    } catch (error) {
-      console.error("Error obteniendo mensajes:", error);
-      throw error;
-    }
-  };
+export const getMessagesByComponentId = async (
+  componentId: number
+): Promise<Message[]> => {
+  try {
+    const { data } = await api.get<Message[]>(`${apiUrl}/component/${componentId}`);
+    return data;
+  } catch (error) {
+    handleApiError(error, ["NO_MESSAGES"]);
+    throw error;
+  }
+};

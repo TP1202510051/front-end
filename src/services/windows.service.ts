@@ -1,10 +1,6 @@
-import type { Window } from '@/models/windowModel';
-import axios from 'axios';
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
-  headers: { 'Content-Type': 'application/json' },
-});
+import type { AppWindow } from "@/models/windowModel";
+import api from "@/utils/interceptors/authInterceptor";
+import { handleApiError } from "@/utils/handlers/errorHandler";
 
 export interface CreateWindowRequest {
   name: string;
@@ -13,7 +9,7 @@ export interface CreateWindowRequest {
 
 export interface WindowResponse {
   id: string;
-  windowName: string;
+  name: string;
   createdAt: string;
   projectId: number;
 }
@@ -22,22 +18,24 @@ export const createWindow = async (
   projectId: number,
   name: string
 ): Promise<WindowResponse> => {
-  const payload: CreateWindowRequest = { name, projectId };
-  console.log('Enviando CreateWindowRequest:', payload);
-  const resp = await api.post<WindowResponse>('/windows', payload);
-  console.log('Ventana creada:', resp.data);
-  return resp.data;
+  try {
+    const payload: CreateWindowRequest = { name, projectId };
+    const { data } = await api.post<WindowResponse>("/windows", payload);
+    return data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
 };
 
 export const getWindowsByProjectId = async (
   projectId: number
-): Promise<Window[]> => {
+): Promise<AppWindow[]> => {
   try {
-    const response = await api.get<Window[]>(`/windows/project/${projectId}`);
-    console.log('Ventanas obtenidas:', response.data);
-    return response.data;
+    const { data } = await api.get<AppWindow[]>(`/windows/project/${projectId}`);
+    return data;
   } catch (error) {
-    console.error('Error obteniendo ventanas:', error);
+    handleApiError(error, ["NO_WINDOWS"]);
     throw error;
   }
 };
@@ -47,21 +45,18 @@ export const updateWindowName = async (
   name: string
 ): Promise<void> => {
   try {
-    const payload = { name };
-    console.log(`Actualizando ventana ${windowId} con nombre:`, name);
-    await api.put(`/windows/${windowId}`, payload);
+    await api.put(`/windows/${windowId}`, { name });
   } catch (error) {
-    console.error('Error actualizando nombre de la ventana:', error);
+    handleApiError(error);
     throw error;
   }
 };
 
 export const deleteWindow = async (windowId: string): Promise<void> => {
   try {
-    console.log(`Eliminando ventana con id: ${windowId}`);
     await api.delete(`/windows/${windowId}`);
   } catch (error) {
-    console.error('Error eliminando la ventana:', error);
+    handleApiError(error);
     throw error;
   }
 };

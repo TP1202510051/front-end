@@ -1,299 +1,156 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { createMessage } from '@/services/messaging.service';
-import { getMessagesByWindowId } from '@/services/messaging.service';
-import type { Message } from '@/models/messageModel';
-import { Client, type IMessage } from '@stomp/stompjs';
-import SockJS from 'sockjs-client';
-import type { Window } from '@/models/windowModel';
+import { useChatSocket } from '@/hooks/useChatSocket';
+import { useAutoScroll } from '@/hooks/useAutoScroll';
+import { MessageList } from '@/components/created-components/MessageList';
+import { ThinkingIndicator } from '@/assets/icons/ThinkingIcon';
+import { MicIcon } from '@/assets/icons/MicIcon';
+import { SendIcon } from '@/assets/icons/SendIcon';
+import { promptMapWindows } from '@/utils/constants/promptMapWindows';
+import { promptMapComponents } from '@/utils/constants/promptMapComponents';
+import { promptMapProject } from '@/utils/constants/promptMapProject';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
+import { createMessage, getMessagesByWindowId, getMessagesByComponentId, getMessagesByProjectId } from '@/services/messaging.service';
+import type { Message } from '@/models/messageModel';
+import { toast } from 'react-toastify';
+
 
 interface ChatInterfaceProps {
   onCode: (jsx: string) => void;
-  window: Window;
   projectId: string;
   setIsSaving?: (saving: boolean) => void;
+  target: { kind: "project" | "window" | "component"; id: string; name?: string; windowId?: string };
 }
 
-const ChatInterface = ({onCode, window, projectId, setIsSaving}: ChatInterfaceProps) => {
-  const [response, setResponse] = useState<boolean>(false);
+export default function ChatInterface({ onCode, projectId, setIsSaving, target }: ChatInterfaceProps) {
+  const [response, setResponse] = useState(false);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const {
-    isListening,
-    transcript,
-    startListening,
-    stopListening,
-  } = useSpeechRecognition();
+  const [promptMap, setPromptMap] = useState<{ mini: string; full: string }[]>([]);
 
-  const promptMap: { mini: string; full: string }[] = [
-    {
-      mini: 'Tienda sencilla',
-      full: `
-  Me gustaría una página de tienda online muy básica:
-  - Una cabecera con el logo y un menú (Inicio, Tienda, Contacto).
-  - Un área donde se muestren los productos en tarjetas con foto, nombre y precio.
-  - Un pie de página con información de la empresa y enlaces de contacto.
-  `.trim()
-    },
-    {
-      mini: 'Tienda con carrito',
-      full: `
-  Necesito una tienda donde se pueda “añadir al carrito”:
-  - Muestra los productos con su foto, nombre y precio.
-  - Cada producto tiene un botón para agregar al carrito.
-  - Ver un carrito con la lista de productos, la cantidad y el total (solo la apariencia).
-  - Incluye cabecera y pie de página simples.
-  `.trim()
-    },
-    {
-      mini: 'Checkout de pago',
-      full: `
-  Quiero la parte de pago de la tienda:
-  - Un formulario para ingresar datos de facturación (nombre, dirección) y datos de tarjeta.
-  - Mensajes de error si falta algo.
-  - Un botón “Pagar” que lleve a una página de confirmación (solo apariencia).
-  - Mantén una cabecera y un pie de página discretos.
-  `.trim()
-    },
-    {
-      mini: 'Gestión de inventario',
-      full: `
-  Necesito una vista para controlar existencias:
-  - Muestra una lista de productos con su foto, nombre y cantidad disponible.
-  - Un espacio para buscar o filtrar productos.
-  - Botones para “Editar” o “Eliminar” cada producto (solo apariencia).
-  - Añade una cabecera y un pie de página sencillos.
-  `.trim()
-    },
-  ];
+  const { isListening, transcript, startListening, stopListening } = useSpeechRecognition();
+
+  useChatSocket(target, onCode, setMessages, setResponse, setIsSaving);
+  useAutoScroll(bottomRef, [messages]);
 
   useEffect(() => {
-    const socket = new SockJS(import.meta.env.VITE_API_WS_URL);
-    const client = new Client({
-      webSocketFactory: () => socket as WebSocket,
-      reconnectDelay: 5000,
-      heartbeatIncoming: 10000,
-      heartbeatOutgoing: 10000,
-    });
-
-    client.onConnect = () => {
-      client.subscribe(`/topic/conversation/${window.id}`, (msg: IMessage) => {
-        let parsed: { code: string; message: string };
-        try {
-          parsed = JSON.parse(msg.body);
-        } catch {
-          console.error('No es JSON válido:', msg.body);
-          return;
+    const fetchMessages = async () => {
+      try {
+        let data: Message[] = [];
+        if (target.kind === "project") {
+          data = await getMessagesByProjectId(Number(target.id));
+          setPromptMap(promptMapProject);
+        } else if (target.kind === "window") {
+          data = await getMessagesByWindowId(Number(target.id));
+          setPromptMap(promptMapWindows);
+        } else if (target.kind === "component" && target.id) {
+          data = await getMessagesByComponentId(Number(target.id));
+          setPromptMap(promptMapComponents);
         }
-
-        const jsxOnly = parsed.code
-          .replace(/import[\s\S]*?from ['"][\s\S]*?['"];?/g, '')
-          .replace(/export\s+default\s+\w+\s*;?/, '');
-
-        onCode(jsxOnly);
-
-        setMessages(prev => [
-          ...prev,
-          {
-            id: Date.now().toString(),
-            content: parsed.message,
-            createdAt: Date.now().toString(),
-            windowId: window.id,
-            type: 'response',
-          },
-        ]);
+        setMessages(data.filter(msg => msg.type !== "system"));
         setResponse(false);
-        if (msg) {
-          if (setIsSaving) setIsSaving(false);
-        }
-      });
+      } catch (error) {
+        toast.error(`Error al obtener mensajes: ${error instanceof Error ? error.message : String(error)}`);
+      }
     };
-      
-    client.activate();
-    return () => { client.deactivate(); };
-  }, [window.id, onCode]);
+
+    setMessages([]);
+    fetchMessages();
+  }, [target]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
+    if (isListening && transcript.trim()) {
+      setMessage(prev => {
+        if (prev.endsWith(transcript)) return prev;
+        return prev + ' ' + transcript;
+      });
+    }
+  }, [isListening, transcript]);
 
   const handleSendMessage = async (overridePrompt?: string) => {
     const toSend = (overridePrompt ?? message).trim();
     if (!toSend) return;
+
     if (setIsSaving) setIsSaving(true);
 
     try {
-      await createMessage(Number(window.id), toSend, Number(projectId));
-    } catch (error) {
-      console.error('Error al crear mensaje', error);
-    }
+      await createMessage({
+        message: toSend,
+        projectId,
+        ...(target.kind === "window" && { windowId: target.id }),
+        ...(target.kind === "component" && { 
+          windowId: target.windowId, 
+          componentId: target.id 
+        }),
+      });
 
-    setMessages(prev => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        content: toSend,
-        createdAt: Date.now().toString(),
-        windowId: window.id,
-        type: 'prompt',
-      },
-    ]);
-    setMessage('');
-    setResponse(true);
+      setMessages(prev => [
+        ...prev,
+        {
+          content: toSend,
+          createdAt: new Date().toISOString(),
+          type: "prompt",
+          projectId: Number(projectId),
+          windowId: target.kind === "window"
+            ? Number(target.id)
+            : target.kind === "component"
+            ? Number(target.windowId)
+            : undefined,
+          componentId: target.kind === "component" ? Number(target.id) : undefined,
+        } as Message,
+      ]);
+    } catch (error) {
+      toast.error(`Error al crear mensaje: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setMessage('');
+      setResponse(true);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') handleSendMessage();
   };
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  const fetchMessages = async () => {
-    try {
-      const data = await getMessagesByWindowId(Number(window.id));
-      setMessages(data.filter(msg => msg.type !== 'system'));
-      setResponse(false);
-    } catch (error) {
-      console.error('Error al obtener los mensajes', error);
-    }
-  };
-  useEffect(() => {
-    setMessages([]);
-    fetchMessages();
-  }, [window.id]);
-
-  useEffect(() => {
-    if (isListening && transcript.trim()) {
-      setMessage(prev => {
-        if (prev.endsWith(transcript)) return prev;
-        return prev + " " + transcript;
-      });
-    }
-  }, [isListening, transcript]);
-
-
   return (
-    <div className="bg-[#2C2C2C] text-white flex flex-col h-screen py-4">
-      <h1 className="text-2xl mb-4 text-center">{window.windowName}</h1>
-      <div className="flex-1 overflow-y-auto space-y-2 px-4">
-        {messages.length === 0 ? (
-          <div className="grid grid-cols-1 gap-4 w-full">
-            {promptMap.map(({mini, full}, idx) => (
-              <button
-                key={idx}
-                className="
-                  bg-[#20212c] text-white 
-                  py-14 px-4 rounded-lg 
-                  hover:bg-[#3c3d49] transition 
-                  w-full overflow-hidden whitespace-nowrap truncate text-left
-                "
-                onClick={() => handleSendMessage(full)}
-              >
-                {mini}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col space-y-2">
-            {messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`
-                    bg-transparent rounded-none p-3 max-w-xs 
-                    ${msg.type === 'prompt' ? 'self-end ' : 'self-start'}
-                    whitespace-pre-wrap break-words
-                    border-b-2 border-[#343540]
-                  `}
-                >
-                  <div className='text-xs font-semibold'>
-                    {msg.type !== 'prompt' && <p>Abstractify</p>}
-                    {msg.type == 'prompt' && <p className='w-full text-end justify-end'>User</p>}
-                  </div>
-                  {msg.content}
-                </div>
-            ))}
-            <div ref={bottomRef} />
-          </div>
-        )}
-      </div>
-      <div className='mt-4'>
-        {
-          response ? (
-            <div className='flex px-3 space-y-2 space-x-1 items-baseline content-center text-white'>
-              <div className='text-xs'>
-                Pensando
-              </div>
-              <div className='flex space-x-1 items-center text-white'>
-                <div className="animate-bounce [animation-delay:0s]">
-                  <svg width="5" height="5" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="18" cy="18" r="18" fill="white"/>
-                  </svg>
-                </div>
-                <div className="animate-bounce [animation-delay:0.2s]">
-                  <svg width="5" height="5" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="18" cy="18" r="18" fill="white"/>
-                  </svg>
-                </div>
-                <div className="animate-bounce [animation-delay:0.4s]">
-                  <svg width="5" height="5" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="18" cy="18" r="18" fill="white"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-          ) : (<></>)
-        }
-        <div className="mx-4 flex items-center gap-2">
-          <Button
-            disabled={response}
-            type="button"
-            variant="ghost"
-            className="cursor-pointer"
-            onClick={() => {
-              if (isListening) {
-                stopListening();
-              } else {
-                startListening();
-              }
-            }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill={isListening ? 'red' : 'none'}
-              viewBox="0 0 24 24"
-              strokeWidth="1.5"
-              stroke="currentColor"
-              className="size-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"
-              />
-            </svg>
-          </Button>
-          <Input
-            placeholder="Explica la interfaz que deseas diseñar..."
-            className="flex-grow bg-transparent text-white p-2 rounded focus:outline-none"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-          />
-          <Button type="button" variant="ghost" className="cursor-pointer" disabled={response}  onClick={() => { handleSendMessage()}}>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
-            </svg>
-          </Button>
-        </div>
+    <div className="bg-[var(--sidebar)] text-[var(--sidebar-foreground)] flex flex-col h-full py-4 justify-between">
+      <h1 className="text-2xl mb-4 text-center">{target.name ?? target.kind}</h1>
+
+      <MessageList messages={messages} bottomRef={bottomRef} promptMap={promptMap} onPromptClick={handleSendMessage} />
+
+      {response && <ThinkingIndicator />}
+
+      <div className="mx-4 flex items-center gap-2 mt-4">
+        <Button
+          disabled={response}
+          type="button"
+          variant="ghost"
+          className="cursor-pointer"
+          onClick={() => (isListening ? stopListening() : startListening())}
+        >
+          <MicIcon active={isListening} />
+        </Button>
+
+        <Input
+          placeholder="Explica la interfaz que deseas diseñar..."
+          className="flex-grow bg-transparent p-2 rounded placeholder:text-[var(--sidebar-foreground)] focus:outline-none border-[var(--sidebar-foreground)] focus:border-[var(--sidebar-primary)] focus:ring-1 focus:ring-[var(--sidebar-ring)]"
+          value={message}
+          onChange={e => setMessage(e.target.value)}
+          disabled={response}
+          onKeyPress={handleKeyPress}
+        />
+
+        <Button
+          type="button"
+          variant="ghost"
+          className="cursor-pointer"
+          disabled={response}
+          onClick={() => handleSendMessage()}
+        >
+          <SendIcon />
+        </Button>
       </div>
     </div>
   );
-};
-
-export default ChatInterface;
+}

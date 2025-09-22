@@ -16,6 +16,8 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { exportProject } from '@/services/project.service';
+import { toast } from 'react-toastify';
+import { CategorySkeleton } from '@/components/skeletons/CategorySkeleton';
 
 interface ProductInterfaceProps {
   projectId: string;
@@ -34,13 +36,13 @@ const ProductInterface: React.FC<ProductInterfaceProps> = ({ projectId, projectN
 
     const handleExport = async () => {
       if (!projectId || !projectName) {
-        console.error("Project ID o Project Name no encontrado.");
+        toast.error("Project ID o Project Name no encontrado.");
         return;
       }
       try {
         await exportProject(projectId, projectName);
       } catch (error) {
-        console.error('Failed to export project:', error);
+        toast.error(`Failed to export project: ${error instanceof Error ? error.message : String(error)}`);
       }
     };
 
@@ -49,7 +51,7 @@ const ProductInterface: React.FC<ProductInterfaceProps> = ({ projectId, projectN
             const data = await getCategoriesByProjectId(Number(projectId));
             setCategories(data);
         } catch (error) {
-            console.error('Error al obtener las categorías', error);
+            toast.error(`Error al obtener las categorías: ${error instanceof Error ? error.message : String(error)}`);
         }
     };
 
@@ -57,21 +59,20 @@ const ProductInterface: React.FC<ProductInterfaceProps> = ({ projectId, projectN
         try {
             const result = await createCategory(Number(projectId), categoryName);
             if(result) {
-              console.log("Categoría creada con éxito:", result);
               if (setIsSaving) setIsSaving(false);
             }
 
             setCategories(prev => [...prev, {
-            id: result.id,
-            categoryName: result.categoryName,
-            projectId: String(result.projectId),
-            createdAt: result.createdAt,
+              id: result.id,
+              name: result.name,
+              projectId: String(result.projectId),
+              createdAt: result.createdAt,
             }]);
 
             setCategoryName("");
             setIsOpen(false);
         } catch (error) {
-            console.error("Error al crear categoría:", error);
+            toast.error(`Error al crear categoría: ${error instanceof Error ? error.message : String(error)}`);
         }
         };
 
@@ -84,11 +85,14 @@ const ProductInterface: React.FC<ProductInterfaceProps> = ({ projectId, projectN
       setCategories(prev => prev.filter(c => c.id !== categoryId));
     };
 
+    if (!categories) {
+      return <CategorySkeleton />;
+    }
 
   return (
     <div className="flex flex-col h-full">
       <div className="flex-grow flex flex-col overflow-y-auto pr-2">
-          <div className='py-2 gap-2 flex items-center content-center text-white justify-between border-b-2 border-t-2 border-[#343540]'>
+          <div className='py-2 gap-2 flex items-center content-center justify-between border-b-2 border-t-2 border-border'>
             <span className="text-lg font-semibold">Categorias</span>
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
               <DialogTrigger asChild>
@@ -96,24 +100,24 @@ const ProductInterface: React.FC<ProductInterfaceProps> = ({ projectId, projectN
                   <Plus className="" />
                 </Button>
               </DialogTrigger>
-              <DialogContent className="bg-[var(--dashboard-background)] rounded-sm outline-none">
-                <DialogTitle className="text-white .lato-regular">
+              <DialogContent className="rounded-sm outline-none bg-[var(--dialog-background)] text-[var(--dialog-foreground)] w-[90vw] max-w-md">
+                <DialogTitle className=".lato-regular">
                   Ingrese nombre de la nueva categoria
                 </DialogTitle>
                 <div className="mt-4">
                   <Input
                     id="link"
                     placeholder="Nombre..."
-                    className="w-full p-2 text-white rounded border focus:outline-none selection:bg-gray-700/50"
+                    className="w-full p-2 rounded border focus:outline-none selection:bg-gray-700/50"
                     onChange={handleInputChange}
                     value={categoryName}
                   />
                 </div>
                 <DialogFooter className="pt-2 sm:justify-around">
-                  <Button type="submit" variant="secondary" className="cursor-pointer"  onClick={() => { handleAccept(); if (setIsSaving) setIsSaving(true); }}>
+                  <Button type="submit" variant="inverseDark" className="cursor-pointer"  onClick={() => { handleAccept(); if (setIsSaving) setIsSaving(true); }}>
                     Aceptar
                   </Button>
-                  <Button type="button" variant="default" className="cursor-pointer"  onClick={() => setIsOpen(false)}>
+                  <Button type="button" variant="inverseLight" className="cursor-pointer"  onClick={() => setIsOpen(false)}>
                     Cancelar
                   </Button>
                 </DialogFooter>
@@ -123,7 +127,7 @@ const ProductInterface: React.FC<ProductInterfaceProps> = ({ projectId, projectN
               {categories.map((category) => (
                 <div key={category.id} className="pl-2 pt-2 rounded flex flex-col gap-2">
                   <div className='pl-4'>
-                    <ProductFormDialog categoryId={category.id ?? ''} categoryName={category.categoryName} setIsSaving={setIsSaving} onDeleteCategory={handleRemoveCategory}/>
+                    <ProductFormDialog categoryId={category.id ?? ''} categoryName={category.name} setIsSaving={setIsSaving} onDeleteCategory={handleRemoveCategory}/>
                   </div>
                 </div>
           ))}

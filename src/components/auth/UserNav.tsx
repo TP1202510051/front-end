@@ -1,11 +1,7 @@
-// src/components/auth/UserNav.tsx
-
-import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { logout } from "@/services/auth.service";
-import { getUserProfile } from "@/services/user.service";
-
+import { dashboard, profile as profileR, login, register } from "@/utils/constants/navigations";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,83 +13,80 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ThemeToggle } from "../created-components/ThemeToggle";
+import { useProfileData } from "@/hooks/useProfileData";
 
 export function UserNav() {
-  const { currentUser } = useAuth();
+  const { firebaseUser } = useAuth();
+  const { profile } = useProfileData();
   const navigate = useNavigate();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [profile, setProfile] = useState<any>(null);
-
-  useEffect(() => {
-    // Si hay un usuario, buscamos su perfil para obtener nombre y foto
-    if (currentUser) {
-      getUserProfile(currentUser.uid).then(setProfile);
-    }
-  }, [currentUser]);
 
   const handleLogout = async () => {
     await logout();
+    localStorage.removeItem("user");
     navigate("/login");
   };
 
-  // Si no hay usuario, mostramos los botones de Login/Registro
-  if (!currentUser) {
+  if (!firebaseUser) {
     return (
       <div className="flex items-center gap-2">
         <Button asChild variant="outline">
-          <Link to="/login">Iniciar Sesión</Link>
+          <Link to={login}>Iniciar Sesión</Link>
         </Button>
         <Button asChild>
-          <Link to="/register">Registrarse</Link>
+          <Link to={register}>Registrarse</Link>
         </Button>
       </div>
     );
   }
 
-  // Si hay un usuario, mostramos el menú desplegable
+  const pictureUrl = profile?.profilePictureUrl || firebaseUser.photoURL || undefined;
+  const displayName =
+    profile?.firstName && profile?.lastName
+      ? `${profile.firstName} ${profile.lastName}`
+      : firebaseUser.displayName || "Usuario";
+  const fallback =
+    profile?.firstName?.[0] && profile?.lastName?.[0]
+      ? `${profile.firstName[0]}${profile.lastName[0]}`
+      : firebaseUser.displayName?.[0] || "U";
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-          <Avatar className="h-10 w-10">
-            <AvatarImage
-              src={profile?.profilePictureUrl}
-              alt={profile?.firstName || "Usuario"}
-            />
-            <AvatarFallback>
-              {profile ? `${profile.firstName?.[0] || ''}${profile.lastName?.[0] || ''}` : "U"}
-            </AvatarFallback>
-          </Avatar>
+          {pictureUrl ? (
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={pictureUrl} alt={displayName} />
+              <AvatarFallback>{fallback}</AvatarFallback>
+            </Avatar>
+          ) : (
+            <div className="h-10 w-10 relative flex shrink-0 overflow-hidden rounded-full bg-[var(--pulse)] animate-pulse" />
+          )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">
-              {profile ? `${profile.firstName} ${profile.lastName}` : "Cargando..."}
-            </p>
+            <p className="text-sm font-medium leading-none">{displayName}</p>
             <p className="text-xs leading-none text-muted-foreground">
-              {currentUser.email}
+              {profile?.email || firebaseUser.email}
             </p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <Link to="/profile">
-              Perfil
-            </Link>
+            <Link to={profileR}>Perfil</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link to="/dashboard">
-              Dashboard
-            </Link>
+            <Link to={dashboard}>Dashboard</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem>
+            <ThemeToggle />
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout}>
-          Cerrar sesión
-        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleLogout}>Cerrar sesión</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

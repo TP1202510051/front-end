@@ -2,43 +2,76 @@ import DashboardCard from '@/components/ui/dashboard-card';
 import type { Project } from '@/models/projectModel';
 import { getProjectsByUserId } from '@/services/project.service';
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'react-toastify';
+import { useOutletContext } from 'react-router';
+import { DashboardSkeleton } from '@/components/skeletons/DashboardSkeleton';
+
+interface OutletContext {
+  searchTerm: string;
+}
 
 const Dashboard = () => {
   const [projects, setProjects] = useState<Project[]>([]);
-  const { currentUser } = useAuth();
+  const { searchTerm } = useOutletContext<OutletContext>();
+  const [ loadingProjects, setLoadingProjects ] = useState(false);
 
   const fetchProjects = async () => {
-    if (!currentUser?.uid) return;
+    setLoadingProjects(true);
     try {
-      const data = await getProjectsByUserId(currentUser.uid);
-      console.log("Proyectos obtenidos en dashboard:", data);
-      setProjects(data); // Establecer proyectos
+      const data = await getProjectsByUserId();
+      setProjects(data);
     } catch (error) {
-      console.error("Error al obtener los proyectos", error);
+      toast.error(`Error al obtener los proyectos: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setLoadingProjects(false);
     }
   };
 
-  // Llamar a fetchProjects cuando el componente se monta
   useEffect(() => {
     fetchProjects();
   }, []);
+
+  const filteredProjects = projects.filter(project =>
+    project.name?.toLowerCase().includes(searchTerm.toLowerCase() || '')
+  );
   return (
     <div className="w-full p-8 px-24 min-h-screen bg-[var(--dashboard-background)]">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {projects.length > 0 ? (
-            projects.map((project) => (
-              <DashboardCard
-                key={project.id}
-                id={project.id}
-                title={project.projectName ?? 'Proyecto sin nombre'}
-                lastEdited={project.lastEdited ?? project.createdAt}
-                imageUrl={project.imageUrl ?? 'https://i.imgur.com/SBpn2o8.png'}
-              />
-            ))
-          ) : (
-            <p>No hay proyectos disponibles.</p>
-          )}
+          {loadingProjects ? 
+            (
+              <>
+                <DashboardSkeleton />
+                <DashboardSkeleton />
+                <DashboardSkeleton />
+                <DashboardSkeleton />
+                <DashboardSkeleton />
+                <DashboardSkeleton />
+                <DashboardSkeleton />
+                <DashboardSkeleton />
+                <DashboardSkeleton />
+                <DashboardSkeleton />
+                <DashboardSkeleton />
+                <DashboardSkeleton />
+              </>
+            ):(
+              <>{filteredProjects.length > 0 ? (
+                filteredProjects.map((project) => (
+                  <DashboardCard
+                    key={project.id}
+                    id={project.id}
+                    title={project.name ?? 'Proyecto sin nombre'}
+                    lastEdited={project.lastEdited ?? project.createdAt}
+                    imageUrl={project.imageUrl ?? 'https://i.imgur.com/SBpn2o8.png'}
+                  />
+                )
+              )
+            ) : (
+              <div className="col-span-full text-center text-gray-400">
+                <p>No hay proyectos disponibles.</p>
+              </div>
+            )}
+          </>) 
+        }
         </div>
     </div>
   );

@@ -1,6 +1,6 @@
-export interface Window {
+export interface AppWindow {
     id: string;
-    windowName: string;
+    name: string;
     createdAt: string;
     projectId: string;
 }
