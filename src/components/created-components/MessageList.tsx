@@ -2,6 +2,7 @@ import { AbstractifyLogo } from '@/assets/icons/AbstractifyLogo';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Message } from '@/models/messageModel';
 import { Button } from '../ui/button';
+import { useProfileData } from '@/hooks/useProfileData';
 
 interface MessageListProps {
   messages: Message[];
@@ -11,6 +12,7 @@ interface MessageListProps {
 }
 
 export function MessageList({ messages, bottomRef, promptMap, onPromptClick }: MessageListProps) {
+  const { profile } = useProfileData();
   const { firebaseUser } = useAuth();
   if (messages.length === 0) {
     return (
@@ -30,6 +32,13 @@ export function MessageList({ messages, bottomRef, promptMap, onPromptClick }: M
       </div>
     );
   }
+
+    const displayName =
+    profile?.profilePictureUrl && profile?.lastName
+      ? `${profile.firstName} ${profile.lastName}`
+      : firebaseUser?.displayName || "Usuario";
+
+    const imageUrl = profile?.profilePictureUrl || firebaseUser?.photoURL || undefined;
 
   return (
     <div className="flex-1 overflow-y-auto flex flex-col space-y-3 px-4 py-2">
@@ -57,14 +66,14 @@ export function MessageList({ messages, bottomRef, promptMap, onPromptClick }: M
               }`}
             >
               {msg.type === "prompt"
-                ? firebaseUser?.displayName ?? "User"
+                ? displayName ?? "User"
                 : "Abstractify"}
             </div>
             <div>{msg.content}</div>
           </div>
           {msg.type === "prompt" && (
             <img
-              src={firebaseUser?.photoURL ?? undefined}
+              src={imageUrl}
               alt="user avatar"
               className="w-7 h-7 rounded-full"
             />

@@ -33,7 +33,7 @@ const IframeRenderer: React.FC<IframeRendererProps> = ({ code, selectedWindow })
     const styleLink = doc.createElement("link");
     styleLink.rel = "stylesheet";
     styleLink.href =
-        "https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css";
+      "https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css";
     head.appendChild(styleLink);
 
     // Contenedor root
@@ -49,6 +49,8 @@ const IframeRenderer: React.FC<IframeRendererProps> = ({ code, selectedWindow })
     }, []);
 
   return (
+    <>
+    {code}
     <iframe ref={iframeRef} className="w-full h-full border-0" title="jsx-preview">
       {mountNode &&
         (
@@ -77,6 +79,7 @@ const IframeRenderer: React.FC<IframeRendererProps> = ({ code, selectedWindow })
           mountNode
         ))}
     </iframe>
+    </>
   );
 };
 
