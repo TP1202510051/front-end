@@ -6,12 +6,12 @@ import { MessageCircle } from "lucide-react";
 interface ComponentWrapperProps {
   id?: string;
   name?: string;
-  windowId: string | 0;
+  windowId: string;
   children?: React.ReactNode;
 }
 
 const ComponentWrapper: React.FC<ComponentWrapperProps> = ({ id, name = "", windowId, children }) => {
-  const { selectComponent, openComponent, selectedId } = useEditing();
+  const { openComponent, selectedId } = useEditing();
 
   return (
     <div className="flex w-full gap-2">
@@ -19,7 +19,12 @@ const ComponentWrapper: React.FC<ComponentWrapperProps> = ({ id, name = "", wind
         className={`rounded-full bg-black text-white ${selectedId === id ? "visible" : "invisible"}`}
         onClick={(e) => {
           e.stopPropagation();
-          openComponent(id ?? "", { name, windowId: windowId.toString() });
+          console.log("[ComponentWrapper] openComponent clicked", { id, name, windowId });
+          if (!id || isNaN(Number(id))) {
+            console.error("❌ Intento de abrir componente sin ID válido", { id, name, windowId });
+            return;
+          }
+          openComponent(id, { name, windowId });
         }}
       >
         <MessageCircle className="h-4 w-4" />
@@ -27,9 +32,10 @@ const ComponentWrapper: React.FC<ComponentWrapperProps> = ({ id, name = "", wind
       <div
         onClick={(e) => {
           const tag = (e.target as HTMLElement).tagName.toLowerCase();
-          if (tag !== "button" && tag !== "svg" && tag !== "path" && tag !== "input" && tag !== "label") {
+          if (!["button", "svg", "path", "input", "label"].includes(tag)) {
             e.stopPropagation();
-            selectComponent(id ?? "");
+            console.log("[ComponentWrapper] Div clicked", { id, name, windowId });
+            openComponent(id ?? "0", { name, windowId });
           }
         }}
         className={`flex-1 relative group border hover:border-2 hover:shadow-md hover:border-blue-500 cursor-pointer 

@@ -61,18 +61,28 @@ export const EditingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     },
 
     openComponent: (id, opts) => {
+      console.log("[EditingContext] openComponent called", { id, opts });
+
       if (!opts?.windowId) {
         toast.error("❌ Component opened without windowId");
         return;
       }
+
       if (target?.kind === "component" && target.id === id && showChat) {
         setShowChat(false);
         setTarget(null);
         return;
       }
+
       setTarget({ kind: "component", id, name: opts?.name, windowId: opts.windowId });
       setShowChat(true);
       setSelectedId(id);
+
+      console.log("[EditingContext] new target set", {
+        id,
+        name: opts?.name,
+        windowId: opts.windowId,
+      });
     },
 
     closeChat: () => setShowChat(false),

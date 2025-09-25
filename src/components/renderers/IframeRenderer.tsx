@@ -56,13 +56,13 @@ const IframeRenderer: React.FC<IframeRendererProps> = ({ code, selectedWindow })
               bindings={{ Array, Math, Date, JSON }}
               components={{
                 ComponentWrapper: (props: Record<string, unknown>) => (
-                  <ComponentWrapper
-                    id={String(props.id ?? "")}
-                    name={String(props.name ?? "")}
-                    windowId={selectedWindow?.id ?? 0}
-                  >
-                    {props.children as React.ReactNode}
-                  </ComponentWrapper>
+                <ComponentWrapper
+                  id={props.id && !isNaN(Number(props.id)) ? String(props.id) : ""}
+                  name={String(props.name ?? "")}
+                  windowId={selectedWindow?.id ? String(selectedWindow.id) : "0"}
+                >
+                  {props.children as React.ReactNode}
+                </ComponentWrapper>
                 ),
               }}
             />

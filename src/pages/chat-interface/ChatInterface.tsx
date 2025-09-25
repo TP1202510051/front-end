@@ -51,7 +51,7 @@ export default function ChatInterface({ onCode, projectId, setIsSaving, target }
     open: false,
     compId: null,
   });
-  const [loadingComponents, setLoadingComponents] = useState(false); // 👈 nuevo estado
+  const [loadingComponents, setLoadingComponents] = useState(false);
 
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -98,7 +98,6 @@ export default function ChatInterface({ onCode, projectId, setIsSaving, target }
   useChatSocket(target, onCode, setMessages, setResponse, setIsSaving);
   useAutoScroll(bottomRef, [messages]);
 
-  // carga de mensajes según target
   useEffect(() => {
     const fetchMessages = async () => {
       try {
@@ -110,9 +109,13 @@ export default function ChatInterface({ onCode, projectId, setIsSaving, target }
           data = await getMessagesByWindowId(Number(target.id));
           setPromptMap(promptMapWindows);
         } else if (target.kind === "component" && target.id) {
-          data = await getMessagesByComponentId(Number(target.id));
-          setPromptMap(promptMapComponents);
+        if (isNaN(Number(target.id))) {
+          toast.error(`❌ ID de componente inválido: ${target.id}`);
+          return;
         }
+        data = await getMessagesByComponentId(Number(target.id));
+        setPromptMap(promptMapComponents);
+      }
         setMessages(data.filter(msg => msg.type !== "system"));
         setResponse(false);
       } catch (error) {
@@ -124,7 +127,6 @@ export default function ChatInterface({ onCode, projectId, setIsSaving, target }
     fetchMessages();
   }, [target]);
 
-  // reconocimiento de voz -> input
   useEffect(() => {
     if (isListening && transcript.trim()) {
       setMessage(prev => {
