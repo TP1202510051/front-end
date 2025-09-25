@@ -37,7 +37,7 @@ export const WindowDropDownMenu: React.FC<WindowDropDownMenuProps> = ({
           setMenuPos({ x: e.clientX, y: e.clientY });
         }}
       >
-        <Button variant="design" className="flex-1 justify-start border-1">
+        <Button variant="design" className="flex-1 justify-start border-1 border-[var(--sidebar-foreground)]">
           {win.name}
         </Button>
       </div>
