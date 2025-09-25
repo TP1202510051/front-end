@@ -15,21 +15,27 @@ const ComponentWrapper: React.FC<ComponentWrapperProps> = ({ id, name = "", wind
 
   return (
     <div className="flex w-full gap-2">
-      <Button className={`rounded-full bg-black text-white h-12 ${selectedId === id ? "visible" : "invisible"}`} onClick={(e) => {
-        e.stopPropagation();
-        openComponent(id ?? "", { name, windowId: windowId.toString() });
-      }}>
-        <MessageCircle className="h-4 w-4" />
-      </Button>
-        <div
+      <Button
+        className={`rounded-full bg-black text-white ${selectedId === id ? "visible" : "invisible"}`}
         onClick={(e) => {
           e.stopPropagation();
-          selectComponent(id ?? ""); 
+          openComponent(id ?? "", { name, windowId: windowId.toString() });
         }}
-        className={`flex-1 relative group border hover:border-8 hover:shadow-md hover:border-blue-500 cursor-pointer 
-          ${selectedId === id ? "border-blue-500 border-4 animate-pulse" : "border-transparent"}`}
       >
-        {children}
+        <MessageCircle className="h-4 w-4" />
+      </Button>
+      <div
+        onClick={(e) => {
+          const tag = (e.target as HTMLElement).tagName.toLowerCase();
+          if (tag !== "button" && tag !== "svg" && tag !== "path" && tag !== "input" && tag !== "label") {
+            e.stopPropagation();
+            selectComponent(id ?? "");
+          }
+        }}
+        className={`flex-1 relative group border hover:border-2 hover:shadow-md hover:border-blue-500 cursor-pointer 
+          ${selectedId === id ? "border-blue-500 border-2 animate-pulse" : "border-transparent"}`}
+      >
+        <div className="bg-white">{children}</div>
       </div>
     </div>
   );

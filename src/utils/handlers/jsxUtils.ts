@@ -3,9 +3,9 @@ export const normalizeJSX = (raw: string) => {
 
   code = code
     .replace(/<\s*componentwrapper/gi, "<ComponentWrapper")
-    .replace(/<\/\s*componentwrapper\s*>/gi, "</ComponentWrapper>");
+    .replace(/<\/\s*componentwrapper\s*>/gi, "</ComponentWrapper>")
+    .replace(/\bclass=/g, "className=");
 
-  // Si ya empieza con <> o con un único nodo raíz, lo dejas
   if (code.startsWith("<>") || code.startsWith("<ComponentWrapper") || code.startsWith("<div")) {
     return code;
   }

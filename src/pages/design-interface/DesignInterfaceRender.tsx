@@ -41,13 +41,12 @@ const DesignInterfaceRender: React.FC = () => {
             onWindowSelect={(window) => setSelectedWindow(window ?? null)}
             setIsSaving={setIsSaving}
             selectedWindow={selectedWindow}
-            setShowChat={() => {}}
           />
         </div>
       </div>
 
       <div
-        className={`absolute rounded-2xl top-12 right-4 h-9/10 bg-transparent text-[var(--sidebar-foreground)] shadow-2xl z-50 flex flex-col transform transition-all duration-300
+        className={`absolute rounded-2xl top-14 right-4 w-250 h-9/10 bg-transparent text-[var(--sidebar-foreground)] shadow-2xl z-50 flex flex-col transform transition-all duration-300
           ${showChat ? "translate-x-0 w-1/3 opacity-100 pointer-events-auto" : "translate-x-full w-0 opacity-0 pointer-events-none"}
         `}
       >

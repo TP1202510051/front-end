@@ -14,44 +14,37 @@ const IframeRenderer: React.FC<IframeRendererProps> = ({ code, selectedWindow })
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [mountNode, setMountNode] = useState<HTMLElement | null>(null);
 
-  // Inicializar iframe
     useEffect(() => {
 
-    if (!iframeRef.current) return;
-    const doc = iframeRef.current.contentDocument;
-    if (!doc) return;
+      if (!iframeRef.current) return;
+      const doc = iframeRef.current.contentDocument;
+      if (!doc) return;
 
-    // Inicializar documento vacío
-    doc.open();
-    doc.write("<!DOCTYPE html><html><head></head><body></body></html>");
-    doc.close();
+      doc.open();
+      doc.write("<!DOCTYPE html><html><head></head><body></body></html>");
+      doc.close();
 
-    const head = doc.head;
-    const body = doc.body;
+      const head = doc.head;
+      const body = doc.body;
 
-    // Estilos de Tailwind vía <link>
-    const styleLink = doc.createElement("link");
-    styleLink.rel = "stylesheet";
-    styleLink.href =
-      "https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css";
-    head.appendChild(styleLink);
+      const script = doc.createElement("script");
+      script.src = "https://cdn.tailwindcss.com";
+      head.appendChild(script);
 
-    // Contenedor root
-    const rootDiv = doc.createElement("div");
-    rootDiv.id = "root";
-    body.appendChild(rootDiv);
+      const rootDiv = doc.createElement("div");
+      rootDiv.id = "root";
+      body.appendChild(rootDiv);
 
-    setMountNode(rootDiv);
+      setMountNode(rootDiv);
 
-    return () => {
-        setMountNode(null);
-    };
+      return () => {
+          setMountNode(null);
+      };
     }, []);
 
   return (
     <>
-    {code}
-    <iframe ref={iframeRef} className="w-full h-full border-0" title="jsx-preview">
+    <iframe ref={iframeRef} className="w-full h-full" title="jsx-preview">
       {mountNode &&
         (
         createPortal(

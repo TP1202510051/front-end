@@ -64,3 +64,21 @@ export const getMessagesByComponentId = async (
     throw error;
   }
 };
+
+export const deleteMessagesByComponentId = async (componentId: number): Promise<void> => {
+  try {
+    await api.delete(`${apiUrl}/component/${componentId}`);
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
+export const deleteMessagesByWindowId = async (windowId: number): Promise<void> => {
+  try {
+    await api.delete(`${apiUrl}/window/${windowId}`);
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};

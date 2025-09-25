@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { RenderSkeleton } from "@/components/skeletons/RenderSkeleton";
 import { useWindows } from "@/hooks/useWindows";
 import IframeRenderer from "@/components/renderers/IframeRenderer";
+import { useEditing } from "@/contexts/EditingContext";
 
 interface WindowInterfaceProps {
   projectId: string;
@@ -19,7 +20,6 @@ interface WindowInterfaceProps {
   onWindowSelect: (window: AppWindow | null) => void;
   setIsSaving?: (isSaving: boolean) => void;
   selectedWindow: AppWindow | null;
-  setShowChat: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const CodeInterface: React.FC<WindowInterfaceProps> = ({
@@ -34,6 +34,7 @@ const CodeInterface: React.FC<WindowInterfaceProps> = ({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newWindowName, setNewWindowName] = useState("");
   const [loadingCode, setLoadingCode] = useState(false);
+  const { openWindow } = useEditing();
 
   React.useEffect(() => {
     const load = async () => {
@@ -56,6 +57,12 @@ const CodeInterface: React.FC<WindowInterfaceProps> = ({
     setIsDialogOpen(false);
   };
 
+  const handleOpenChat = () => {
+    if (selectedWindow) {
+      openWindow(selectedWindow);
+    }
+  };
+
   return (
     <div className="flex flex-col w-full h-full text-[var(--dialog-foreground)]">
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -73,13 +80,25 @@ const CodeInterface: React.FC<WindowInterfaceProps> = ({
         </DialogContent>
       </Dialog>
 
+      <div className="absolute top-4 right-4 z-10">
+        <Button onClick={handleOpenChat} variant="inverseDark">
+          Abrir Chat Ventana
+        </Button>
+      </div>
+      
+
       <main className="flex-1 overflow-auto p-10 box-border min-h-[500px]">
         {loadingCode ? (
           <RenderSkeleton />
         ) : liveCode ? (
-          <IframeRenderer code={liveCode} selectedWindow={selectedWindow} />
+          <>
+            <IframeRenderer code={liveCode} selectedWindow={selectedWindow} />
+
+          </>
         ) : (
-          <p className="text-gray-500">Selecciona una ventana para ver su contenido…</p>
+          <p className="text-gray-500">
+            Selecciona una ventana para ver su contenido…
+          </p>
         )}
       </main>
     </div>
