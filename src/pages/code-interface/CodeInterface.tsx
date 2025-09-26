@@ -13,6 +13,8 @@ import { RenderSkeleton } from "@/components/skeletons/RenderSkeleton";
 import { useWindows } from "@/hooks/useWindows";
 import IframeRenderer from "@/components/renderers/IframeRenderer";
 import { useEditing } from "@/contexts/EditingContext";
+import { MessageCircle } from "lucide-react";
+
 
 interface WindowInterfaceProps {
   projectId: string;
@@ -80,11 +82,22 @@ const CodeInterface: React.FC<WindowInterfaceProps> = ({
         </DialogContent>
       </Dialog>
 
-      <div className="absolute top-4 right-4 z-10">
-        <Button onClick={handleOpenChat} variant="inverseDark">
-          Abrir Chat Ventana
-        </Button>
-      </div>
+    {
+      selectedWindow ? (
+        <div className="absolute bottom-4 right-20 z-10 rounded-full overflow-hidden shadow-lg">
+          <Button 
+            onClick={handleOpenChat} 
+            variant="inverseDark"
+            className="h-16 w-16 p-0 flex items-center justify-center rounded-full"
+          >
+            <MessageCircle className="h-12 w-12" />
+          </Button>
+        </div>
+      ) : (
+        <></>
+      )
+    }
+
       
 
       <main className="flex-1 overflow-auto p-10 box-border min-h-[500px]">

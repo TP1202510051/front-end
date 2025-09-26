@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import type { AppWindow } from "@/models/windowModel";
 import ChatInterface from "../chat-interface/ChatInterface";
@@ -19,7 +19,13 @@ const DesignInterfaceRender: React.FC = () => {
   const [selectedWindow, setSelectedWindow] = useState<AppWindow | null>(null);
   const [liveCode, setLiveCode] = useState("");
 
-  const { target, showChat, closeChat } = useEditing();
+  const { target, showChat, closeChat, clearTarget } = useEditing();
+
+  useEffect(() => {
+    // Cada vez que cambie el proyecto → cerrar chat y limpiar target
+    closeChat();
+    clearTarget();
+  }, [projectId]);
 
   return (
     <div className="w-full h-screen flex flex-col bg-[#202123] overflow-hidden relative">

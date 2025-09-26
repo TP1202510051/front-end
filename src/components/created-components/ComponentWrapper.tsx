@@ -11,7 +11,7 @@ interface ComponentWrapperProps {
 }
 
 const ComponentWrapper: React.FC<ComponentWrapperProps> = ({ id, name = "", windowId, children }) => {
-  const { openComponent, selectedId } = useEditing();
+  const { openComponent, selectedId, selectComponent } = useEditing();
 
   return (
     <div className="flex w-full gap-2">
@@ -19,9 +19,7 @@ const ComponentWrapper: React.FC<ComponentWrapperProps> = ({ id, name = "", wind
         className={`rounded-full bg-black text-white ${selectedId === id ? "visible" : "invisible"}`}
         onClick={(e) => {
           e.stopPropagation();
-          console.log("[ComponentWrapper] openComponent clicked", { id, name, windowId });
           if (!id || isNaN(Number(id))) {
-            console.error("❌ Intento de abrir componente sin ID válido", { id, name, windowId });
             return;
           }
           openComponent(id, { name, windowId });
@@ -34,8 +32,7 @@ const ComponentWrapper: React.FC<ComponentWrapperProps> = ({ id, name = "", wind
           const tag = (e.target as HTMLElement).tagName.toLowerCase();
           if (!["button", "svg", "path", "input", "label"].includes(tag)) {
             e.stopPropagation();
-            console.log("[ComponentWrapper] Div clicked", { id, name, windowId });
-            openComponent(id ?? "0", { name, windowId });
+            selectComponent(id ?? "0");
           }
         }}
         className={`flex-1 relative group border hover:border-2 hover:shadow-md hover:border-blue-500 cursor-pointer 

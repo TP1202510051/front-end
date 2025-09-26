@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import type { AppWindow } from "@/models/windowModel";
 import { toast } from "react-toastify";
 
@@ -26,6 +26,12 @@ export const EditingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [target, setTarget] = useState<EditingTarget | null>(null);
   const [showChat, setShowChat] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  useEffect(() => {
+  if (!target) {
+    setShowChat(false);
+  }
+}, [target]);
 
   const value: EditingContextType = {
     target,
@@ -61,7 +67,6 @@ export const EditingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     },
 
     openComponent: (id, opts) => {
-      console.log("[EditingContext] openComponent called", { id, opts });
 
       if (!opts?.windowId) {
         toast.error("❌ Component opened without windowId");
@@ -78,11 +83,6 @@ export const EditingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setShowChat(true);
       setSelectedId(id);
 
-      console.log("[EditingContext] new target set", {
-        id,
-        name: opts?.name,
-        windowId: opts.windowId,
-      });
     },
 
     closeChat: () => setShowChat(false),

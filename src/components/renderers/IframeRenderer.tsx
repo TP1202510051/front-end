@@ -14,33 +14,34 @@ const IframeRenderer: React.FC<IframeRendererProps> = ({ code, selectedWindow })
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [mountNode, setMountNode] = useState<HTMLElement | null>(null);
 
-    useEffect(() => {
+  useEffect(() => {
+    if (!iframeRef.current) return;
+    const doc = iframeRef.current.contentDocument;
+    if (!doc) return;
 
-      if (!iframeRef.current) return;
-      const doc = iframeRef.current.contentDocument;
-      if (!doc) return;
+    doc.open();
+    doc.write("<!DOCTYPE html><html><head></head><body></body></html>");
+    doc.close();
 
-      doc.open();
-      doc.write("<!DOCTYPE html><html><head></head><body></body></html>");
-      doc.close();
+    const head = doc.head;
+    const body = doc.body;
 
-      const head = doc.head;
-      const body = doc.body;
+    const script = doc.createElement("script");
+    script.src = "https://cdn.tailwindcss.com";
 
-      const script = doc.createElement("script");
-      script.src = "https://cdn.tailwindcss.com";
-      head.appendChild(script);
-
+    script.onload = () => {
       const rootDiv = doc.createElement("div");
       rootDiv.id = "root";
       body.appendChild(rootDiv);
-
       setMountNode(rootDiv);
+    };
 
-      return () => {
-          setMountNode(null);
-      };
-    }, []);
+    head.appendChild(script);
+
+    return () => {
+      setMountNode(null);
+    };
+  }, []);
 
   return (
     <>

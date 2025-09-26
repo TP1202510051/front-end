@@ -61,7 +61,6 @@ export const getMessagesByComponentId = async (
     return data;
   } catch (error) {
     handleApiError(error, ["NO_MESSAGES"]);
-    console.error(error);
     throw error;
   }
 };
