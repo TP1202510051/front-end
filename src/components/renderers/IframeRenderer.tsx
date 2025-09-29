@@ -7,9 +7,10 @@ import ComponentWrapper from "../created-components/ComponentWrapper";
 interface IframeRendererProps {
   code: string;
   selectedWindow: AppWindow | null;
+  onWindowSelect: (window: AppWindow | null) => void;
 }
 
-const IframeRenderer: React.FC<IframeRendererProps> = ({ code }) => {
+const IframeRenderer: React.FC<IframeRendererProps> = ({ code, onWindowSelect }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [mountNode, setMountNode] = useState<HTMLElement | null>(null);
   const [Component, setComponent] = useState<React.ComponentType | null>(null);
@@ -22,6 +23,20 @@ const IframeRenderer: React.FC<IframeRendererProps> = ({ code }) => {
     doc.open();
     doc.write("<!DOCTYPE html><html><head></head><body></body></html>");
     doc.close();
+
+    doc.addEventListener("click", (e) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === "A") {
+        e.preventDefault();
+        const winAttr = (target as HTMLAnchorElement).getAttribute("data-window");
+        if (winAttr) {
+          const id = Number(winAttr);
+          if (!isNaN(id)) {
+            window.parent.postMessage({ type: "navigate", window: { id, name: null } }, "*");
+          }
+        }
+      }
+    });
 
     const head = doc.head;
     const body = doc.body;
@@ -44,14 +59,23 @@ const IframeRenderer: React.FC<IframeRendererProps> = ({ code }) => {
     };
   }, []);
 
-  // 👉 Transpilar y preparar el componente dinámicamente
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (event.data.type === "navigate") {
+        onWindowSelect(event.data.window as AppWindow);
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [onWindowSelect]);
+
   useEffect(() => {
     if (!code || !mountNode) return;
 
     try {
       let transpiled = Babel.transform(code, {
         presets: ["react", "typescript"],
-        filename: "dynamic.tsx", // ⚡ importante
+        filename: "dynamic.tsx",
       }).code;
 
       if (!transpiled) return;
@@ -94,8 +118,7 @@ const IframeRenderer: React.FC<IframeRendererProps> = ({ code }) => {
 
   return (
     <iframe ref={iframeRef} className="w-full h-full" title="jsx-preview">
-      {mountNode && Component &&
-        createPortal(<Component />, mountNode)}
+      {mountNode && Component && createPortal(<Component />, mountNode)}
     </iframe>
   );
 };

@@ -34,7 +34,6 @@ export const promptMapWindows: { mini: string; full: string }[] = [
   Necesito una sección para mostrar productos:
   - Lista de productos con foto, nombre y precio.
   - Barra de búsqueda o filtro.
-  - Botones para “Editar” o “Eliminar” cada producto (solo apariencia).
   - Botones “Ver” o “Añadir al carrito” en cada producto (solo apariencia).
   `.trim()
     },
