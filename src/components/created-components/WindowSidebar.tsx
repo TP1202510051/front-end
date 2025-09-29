@@ -13,7 +13,6 @@ import type { AppWindow } from "@/models/windowModel";
 import { WindowSkeleton } from "@/components/skeletons/WindowSkeleton";
 import { createWindow } from "@/services/windows.service";
 import { toast } from "react-toastify";
-import { useEditing } from "@/contexts/EditingContext";
 import { WindowDropDownMenu } from "./WindowDropDownMenu";
 
 interface WindowSidebarProps {
@@ -36,7 +35,6 @@ export const WindowSidebar: React.FC<WindowSidebarProps> = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedWindow, setSelectedWindow] = useState<AppWindow | null>(null);
   const [newWindowName, setNewWindowName] = useState("");
-  const { openWindow } = useEditing();
 
   const handleCreateWindow = async () => {
   try {
@@ -104,9 +102,6 @@ export const WindowSidebar: React.FC<WindowSidebarProps> = ({
           onDelete={(w) => {
             setSelectedWindow(w);
             setIsDeleteDialogOpen(true);
-          }}
-          onOpenChat={(w) => {
-            openWindow(w);
           }}
         />
       ))}
