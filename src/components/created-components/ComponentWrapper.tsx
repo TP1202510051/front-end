@@ -31,7 +31,6 @@ const ComponentWrapper: React.FC<ComponentWrapperProps> = ({ id, name = "", wind
         onClick={(e) => {
           const tag = (e.target as HTMLElement).tagName.toLowerCase();
           if (!["button", "svg", "path", "input", "label"].includes(tag)) {
-            e.stopPropagation();
             selectComponent(id ?? "0");
           }
         }}

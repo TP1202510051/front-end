@@ -105,6 +105,7 @@ const CodeInterface: React.FC<WindowInterfaceProps> = ({
           <RenderSkeleton />
         ) : liveCode ? (
           <>
+            {/* {<>{liveCode}</>} */}
             <IframeRenderer code={liveCode} selectedWindow={selectedWindow} />
 
           </>
