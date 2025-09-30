@@ -42,11 +42,9 @@ export const uploadFileAndUpdateProfile = async (
   try {
     // Subir archivo
     const snapshot = await uploadBytes(storageRef, file);
-    console.log("✅ Archivo subido:", snapshot.metadata.fullPath);
 
     // Obtener URL de descarga
     const downloadURL = await getDownloadURL(snapshot.ref);
-    console.log("✅ URL generada:", downloadURL);
 
     // Actualizar Firestore con setDoc (merge)
     const userDocRef = doc(db, "users", uid);
@@ -57,10 +55,8 @@ export const uploadFileAndUpdateProfile = async (
       await setDoc(userDocRef, { company: { logoUrl: downloadURL } }, { merge: true });
     }
 
-    console.log("✅ Firestore actualizado en campo:", fieldName);
     return { success: true, url: downloadURL };
   } catch (error) {
-    console.error("❌ Error en uploadFileAndUpdateProfile:", error);
     toast.error(
       `Error uploading file: ${error instanceof Error ? error.message : String(error)}`
     );

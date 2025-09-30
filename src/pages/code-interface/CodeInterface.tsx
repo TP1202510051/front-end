@@ -12,6 +12,9 @@ import { Button } from "@/components/ui/button";
 import { RenderSkeleton } from "@/components/skeletons/RenderSkeleton";
 import { useWindows } from "@/hooks/useWindows";
 import IframeRenderer from "@/components/renderers/IframeRenderer";
+import { useEditing } from "@/contexts/EditingContext";
+import { MessageCircle } from "lucide-react";
+
 
 interface WindowInterfaceProps {
   projectId: string;
@@ -19,7 +22,6 @@ interface WindowInterfaceProps {
   onWindowSelect: (window: AppWindow | null) => void;
   setIsSaving?: (isSaving: boolean) => void;
   selectedWindow: AppWindow | null;
-  setShowChat: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const CodeInterface: React.FC<WindowInterfaceProps> = ({
@@ -34,6 +36,7 @@ const CodeInterface: React.FC<WindowInterfaceProps> = ({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newWindowName, setNewWindowName] = useState("");
   const [loadingCode, setLoadingCode] = useState(false);
+  const { openWindow } = useEditing();
 
   React.useEffect(() => {
     const load = async () => {
@@ -56,6 +59,12 @@ const CodeInterface: React.FC<WindowInterfaceProps> = ({
     setIsDialogOpen(false);
   };
 
+  const handleOpenChat = () => {
+    if (selectedWindow) {
+      openWindow(selectedWindow);
+    }
+  };
+
   return (
     <div className="flex flex-col w-full h-full text-[var(--dialog-foreground)]">
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -73,13 +82,37 @@ const CodeInterface: React.FC<WindowInterfaceProps> = ({
         </DialogContent>
       </Dialog>
 
+    {
+      selectedWindow ? (
+        <div className="absolute bottom-4 right-20 z-10 rounded-full overflow-hidden shadow-lg">
+          <Button 
+            onClick={handleOpenChat} 
+            variant="inverseDark"
+            className="h-16 w-16 p-0 flex items-center justify-center rounded-full"
+          >
+            <MessageCircle className="h-12 w-12" />
+          </Button>
+        </div>
+      ) : (
+        <></>
+      )
+    }
+
+      
+
       <main className="flex-1 overflow-auto p-10 box-border min-h-[500px]">
         {loadingCode ? (
           <RenderSkeleton />
         ) : liveCode ? (
-          <IframeRenderer code={liveCode} selectedWindow={selectedWindow} />
+          <>
+            {/* {<>{liveCode}</>} */}
+            <IframeRenderer code={liveCode} selectedWindow={selectedWindow} onWindowSelect={onWindowSelect} />
+
+          </>
         ) : (
-          <p className="text-gray-500">Selecciona una ventana para ver su contenido…</p>
+          <p className="text-gray-500">
+            Selecciona una ventana para ver su contenido…
+          </p>
         )}
       </main>
     </div>

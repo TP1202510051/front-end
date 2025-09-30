@@ -101,8 +101,7 @@ export async function register(userData: UserProfileData, password: string) {
 export const sendRecoveryEmail = async (email: string) => {
   const auth = getAuth();
   try {
-    const response = await sendPasswordResetEmail(auth, email);
-    console.log(response);
+    await sendPasswordResetEmail(auth, email);
     toast.success("Se envió un enlace de recuperación a tu correo.");
   } catch (error) {
     if (error instanceof Error) {

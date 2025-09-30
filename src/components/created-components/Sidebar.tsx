@@ -29,24 +29,11 @@ export const Sidebar = ({ projectId, projectName, setIsSaving, onSelectWindow }:
     <div className="w-1/4 bg-[var(--sidebar)] text-[var(--sidebar-foreground)] flex flex-col overflow-auto p-4 gap-3">
       <UserNav />
       <ProjectHeader projectId={projectId} projectName={projectName} setIsSaving={setIsSaving} />
-
-      {/* <Button
-        variant="inverseDark"
-        className="flex items-center gap-2"
-        onClick={() => openProject(projectId, projectName)}
-      >
-        <MessageCircle className="h-4 w-4" />
-        Chat Proyecto
-      </Button> */}
-
       <WindowSidebar
         projectId={projectId}
         onSelect={handleSelectWindow}
         setIsSaving={setIsSaving}
       />
-
-      {/* {selectedWindowId && <ComponentSidebar windowId={selectedWindowId} />} */}
-
       <ProductInterface projectId={projectId} projectName={projectName} setIsSaving={setIsSaving} />
     </div>
   );
