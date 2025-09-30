@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import * as Babel from "@babel/standalone";
@@ -15,49 +16,67 @@ const IframeRenderer: React.FC<IframeRendererProps> = ({ code, onWindowSelect })
   const [mountNode, setMountNode] = useState<HTMLElement | null>(null);
   const [Component, setComponent] = useState<React.ComponentType | null>(null);
 
-  useEffect(() => {
-    if (!iframeRef.current) return;
-    const doc = iframeRef.current.contentDocument;
-    if (!doc) return;
+useEffect(() => {
+  if (!iframeRef.current) return;
+  const doc = iframeRef.current.contentDocument;
+  if (!doc) return;
 
-    doc.open();
-    doc.write("<!DOCTYPE html><html><head></head><body></body></html>");
-    doc.close();
+  doc.open();
+  doc.write("<!DOCTYPE html><html><head></head><body></body></html>");
+  doc.close();
 
-    doc.addEventListener("click", (e) => {
-      const target = e.target as HTMLElement;
-      if (target.tagName === "A") {
-        e.preventDefault();
-        const winAttr = (target as HTMLAnchorElement).getAttribute("data-window");
-        if (winAttr) {
-          const id = Number(winAttr);
-          if (!isNaN(id)) {
-            window.parent.postMessage({ type: "navigate", window: { id, name: null } }, "*");
-          }
+  const head = doc.head;
+  const body = doc.body;
+
+  // Inyecta Tailwind primero
+  const tailwindScript = doc.createElement("script");
+  tailwindScript.src = "https://cdn.tailwindcss.com";
+
+  // Inyecta SockJS y StompJS después (o como prefieras)
+  const sockJsScript = doc.createElement("script");
+  sockJsScript.src = "https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js";
+  const stompJsScript = doc.createElement("script");
+  stompJsScript.src = "https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js";
+
+  // Unir carga ordenada: esperar que se cargue todo
+  tailwindScript.onload = () => {
+    sockJsScript.onload = () => {
+      stompJsScript.onload = () => {
+        const rootDiv = doc.createElement("div");
+        rootDiv.id = "root";
+        body.appendChild(rootDiv);
+        setMountNode(rootDiv);
+      };
+      head.appendChild(stompJsScript);
+    };
+    head.appendChild(sockJsScript);
+  };
+
+  head.appendChild(tailwindScript);
+
+  // listener para clics en el iframe
+  const clickListener = (e: MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.tagName === "A") {
+      e.preventDefault();
+      const winAttr = (target as HTMLAnchorElement).getAttribute("data-window");
+      if (winAttr) {
+        const id = Number(winAttr);
+        if (!isNaN(id)) {
+          window.parent.postMessage({ type: "navigate", window: { id, name: null } }, "*");
         }
       }
-    });
+    }
+  };
+  doc.addEventListener("click", clickListener);
 
-    const head = doc.head;
-    const body = doc.body;
+  return () => {
+    doc.removeEventListener("click", clickListener);
+    setMountNode(null);
+    setComponent(null);
+  };
+}, []);
 
-    const script = doc.createElement("script");
-    script.src = "https://cdn.tailwindcss.com";
-
-    script.onload = () => {
-      const rootDiv = doc.createElement("div");
-      rootDiv.id = "root";
-      body.appendChild(rootDiv);
-      setMountNode(rootDiv);
-    };
-
-    head.appendChild(script);
-
-    return () => {
-      setMountNode(null);
-      setComponent(null);
-    };
-  }, []);
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
@@ -69,52 +88,58 @@ const IframeRenderer: React.FC<IframeRendererProps> = ({ code, onWindowSelect })
     return () => window.removeEventListener("message", handler);
   }, [onWindowSelect]);
 
-  useEffect(() => {
-    if (!code || !mountNode) return;
+useEffect(() => {
+  if (!code || !mountNode) return;
 
-    try {
-      let transpiled = Babel.transform(code, {
-        presets: ["react", "typescript"],
-        filename: "dynamic.tsx",
-      }).code;
+  try {
+    let transpiled = Babel.transform(code, {
+      presets: ["react", "typescript"],
+      filename: "dynamic.tsx"
+    }).code;
+    if (!transpiled) return;
 
-      if (!transpiled) return;
+    transpiled = transpiled.replace(
+      /https:\/\/back-end-76685875773\.europe-west1\.run\.app/g,
+      "http://localhost:8080"
+    );
+    transpiled = transpiled.replace(/export\s+default/, "exports.default =");
 
-      // Reemplazar `export default` por `exports.default =`
-      transpiled = transpiled.replace(/export\s+default/, "exports.default =");
+    const moduleExports: Record<string, unknown> = {};
+    const fn = new Function(
+      "React",
+      "useState",
+      "useEffect",
+      "useContext",
+      "useReducer",
+      "useRef",
+      "ComponentWrapper",
+      "SockJS",
+      "Stomp",
+      "exports",
+      transpiled
+    );
 
-      // Crear módulo dinámico
-      const moduleExports: Record<string, unknown> = {};
-      const fn = new Function(
-        "React",
-        "useState",
-        "useEffect",
-        "useContext",
-        "useReducer",
-        "useRef",
-        "ComponentWrapper",
-        "exports",
-        transpiled
-      );
+    fn(
+      React,
+      React.useState,
+      React.useEffect,
+      React.useContext,
+      React.useReducer,
+      React.useRef,
+      ComponentWrapper,
+      (iframeRef.current!.contentWindow as any).SockJS,
+      (iframeRef.current!.contentWindow as any).Stomp,
+      moduleExports
+    );
 
-      fn(
-        React,
-        React.useState,
-        React.useEffect,
-        React.useContext,
-        React.useReducer,
-        React.useRef,
-        ComponentWrapper,
-        moduleExports
-      );
+    const Comp = moduleExports.default as React.ComponentType;
+    setComponent(() => Comp);
+  } catch (error) {
+    console.error("❌ Error ejecutando código dinámico:", error);
+    setComponent(null);
+  }
+}, [code, mountNode]);
 
-      const Comp = moduleExports.default as React.ComponentType;
-      setComponent(() => Comp);
-    } catch (error) {
-      console.error("❌ Error ejecutando código dinámico:", error);
-      setComponent(null);
-    }
-  }, [code, mountNode]);
 
   return (
     <iframe ref={iframeRef} className="w-full h-full" title="jsx-preview">

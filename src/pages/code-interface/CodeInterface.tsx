@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLiveCode } from "@/hooks/useLiveCodes";
 import type { AppWindow } from "@/models/windowModel";
 import {
@@ -38,7 +38,7 @@ const CodeInterface: React.FC<WindowInterfaceProps> = ({
   const [loadingCode, setLoadingCode] = useState(false);
   const { openWindow } = useEditing();
 
-  React.useEffect(() => {
+  useEffect(() => {
     const load = async () => {
       if (!selectedWindow) return;
       setLoadingCode(true);
