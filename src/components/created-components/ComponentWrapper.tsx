@@ -22,7 +22,8 @@ const ComponentWrapper: React.FC<ComponentWrapperProps> = ({ id, name = "", wind
           if (!id || isNaN(Number(id))) {
             return;
           }
-          openComponent(id, { name, windowId });
+          const numericId = String(Number(id));
+          openComponent(numericId, { name, windowId });
         }}
       >
         <MessageCircle className="h-4 w-4" />
