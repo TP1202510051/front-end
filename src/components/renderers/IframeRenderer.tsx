@@ -92,16 +92,23 @@ useEffect(() => {
   if (!code || !mountNode) return;
 
   try {
-    let transpiled = Babel.transform(code, {
+    const cleanedCode = code
+      .replace(/^<>/, "")              // quita fragmento abierto al inicio
+      .replace(/<\/>$/, "")            // quita fragmento cerrado al final
+      .replace(/```[a-zA-Z]*\n?/g, "") // quita fences tipo ```jsx o ```
+      .trim();
+
+    let transpiled = Babel.transform(cleanedCode, {
       presets: ["react", "typescript"],
       filename: "dynamic.tsx"
     }).code;
+
     if (!transpiled) return;
 
-    transpiled = transpiled.replace(
-      /https:\/\/back-end-76685875773\.europe-west1\.run\.app/g,
-      "http://localhost:8080"
-    );
+    // transpiled = transpiled.replace(
+    //   /https:\/\/back-end-76685875773\.europe-west1\.run\.app/g,
+    //   "http://localhost:8080"
+    // );
     transpiled = transpiled.replace(/export\s+default/, "exports.default =");
 
     const moduleExports: Record<string, unknown> = {};
