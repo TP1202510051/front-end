@@ -30,7 +30,7 @@ export const TemplateCard = ({ template, onSelect }: TemplateCardProps) => {
         <img
           src={template.image}
           alt={template.name}
-          className="w-full object-cover rounded-t-lg aspect-[3/2]"
+          className="w-full object-cover rounded-t-lg"
           draggable={false}
         />
       )}
