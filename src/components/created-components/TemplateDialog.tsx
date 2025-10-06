@@ -60,7 +60,6 @@ export const TemplateDialog = () => {
                                 template={templates[position - 1]}
                                 onSelect={() => {
                                     handleTemplateSelect(templates[position - 1].id);
-                                    console.log("Selected template ID:", templates[position - 1].id);
                                 }}
                             />
                         )}
