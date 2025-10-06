@@ -4,6 +4,7 @@ import { Outlet } from 'react-router';
 import { CreateProjectDialog } from '@/components/created-components/CreateProjectDialog';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router';
+import { TemplateDialog } from '@/components/created-components/TemplateDialog';
 
 export const DashboardLayout = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -22,7 +23,10 @@ export const DashboardLayout = () => {
             <SearchInput value={searchTerm} onChange={setSearchTerm} />
           </div>
         )}
-        <CreateProjectDialog />
+      <div className="flex items-center gap-4">
+          <TemplateDialog />
+          <CreateProjectDialog />
+      </div>
       </nav>
     </header>
     <main>
