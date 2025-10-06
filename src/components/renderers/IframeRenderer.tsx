@@ -105,10 +105,10 @@ useEffect(() => {
 
     if (!transpiled) return;
 
-    transpiled = transpiled.replace(
-      /https:\/\/back-end-76685875773\.europe-west1\.run\.app/g,
-      "http://localhost:8080"
-    );
+    // transpiled = transpiled.replace(
+    //   /https:\/\/back-end-76685875773\.europe-west1\.run\.app/g,
+    //   "http://localhost:8080"
+    // );
     transpiled = transpiled.replace(/export\s+default/, "exports.default =");
 
     const moduleExports: Record<string, unknown> = {};

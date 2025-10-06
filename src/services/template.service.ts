@@ -7,7 +7,6 @@ const apiUrl = "/templates";
 export const getTemplates = async (): Promise<Template[]> => {
   try {
     const { data } = await api.get<Template[]>(`${apiUrl}`);
-    console.log(data);
     return data;
   } catch (error) {
     handleApiError(error, ["NO_TEMPLATES"]);
@@ -16,10 +15,8 @@ export const getTemplates = async (): Promise<Template[]> => {
 };
 
 export const setTemplate = async (template: TemplateRequest): Promise<TemplateResponse> => {
-    console.log(template);
   try {
     const { data } = await api.post<TemplateResponse>(`${apiUrl}/apply`, template);
-    console.log(data);
     return data;
   } catch (error) {
     handleApiError(error, ["TEMPLATE_NOT_CREATED"]);
