@@ -14,6 +14,7 @@ import { WindowSkeleton } from "@/components/skeletons/WindowSkeleton";
 import { createWindow } from "@/services/windows.service";
 import { toast } from "react-toastify";
 import { WindowDropDownMenu } from "./WindowDropDownMenu";
+import { useEditing } from "@/contexts/EditingContext";
 
 interface WindowSidebarProps {
   projectId: string;
@@ -31,29 +32,32 @@ export const WindowSidebar: React.FC<WindowSidebarProps> = ({
     setIsSaving
   );
 
+  const { openWindow } = useEditing();
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedWindow, setSelectedWindow] = useState<AppWindow | null>(null);
   const [newWindowName, setNewWindowName] = useState("");
 
   const handleCreateWindow = async () => {
-  try {
-    if (!newWindowName.trim()) return;
+    try {
+      if (!newWindowName.trim()) return;
 
-    const win = await createWindow(Number(projectId), newWindowName);
+      const win = await createWindow(Number(projectId), newWindowName);
 
-    setWindows((prev) => [
-      ...prev,
-      { ...win, projectId: String(win.projectId) } as AppWindow,
-    ]);
-    onSelect({ ...win, projectId: String(win.projectId) } as AppWindow);
+      const newWin = { ...win, projectId: String(win.projectId) } as AppWindow;
+      setWindows(prev => [...prev, newWin]);
+      onSelect(newWin);
 
-    setIsDialogOpen(false);
-    setNewWindowName("");
-  } catch (error) {
-    toast.error(`❌ Error creando ventana: ${error instanceof Error ? error.message : String(error)}`);
-  }
-};
+      // abrir chat de la ventana recién creada
+      openWindow(newWin);
+
+      setIsDialogOpen(false);
+      setNewWindowName("");
+    } catch (error) {
+      toast.error(`❌ Error creando ventana: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  };
 
   const handleUpdateWindow = async () => {
     if (!selectedWindow) return;

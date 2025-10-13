@@ -1,6 +1,7 @@
-export const promptMapComponents: { mini: string; full: string }[] = [
+export const promptMapComponents: { mini: string; hover: string; full: string }[] = [
   {
-    mini: 'Rediseñar cabecera: más minimalista, colores claros, menú centrado.',
+    mini: 'Rediseñar cabecera',
+    hover: 'Más minimalista, colores claros, menú centrado.',
     full: `
   Modifica el diseño del componente de cabecera:
   - Hazlo más minimalista.
@@ -9,7 +10,8 @@ export const promptMapComponents: { mini: string; full: string }[] = [
   `.trim()
   },
   {
-    mini: 'Rediseñar tarjeta de producto: bordes redondeados, sombra ligera, botón destacado.',
+    mini: 'Rediseñar tarjeta de producto',
+    hover: 'Aplica bordes redondeados, añade una sombra ligera, resalta el botón “Añadir al carrito”.',
     full: `
   Modifica el diseño del componente de tarjeta de producto:
   - Aplica bordes redondeados.
@@ -18,7 +20,8 @@ export const promptMapComponents: { mini: string; full: string }[] = [
   `.trim()
   },
   {
-    mini: 'Rediseñar carrito: diseño en panel lateral, fondo claro, tipografía más grande.',
+    mini: 'Rediseñar carrito',
+    hover: 'Diseño en panel lateral, fondo claro, tipografía más grande.',
     full: `
   Modifica el diseño del componente de carrito:
   - Muestra el carrito como panel lateral.
@@ -27,7 +30,8 @@ export const promptMapComponents: { mini: string; full: string }[] = [
   `.trim()
   },
   {
-    mini: 'Rediseñar formulario de pago: estilo limpio, campos con borde sutil, botón ancho.',
+    mini: 'Rediseñar formulario de pago',
+    hover: 'Estilo más limpio y moderno, bordes sutiles en los campos, botón “Pagar” ancho y visible.',
     full: `
   Modifica el diseño del componente de formulario de pago:
   - Haz el estilo más limpio y moderno.
@@ -36,7 +40,8 @@ export const promptMapComponents: { mini: string; full: string }[] = [
   `.trim()
   },
   {
-    mini: 'Rediseñar lista de productos: vista en grid, filtros arriba, botones discretos.',
+    mini: 'Rediseñar lista de productos',
+    hover: 'Vista en grid, filtros arriba, botones discretos.',
     full: `
   Modifica el diseño del componente de lista de productos:
   - Muestra los productos en formato de grid.

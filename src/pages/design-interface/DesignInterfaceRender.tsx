@@ -23,7 +23,6 @@ const DesignInterfaceRender: React.FC = () => {
 
   useEffect(() => {
     // Cada vez que cambie el proyecto → cerrar chat y limpiar target
-    closeChat();
     clearTarget();
   }, [projectId]);
 

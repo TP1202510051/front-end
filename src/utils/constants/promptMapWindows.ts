@@ -1,6 +1,7 @@
-export const promptMapWindows: { mini: string; full: string }[] = [
+export const promptMapWindows: { mini: string; hover: string; full: string }[] = [
     {
-      mini: 'Página básica de tienda online: cabecera con logo y menú (Inicio, Tienda, Contacto), sección de productos en tarjetas (foto, nombre, precio) y pie de página con info de empresa y contactos.',
+      mini: 'Página básica de tienda online',
+      hover: 'Cabecera con logo y menú (Inicio, Tienda, Contacto), sección de productos en tarjetas (foto, nombre, precio) y pie de página con info de empresa y contactos.',
       full: `
   Me gustaría una página de tienda online muy básica:
   - Una cabecera con el logo y un menú (Inicio, Tienda, Contacto).
@@ -9,17 +10,8 @@ export const promptMapWindows: { mini: string; full: string }[] = [
   `.trim()
     },
     {
-      mini: 'Tienda online con: cabecera y pie simples, productos en tarjetas (foto, nombre, precio, botón “añadir al carrito”), y carrito visible con lista, cantidades y total (solo apariencia).',
-      full: `
-  Necesito una tienda donde se pueda “añadir al carrito”:
-  - Muestra los productos con su foto, nombre y precio.
-  - Cada producto tiene un botón para agregar al carrito.
-  - Ver un carrito con la lista de productos, la cantidad y el total (solo la apariencia).
-  - Incluye cabecera y pie de página simples.
-  `.trim()
-    },
-    {
-      mini: 'Sección de pago: formulario con datos de facturación y tarjeta, validación con mensajes de error, botón “Pagar” que lleva a página de confirmación (solo apariencia), cabecera y pie discretos.',
+      mini: 'Sección de pago',
+      hover: 'Formulario con datos de facturación y tarjeta, validación con mensajes de error, botón “Pagar” que lleva a página de confirmación (solo apariencia), cabecera y pie discretos.',
       full: `
   Quiero la parte de pago de la tienda:
   - Un formulario para ingresar datos de facturación (nombre, dirección) y datos de tarjeta.
@@ -29,7 +21,8 @@ export const promptMapWindows: { mini: string; full: string }[] = [
   `.trim()
     },
     {
-      mini: 'Sección de productos: lista con foto, nombre y precio, barra de búsqueda o filtro, botones “Editar” y “Eliminar” (solo apariencia), y botones “Ver” y “Añadir al carrito” (solo apariencia).',
+      mini: 'Sección de productos',
+      hover: 'Lista con foto, nombre y precio, barra de búsqueda o filtro, botones “Editar” y “Eliminar” (solo apariencia), y botones “Ver” y “Añadir al carrito” (solo apariencia).',
       full: `
   Necesito una sección para mostrar productos:
   - Lista de productos con foto, nombre y precio.

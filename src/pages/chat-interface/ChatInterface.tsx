@@ -8,13 +8,11 @@ import { MicIcon } from '@/assets/icons/MicIcon';
 import { SendIcon } from '@/assets/icons/SendIcon';
 import { promptMapWindows } from '@/utils/constants/promptMapWindows';
 import { promptMapComponents } from '@/utils/constants/promptMapComponents';
-import { promptMapProject } from '@/utils/constants/promptMapProject';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { 
   createMessage, 
   getMessagesByWindowId, 
-  getMessagesByComponentId, 
-  getMessagesByProjectId 
+  getMessagesByComponentId,  
 } from '@/services/messaging.service';
 import type { Message } from '@/models/messageModel';
 import { toast } from 'react-toastify';
@@ -29,6 +27,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { useProfileData } from '@/hooks/useProfileData';
 
 interface ChatInterfaceProps {
   onCode: (jsx: string) => void;
@@ -43,7 +42,7 @@ export default function ChatInterface({ onCode, projectId, setIsSaving, target }
   const [messages, setMessages] = useState<Message[]>([]);
   const [activeComponents, setActiveComponents] = useState<Component[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const [promptMap, setPromptMap] = useState<{ mini: string; full: string }[]>([]);
+  const [promptMap, setPromptMap] = useState<{ mini: string; hover: string; full: string }[]>([]);
 
   const { isListening, transcript, startListening, stopListening } = useSpeechRecognition();
   const { openComponent } = useEditing();
@@ -52,6 +51,7 @@ export default function ChatInterface({ onCode, projectId, setIsSaving, target }
     compId: null,
   });
   const [loadingComponents, setLoadingComponents] = useState(false);
+  const { profile } = useProfileData();
 
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -102,10 +102,7 @@ export default function ChatInterface({ onCode, projectId, setIsSaving, target }
     const fetchMessages = async () => {
       try {
         let data: Message[] = [];
-        if (target.kind === "project") {
-          data = await getMessagesByProjectId(Number(target.id));
-          setPromptMap(promptMapProject);
-        } else if (target.kind === "window") {
+        if (target.kind === "window") {
           data = await getMessagesByWindowId(Number(target.id));
           setPromptMap(promptMapWindows);
         } else if (target.kind === "component" && target.id) {
@@ -137,6 +134,7 @@ export default function ChatInterface({ onCode, projectId, setIsSaving, target }
   }, [isListening, transcript]);
 
   useEffect(() => {
+    console.log("Address:", profile?.company.address);
     const fetchActiveComponents = async () => {
       if (target.kind !== "window") {
         setActiveComponents([]);
@@ -182,6 +180,11 @@ export default function ChatInterface({ onCode, projectId, setIsSaving, target }
           windowId: target.windowId, 
           componentId: target.id 
         }),
+        name: profile?.company.name || null,
+        addres: profile?.company.address || null,
+        phone: profile?.company.phone || null,
+        ruc: profile?.company.ruc || null,
+        companyLogoUrl: profile?.company.logoUrl || null,
       });
 
       setMessages(prev => [
