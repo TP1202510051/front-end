@@ -8,6 +8,11 @@ interface MessageRequest {
   projectId?: string | null;
   windowId?: string | null;
   componentId?: string | null;
+  name?: string | null;
+  addres?: string | null;
+  phone?: string | null;
+  ruc?: string | null;
+  companyLogoUrl?: string | null;
 }
 
 interface Response {

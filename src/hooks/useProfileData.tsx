@@ -26,5 +26,5 @@ export function useProfileData() {
     }
   }, [currentUser]);
 
-  return { profile, loading };
+  return { profile, loading, currentUser };
 }

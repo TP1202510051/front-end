@@ -7,7 +7,7 @@ import { useProfileData } from '@/hooks/useProfileData';
 interface MessageListProps {
   messages: Message[];
   bottomRef: React.RefObject<HTMLDivElement | null>;
-  promptMap: { mini: string; full: string }[];
+  promptMap: { mini: string; hover: string; full: string }[];
   onPromptClick: (full: string) => void;
 }
 
@@ -17,16 +17,17 @@ export function MessageList({ messages, bottomRef, promptMap, onPromptClick }: M
   if (messages.length === 0) {
     return (
       <div className="h-full overflow-y-auto space-y-4 px-4">
-        {promptMap.map(({ mini, full }, idx) => (
+        {promptMap.map(({ mini, hover, full }, idx) => (
           <Button
             key={idx}
             onClick={() => onPromptClick(full)}
-            className="w-full min-h-16 px-4 py-14 rounded-lg transition text-left whitespace-normal"
+            className="group w-full min-h-16 px-4 py-14 rounded-lg transition text-left whitespace-normal"
             variant="inverseDark"
           >
-            <span className="block w-full whitespace-normal break-words [overflow-wrap:anywhere] leading-snug text-pretty">
-              {mini}
-            </span>
+          <span className="block w-full whitespace-normal break-words [overflow-wrap:anywhere] leading-snug text-pretty">
+            <span className="block group-hover:hidden">{mini}</span>
+            <span className="hidden group-hover:block">{hover}</span>
+          </span>
           </Button>
         ))}
       </div>
