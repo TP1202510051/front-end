@@ -7,7 +7,6 @@ import {
   DialogFooter,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { useWindows } from "@/hooks/useWindows";
 import type { AppWindow } from "@/models/windowModel";
 import { WindowSkeleton } from "@/components/skeletons/WindowSkeleton";
@@ -15,6 +14,7 @@ import { createWindow } from "@/services/windows.service";
 import { toast } from "react-toastify";
 import { WindowDropDownMenu } from "./WindowDropDownMenu";
 import { useEditing } from "@/contexts/EditingContext";
+import CreationWindowCard from "./CreationWindowCard";
 
 interface WindowSidebarProps {
   projectId: string;
@@ -116,12 +116,12 @@ export const WindowSidebar: React.FC<WindowSidebarProps> = ({
           <DialogTitle>
             {selectedWindow ? "Editar ventana" : "Nueva ventana"}
           </DialogTitle>
-          <Input
-            value={newWindowName}
-            onChange={(e) => setNewWindowName(e.target.value)}
-            placeholder="Nombre de la ventana"
-            className="mt-4"
-          />
+          <CreationWindowCard onSelectName={setNewWindowName} />
+          {newWindowName && (
+            <div className="mt-3 text-sm ">
+              Nombre seleccionado: <span className="font-semibold">{newWindowName}</span>
+            </div>
+          )}
           <DialogFooter className="pt-4 flex justify-between">
             {selectedWindow ? (
               <>
