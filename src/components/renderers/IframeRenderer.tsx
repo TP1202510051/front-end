@@ -11,142 +11,203 @@ interface IframeRendererProps {
   onWindowSelect: (window: AppWindow | null) => void;
 }
 
-const IframeRenderer: React.FC<IframeRendererProps> = ({ code, onWindowSelect }) => {
+const IframeRenderer: React.FC<IframeRendererProps> = ({ code, selectedWindow, onWindowSelect }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [mountNode, setMountNode] = useState<HTMLElement | null>(null);
   const [Component, setComponent] = useState<React.ComponentType | null>(null);
 
-useEffect(() => {
-  if (!iframeRef.current) return;
-  const doc = iframeRef.current.contentDocument;
-  if (!doc) return;
+  useEffect(() => {
+    if (!iframeRef.current) return;
+    const doc = iframeRef.current.contentDocument;
+    if (!doc) return;
 
-  doc.open();
-  doc.write("<!DOCTYPE html><html><head></head><body></body></html>");
-  doc.close();
+    doc.open();
+    doc.write("<!DOCTYPE html><html><head></head><body></body></html>");
+    doc.close();
 
-  const head = doc.head;
-  const body = doc.body;
+    const head = doc.head;
+    const body = doc.body;
 
-  // Inyecta Tailwind primero
-  const tailwindScript = doc.createElement("script");
-  tailwindScript.src = "https://cdn.tailwindcss.com";
+    const tailwind = doc.createElement("script");
+    tailwind.src = "https://cdn.tailwindcss.com";
 
-  // Inyecta SockJS y StompJS después (o como prefieras)
-  const sockJsScript = doc.createElement("script");
-  sockJsScript.src = "https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js";
-  const stompJsScript = doc.createElement("script");
-  stompJsScript.src = "https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js";
+    const sockJs = doc.createElement("script");
+    sockJs.src = "https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js";
 
-  // Unir carga ordenada: esperar que se cargue todo
-  tailwindScript.onload = () => {
-    sockJsScript.onload = () => {
-      stompJsScript.onload = () => {
-        const rootDiv = doc.createElement("div");
-        rootDiv.id = "root";
-        body.appendChild(rootDiv);
-        setMountNode(rootDiv);
+    const stompJs = doc.createElement("script");
+    stompJs.src = "https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js";
+
+    tailwind.onload = () => {
+      sockJs.onload = () => {
+        stompJs.onload = () => {
+          const root = doc.createElement("div");
+          root.id = "root";
+          body.appendChild(root);
+          setMountNode(root);
+        };
+        head.appendChild(stompJs);
       };
-      head.appendChild(stompJsScript);
+      head.appendChild(sockJs);
     };
-    head.appendChild(sockJsScript);
-  };
 
-  head.appendChild(tailwindScript);
+    head.appendChild(tailwind);
 
-  // listener para clics en el iframe
-  const clickListener = (e: MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (target.tagName === "A") {
+    const clickListener = (e: MouseEvent) => {
+      const link = (e.target as HTMLElement).closest("a");
+      if (!link) return;
       e.preventDefault();
-      const winAttr = (target as HTMLAnchorElement).getAttribute("data-window");
+
+      const winAttr = link.getAttribute("data-window");
+      const prodAttr = link.getAttribute("data-product");
+
       if (winAttr) {
         const id = Number(winAttr);
-        if (!isNaN(id)) {
-          window.parent.postMessage({ type: "navigate", window: { id, name: null } }, "*");
+        if (!Number.isNaN(id)) {
+          window.parent.postMessage({ type: "navigate", window: { id } }, "*");
+          return;
         }
       }
-    }
-  };
-  doc.addEventListener("click", clickListener);
 
-  return () => {
-    doc.removeEventListener("click", clickListener);
-    setMountNode(null);
-    setComponent(null);
-  };
-}, []);
+      if (prodAttr) {
+        const productId = Number(prodAttr);
+        (iframeRef.current!.contentWindow as any).CURRENT_PRODUCT = {
+          id: productId || 999,
+          name: "Atún Premium 500g",
+          description:
+            "Atún en conserva de la más alta calidad, rico en proteínas y bajo en grasa. Ideal para comidas saludables.",
+          price: 15.9,
+          discount: 2.0,
+          image:
+            "https://firebasestorage.googleapis.com/v0/b/abstractify-v2.firebasestorage.app/o/public%2Ftuna-can.jpg?alt=media",
+          stock: 120,
+          categoryId: 10,
+        };
+        window.parent.postMessage({ type: "open-product", productId }, "*");
+      }
+    };
+    doc.addEventListener("click", clickListener);
 
+    return () => {
+      doc.removeEventListener("click", clickListener);
+      setMountNode(null);
+      setComponent(null);
+    };
+  }, []);
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
       if (event.data.type === "navigate") {
         onWindowSelect(event.data.window as AppWindow);
       }
+      if (event.data.type === "open-product") {
+        onWindowSelect({
+          id: selectedWindow?.id ?? 0,
+          name: "Producto Detalle",
+          productId: event.data.productId,
+        } as any);
+      }
     };
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
-  }, [onWindowSelect]);
+  }, [onWindowSelect, selectedWindow]);
 
-useEffect(() => {
-  if (!code || !mountNode) return;
+  useEffect(() => {
+    if (!code || !mountNode) return;
+    try {
+      const cleanedCode = code
+        .replace(/^<>/, "")
+        .replace(/<\/>$/, "")
+        .replace(/```[a-zA-Z]*\n?/g, "")
+        .trim();
 
-  try {
-    const cleanedCode = code
-      .replace(/^<>/, "")              // quita fragmento abierto al inicio
-      .replace(/<\/>$/, "")            // quita fragmento cerrado al final
-      .replace(/```[a-zA-Z]*\n?/g, "") // quita fences tipo ```jsx o ```
-      .trim();
+      let transpiled = Babel.transform(cleanedCode, {
+        presets: ["react", "typescript"],
+        filename: "dynamic.tsx",
+      }).code;
 
-    let transpiled = Babel.transform(cleanedCode, {
-      presets: ["react", "typescript"],
-      filename: "dynamic.tsx"
-    }).code;
+      if (!transpiled) return;
 
-    if (!transpiled) return;
+      // 🔧 Tumba cualquier fetch de producto y reemplaza con producto simulado
+      transpiled = transpiled
+        .replace(/imageUrl/g, "image")
+        // 🔧 Reemplaza toda la definición de fetchProduct
+        .replace(
+          /const\s+fetchProduct\s*=\s*async\s*\(\)\s*=>\s*\{[\s\S]*?\};/,
+          `
+          const fetchProduct = async () => {
+            const fakeProduct = {
+              id: 999,
+              name: "Producto de ejemplo",
+              description: "Producto simulado para vista previa.",
+              price: 39.9,
+              discount: 5,
+              image: "https://placehold.co/600x400",
+              stock: 50
+            };
+            setProduct(fakeProduct);
+            setLoading(false);
+          };
+          `
+        )
+        // 🔧 Inserta un useEffect adicional para garantizar carga simulada
+        .replace(
+          /useEffect\(\(\)\s*=>\s*\{\s*[^}]*fetchProduct\(\);[^}]*\}\s*,\s*\[\]\);/,
+          `
+          useEffect(() => {
+            const fakeProduct = {
+              id: 999,
+              name: "Producto de ejemplo",
+              description: "Producto simulado para vista previa.",
+              price: 39.9,
+              discount: 5,
+              image: "https://via.placeholder.com/400x400?text=Producto+Simulado",
+              stock: 50
+            };
+            setTimeout(() => {
+              setProduct(fakeProduct);
+              setLoading(false);
+            }, 500);
+          }, []);
+          `
+        )
+        // .replace(/https:\/\/back-end-76685875773\.europe-west1\.run\.app/g, "http://localhost:8080")
+        .replace(/export\s+default/, "exports.default =");
 
-    // transpiled = transpiled.replace(
-    //   /https:\/\/back-end-76685875773\.europe-west1\.run\.app/g,
-    //   "http://localhost:8080"
-    // );
-    transpiled = transpiled.replace(/export\s+default/, "exports.default =");
+      const moduleExports: Record<string, unknown> = {};
+      const fn = new Function(
+        "React",
+        "useState",
+        "useEffect",
+        "useContext",
+        "useReducer",
+        "useRef",
+        "ComponentWrapper",
+        "SockJS",
+        "Stomp",
+        "exports",
+        transpiled
+      );
 
-    const moduleExports: Record<string, unknown> = {};
-    const fn = new Function(
-      "React",
-      "useState",
-      "useEffect",
-      "useContext",
-      "useReducer",
-      "useRef",
-      "ComponentWrapper",
-      "SockJS",
-      "Stomp",
-      "exports",
-      transpiled
-    );
+      fn(
+        React,
+        React.useState,
+        React.useEffect,
+        React.useContext,
+        React.useReducer,
+        React.useRef,
+        ComponentWrapper,
+        (iframeRef.current!.contentWindow as any).SockJS,
+        (iframeRef.current!.contentWindow as any).Stomp,
+        moduleExports
+      );
 
-    fn(
-      React,
-      React.useState,
-      React.useEffect,
-      React.useContext,
-      React.useReducer,
-      React.useRef,
-      ComponentWrapper,
-      (iframeRef.current!.contentWindow as any).SockJS,
-      (iframeRef.current!.contentWindow as any).Stomp,
-      moduleExports
-    );
-
-    const Comp = moduleExports.default as React.ComponentType;
-    setComponent(() => Comp);
-  } catch (error) {
-    console.error("❌ Error ejecutando código dinámico:", error);
-    setComponent(null);
-  }
-}, [code, mountNode]);
-
+      const Comp = moduleExports.default as React.ComponentType;
+      setComponent(() => Comp);
+    } catch (error) {
+      console.error("❌ Error ejecutando código dinámico:", error);
+      setComponent(null);
+    }
+  }, [code, mountNode]);
 
   return (
     <iframe ref={iframeRef} className="w-full h-full" title="jsx-preview">
