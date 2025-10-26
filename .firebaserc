@@ -1,7 +1,8 @@
 {
   "projects": {
-    "default": "abstractify-v2",
-    "sem4updates": "abstractify-v2"
+    "default": "abstractify-476300",
+    "sem4updates": "abstractify-v2",
+    "abstractify_v2": "abstractify-476300"
   },
   "targets": {},
   "etags": {}
