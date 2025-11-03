@@ -144,10 +144,10 @@ const IframeRenderer: React.FC<IframeRendererProps> = ({
           };
           `
         )
-        .replace(
-          /https:\/\/back-end-126860328325\.southamerica-east1\.run\.app/g,
-          "http://localhost:8080"
-        )
+        // .replace(
+        //   /https:\/\/back-end-126860328325\.southamerica-east1\.run\.app/g,
+        //   "http://localhost:8080"
+        // )
         .replace(/export\s+default/, "exports.default =");
 
       const moduleExports: Record<string, unknown> = {};
