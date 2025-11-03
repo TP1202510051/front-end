@@ -11,15 +11,22 @@ interface IframeRendererProps {
   onWindowSelect: (window: AppWindow | null) => void;
 }
 
-const IframeRenderer: React.FC<IframeRendererProps> = ({ code, selectedWindow, onWindowSelect }) => {
+const IframeRenderer: React.FC<IframeRendererProps> = ({
+  code,
+  selectedWindow,
+  onWindowSelect,
+}) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [mountNode, setMountNode] = useState<HTMLElement | null>(null);
   const [Component, setComponent] = useState<React.ComponentType | null>(null);
 
   useEffect(() => {
     if (!iframeRef.current) return;
-    const doc = iframeRef.current.contentDocument;
+    const iframe = iframeRef.current;
+    const doc = iframe.contentDocument;
     if (!doc) return;
+
+    let isUnmounted = false;
 
     doc.open();
     doc.write("<!DOCTYPE html><html><head></head><body></body></html>");
@@ -27,29 +34,16 @@ const IframeRenderer: React.FC<IframeRendererProps> = ({ code, selectedWindow, o
 
     const head = doc.head;
     const body = doc.body;
+    const root = doc.createElement("div");
+    root.id = "root";
+    body.appendChild(root);
 
     const tailwind = doc.createElement("script");
     tailwind.src = "https://cdn.tailwindcss.com";
 
-    const sockJs = doc.createElement("script");
-    sockJs.src = "https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js";
-
-    const stompJs = doc.createElement("script");
-    stompJs.src = "https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js";
-
     tailwind.onload = () => {
-      sockJs.onload = () => {
-        stompJs.onload = () => {
-          const root = doc.createElement("div");
-          root.id = "root";
-          body.appendChild(root);
-          setMountNode(root);
-        };
-        head.appendChild(stompJs);
-      };
-      head.appendChild(sockJs);
+      if (!isUnmounted) setMountNode(root);
     };
-
     head.appendChild(tailwind);
 
     const clickListener = (e: MouseEvent) => {
@@ -70,7 +64,7 @@ const IframeRenderer: React.FC<IframeRendererProps> = ({ code, selectedWindow, o
 
       if (prodAttr) {
         const productId = Number(prodAttr);
-        (iframeRef.current!.contentWindow as any).CURRENT_PRODUCT = {
+        (iframe.contentWindow as any).CURRENT_PRODUCT = {
           id: productId || 999,
           name: "Atún Premium 500g",
           description:
@@ -85,10 +79,15 @@ const IframeRenderer: React.FC<IframeRendererProps> = ({ code, selectedWindow, o
         window.parent.postMessage({ type: "open-product", productId }, "*");
       }
     };
+
     doc.addEventListener("click", clickListener);
 
     return () => {
-      doc.removeEventListener("click", clickListener);
+      isUnmounted = true;
+      try {
+        iframe.contentDocument?.removeEventListener("click", clickListener);
+        iframe.contentDocument!.body.innerHTML = "";
+      } catch { /* empty */ }
       setMountNode(null);
       setComponent(null);
     };
@@ -96,9 +95,7 @@ const IframeRenderer: React.FC<IframeRendererProps> = ({ code, selectedWindow, o
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      if (event.data.type === "navigate") {
-        onWindowSelect(event.data.window as AppWindow);
-      }
+      if (event.data.type === "navigate") onWindowSelect(event.data.window as AppWindow);
       if (event.data.type === "open-product") {
         onWindowSelect({
           id: selectedWindow?.id ?? 0,
@@ -113,6 +110,7 @@ const IframeRenderer: React.FC<IframeRendererProps> = ({ code, selectedWindow, o
 
   useEffect(() => {
     if (!code || !mountNode) return;
+
     try {
       const cleanedCode = code
         .replace(/^<>/, "")
@@ -124,13 +122,10 @@ const IframeRenderer: React.FC<IframeRendererProps> = ({ code, selectedWindow, o
         presets: ["react", "typescript"],
         filename: "dynamic.tsx",
       }).code;
-
       if (!transpiled) return;
 
-      // 🔧 Tumba cualquier fetch de producto y reemplaza con producto simulado
       transpiled = transpiled
         .replace(/imageUrl/g, "image")
-        // 🔧 Reemplaza toda la definición de fetchProduct
         .replace(
           /const\s+fetchProduct\s*=\s*async\s*\(\)\s*=>\s*\{[\s\S]*?\};/,
           `
@@ -149,28 +144,10 @@ const IframeRenderer: React.FC<IframeRendererProps> = ({ code, selectedWindow, o
           };
           `
         )
-        // 🔧 Inserta un useEffect adicional para garantizar carga simulada
         .replace(
-          /useEffect\(\(\)\s*=>\s*\{\s*[^}]*fetchProduct\(\);[^}]*\}\s*,\s*\[\]\);/,
-          `
-          useEffect(() => {
-            const fakeProduct = {
-              id: 999,
-              name: "Producto de ejemplo",
-              description: "Producto simulado para vista previa.",
-              price: 39.9,
-              discount: 5,
-              image: "https://via.placeholder.com/400x400?text=Producto+Simulado",
-              stock: 50
-            };
-            setTimeout(() => {
-              setProduct(fakeProduct);
-              setLoading(false);
-            }, 500);
-          }, []);
-          `
+          /https:\/\/back-end-126860328325\.southamerica-east1\.run\.app/g,
+          "http://localhost:8080"
         )
-        // .replace(/https:\/\/back-end-76685875773\.europe-west1\.run\.app/g, "http://localhost:8080")
         .replace(/export\s+default/, "exports.default =");
 
       const moduleExports: Record<string, unknown> = {};
@@ -182,8 +159,6 @@ const IframeRenderer: React.FC<IframeRendererProps> = ({ code, selectedWindow, o
         "useReducer",
         "useRef",
         "ComponentWrapper",
-        "SockJS",
-        "Stomp",
         "exports",
         transpiled
       );
@@ -196,8 +171,6 @@ const IframeRenderer: React.FC<IframeRendererProps> = ({ code, selectedWindow, o
         React.useReducer,
         React.useRef,
         ComponentWrapper,
-        (iframeRef.current!.contentWindow as any).SockJS,
-        (iframeRef.current!.contentWindow as any).Stomp,
         moduleExports
       );
 

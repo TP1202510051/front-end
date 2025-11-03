@@ -22,9 +22,18 @@ const DesignInterfaceRender: React.FC = () => {
   const { target, showChat, closeChat, clearTarget } = useEditing();
 
   useEffect(() => {
-    // Cada vez que cambie el proyecto → cerrar chat y limpiar target
     clearTarget();
   }, [projectId]);
+
+  // Ventanas de vista individual de producto
+  const singleProductViews = [
+    "Detalle de Producto",
+    "Vista de Producto",
+    "Informacion de Producto",
+  ];
+
+  const isSingleProductView =
+    selectedWindow && singleProductViews.includes(selectedWindow.name);
 
   return (
     <div className="w-full h-screen flex flex-col bg-[#202123] overflow-hidden relative">
@@ -40,6 +49,13 @@ const DesignInterfaceRender: React.FC = () => {
           <div className="w-full flex justify-between items-center">
             <SavingStatus isSaving={isSaving} />
           </div>
+
+          {isSingleProductView && (
+            <p className="text-sm text-gray-400 mb-4 italic">
+              Esta interfaz es una demostración de cómo va a quedar.
+            </p>
+          )}
+
           <CodeInterface
             projectId={projectId ?? ""}
             webSocketCode={liveCode}
@@ -52,8 +68,7 @@ const DesignInterfaceRender: React.FC = () => {
 
       <div
         className={`absolute rounded-2xl top-14 right-4 w-250 h-9/10 bg-transparent text-[var(--sidebar-foreground)] shadow-2xl z-50 flex flex-col transform transition-all duration-300
-          ${showChat ? "translate-x-0 w-1/3 opacity-100 pointer-events-auto" : "translate-x-full w-0 opacity-0 pointer-events-none"}
-        `}
+          ${showChat ? "translate-x-0 w-1/3 opacity-100 pointer-events-auto" : "translate-x-full w-0 opacity-0 pointer-events-none"}`}
       >
         <div className="justify-end w-full p-4 flex absolute">
           <Button
