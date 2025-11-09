@@ -15,6 +15,7 @@ import { toast } from "react-toastify";
 import { WindowDropDownMenu } from "./WindowDropDownMenu";
 import { useEditing } from "@/contexts/EditingContext";
 import CreationWindowCard from "./CreationWindowCard";
+import AdviceDialog from "./AdviceDialog";
 
 interface WindowSidebarProps {
   projectId: string;
@@ -38,6 +39,8 @@ export const WindowSidebar: React.FC<WindowSidebarProps> = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedWindow, setSelectedWindow] = useState<AppWindow | null>(null);
   const [newWindowName, setNewWindowName] = useState("");
+  const [adviceDialog, setAdviceDialog] = useState(false);
+  const [nameInDialog, setNameInDialog] = useState("Actual");
 
   const handleCreateWindow = async () => {
     try {
@@ -53,6 +56,10 @@ export const WindowSidebar: React.FC<WindowSidebarProps> = ({
       openWindow(newWin);
 
       setIsDialogOpen(false);
+      if(newWindowName === 'Detalle de Producto' || newWindowName === 'Vista de Producto' || newWindowName === 'Informacion de Producto'){
+        setNameInDialog(newWindowName);
+        setAdviceDialog(true);
+      }
       setNewWindowName("");
     } catch (error) {
       toast.error(`❌ Error creando ventana: ${error instanceof Error ? error.message : String(error)}`);
@@ -73,6 +80,12 @@ export const WindowSidebar: React.FC<WindowSidebarProps> = ({
     setIsDeleteDialogOpen(false);
   };
 
+  const handleCreationWindow = async () => {
+    setSelectedWindow(null);
+    setNewWindowName("");
+    setIsDialogOpen(true);
+  }
+
   if(!windows) return <WindowSkeleton />;
 
   return (
@@ -83,9 +96,7 @@ export const WindowSidebar: React.FC<WindowSidebarProps> = ({
           variant="ghost"
           size="icon"
           onClick={() => {
-            setSelectedWindow(null);
-            setNewWindowName("");
-            setIsDialogOpen(true);
+            handleCreationWindow();
           }}
         >
           <Plus />
@@ -110,7 +121,7 @@ export const WindowSidebar: React.FC<WindowSidebarProps> = ({
         />
       ))}
     </div>
-
+      <AdviceDialog name={nameInDialog ?? "actual"} isDialogOpen={adviceDialog} setIsDialogOpen={setAdviceDialog}></AdviceDialog>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="bg-[var(--dialog-background)] text-[var(--dialog-foreground)] rounded-md w-[90vw] max-w-md">
           <DialogTitle>
