@@ -1,6 +1,6 @@
 interface ProductGridProps {
   category: string;
-};
+}
 
 export function ProductGrid({ category }: ProductGridProps) {
   return (
