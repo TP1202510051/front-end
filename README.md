@@ -1,54 +1,73 @@
-# React + TypeScript + Vite
+# Abstractify — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules .
+Aplicación React + TypeScript + Vite para construir y renderizar interfaces (chat, diseño, código) con soporte de Firebase, websockets y Tailwind.
 
-Currently, two official plugins are available:
+## Stack
+- React 19, React Router 7
+- TypeScript 5
+- Vite 6
+- Tailwind CSS 4 (`@tailwindcss/vite`)
+- Radix UI / shadcn
+- Firebase
+- STOMP/SockJS, gRPC-web
+- Zustand
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Requisitos
+- Node 20+
+- npm 10+
 
-## Expanding the ESLint configuration
+## Configuración
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+1. Instalar deps:
+   ```bash
+   npm i
+   ```
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+2. Variables de entorno (`.env`):
+   - Firebase keys (`VITE_FIREBASE_*`)
+   - Endpoints backend (`VITE_API_BASE_URL`, `VITE_WS_URL`, etc.)
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+3. Desarrollo:
+   ```bash
+   npm run dev
+   ```
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+4. Build y preview:
+   ```bash
+   npm run build
+   npm run preview
+   ```
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+## Scripts
+- `dev`: arranca Vite
+- `build`: `tsc -b && vite build`
+- `preview`: sirve el build
+-
+- `lint`: ESLint con reglas type-aware
+
+## Linting y estilo
+- Config plano con `typescript-eslint` type-aware.
+- Ejecutar `npm run lint` antes de abrir PR.
+
+## Tailwind
+- Integrado vía `@tailwindcss/vite` (Tailwind v4).
+- Utilidades recomendadas: `clsx`, `tailwind-merge`.
+
+## Estructura
+- `src/components/*`: UI y módulos (auth, canvas, ui, skeletons)
+- `src/pages/*`: rutas (dashboard, design, chat, code, auth)
+- `src/services/*`: llamadas a API/Firebase
+- `src/hooks/*`, `src/contexts/*`, `src/models/*`
+
+## Flujo de trabajo
+- Ramas: `feature/*`, `fix/*`, `chore/*`
+- Commits: Conventional Commits (ej. `feat: ...`, `fix: ...`)
+- PRs con descripción, screenshots si aplica y `npm run lint` en verde.
+
+## Despliegue
+- Firebase Hosting (ver `firebase.json`).
+- Variables de entorno requeridas en el entorno de despliegue.
+
+## Problemas comunes
+- Polyfills: `vite` configurado con alias para `process` y `buffer`.
+- Fast Refresh: regla `react-refresh/only-export-components` activa.

@@ -1,6 +1,6 @@
 interface SpinnerProps {
     text: string
-};
+}
 
 export const Spinner = ({ text }: SpinnerProps) => (
     <div className='fixed h-full w-full top-0 left-0 bg-black opacity-80 z-50 flex items-center justify-center text-white flex-col gap-4'>
