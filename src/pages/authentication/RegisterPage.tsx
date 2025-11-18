@@ -6,6 +6,8 @@ import { useRegister } from "@/hooks/useRegister";
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { login } from '@/utils/constants/navigations';
+import { loginWithEmail } from "@/services/auth.service";
+
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -45,8 +47,18 @@ export default function RegisterPage() {
     };
 
     const user = await handleRegister(userData, formData.password);
+
     if (user) {
-      navigate(login);
+      // 1. Autologin tras registro
+      const loginResult = await loginWithEmail(formData.email, formData.password);
+
+      if (typeof loginResult === "string") {
+        // error string
+        console.error("Error al hacer login automático:", loginResult);
+      } else {
+        // login exitoso
+        navigate("/dashboard"); // cambiar a tu ruta real
+      }
     }
   };
 
