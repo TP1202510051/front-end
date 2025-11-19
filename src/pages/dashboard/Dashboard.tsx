@@ -62,6 +62,8 @@ const Dashboard = () => {
                     title={project.name ?? 'Proyecto sin nombre'}
                     lastEdited={project.lastEdited ?? project.createdAt}
                     imageUrl={project.imageUrl ?? 'https://i.imgur.com/SBpn2o8.png'}
+                    loadingProjects={setLoadingProjects}
+                    setProjects={setProjects}
                   />
                 )
               )
