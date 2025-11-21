@@ -52,6 +52,30 @@ const CodeInterface: React.FC<WindowInterfaceProps> = ({
     load();
   }, [selectedWindow, fetchCode, setLiveCode]);
 
+    const { selectedId, selectComponent } = useEditing();
+
+  useEffect(() => {
+    const handleClickOutsideIframe = (e: MouseEvent) => {
+      // Si no hay nada seleccionado → no hacer nada
+      if (!selectedId || selectedId === "0") return;
+
+      const iframe = document.querySelector("iframe[title='jsx-preview']");
+      if (!iframe) return;
+
+      // ¿clic dentro del iframe?
+      const clickedInIframe = iframe.contains(e.target as Node);
+
+      // si el click NO fue dentro del iframe → deseleccionar
+      if (!clickedInIframe) {
+        selectComponent("0");
+      }
+    };
+
+    document.addEventListener("click", handleClickOutsideIframe);
+    return () => document.removeEventListener("click", handleClickOutsideIframe);
+  }, [selectedId, selectComponent]);
+
+
   const handleUpdateWindow = async () => {
     if (!selectedWindow) return;
     const updated = await updateWindow(selectedWindow, newWindowName);

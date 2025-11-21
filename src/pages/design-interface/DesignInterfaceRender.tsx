@@ -51,9 +51,11 @@ const DesignInterfaceRender: React.FC = () => {
           </div>
 
           {isSingleProductView && (
-            <p className="text-sm text-gray-400 mb-4 italic">
-              Esta interfaz es una demostración de cómo va a quedar.
-            </p>
+            <div className="text-sm text-gray-400 mb-4 italic border px-12 py-6">
+              <p className="animate-pulse">
+                Esta interfaz es una demostración de cómo va a quedar.
+              </p>
+            </div>
           )}
 
           <CodeInterface

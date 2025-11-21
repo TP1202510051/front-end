@@ -75,6 +75,12 @@ export const WindowSidebar: React.FC<WindowSidebarProps> = ({
 
   const handleDeleteWindow = async () => {
     if (!selectedWindow) return;
+
+    if (windows.length === 1) {
+      toast.error("No puede tener 0 ventanas");
+      return;
+    }
+
     await removeWindow(selectedWindow);
     onSelect(null);
     setIsDeleteDialogOpen(false);
@@ -127,7 +133,10 @@ export const WindowSidebar: React.FC<WindowSidebarProps> = ({
           <DialogTitle>
             {selectedWindow ? "Editar ventana" : "Nueva ventana"}
           </DialogTitle>
-          <CreationWindowCard onSelectName={setNewWindowName} />
+          <CreationWindowCard
+            onSelectName={setNewWindowName}
+            existingWindows={windows.map((w) => w.name)}
+          />
           {newWindowName && (
             <div className="mt-3 text-sm ">
               Nombre seleccionado: <span className="font-semibold">{newWindowName}</span>
