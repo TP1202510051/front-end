@@ -68,11 +68,12 @@ export default function RegisterPage() {
         if (value.trim().length < 2) return `${name === 'firstName' ? 'El nombre' : 'El apellido'} debe tener al menos 2 caracteres`;
         return '';
 
-      case 'email':
+      case 'email': {
         if (!value.trim()) return '';
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(value)) return 'Correo electrónico inválido';
         return '';
+      }
 
       case 'password':
         if (!value) return '';
@@ -83,10 +84,12 @@ export default function RegisterPage() {
         if (!value.trim()) return 'El nombre de la empresa es requerido';
         return '';
 
-      case 'companyRuc':
+      case 'companyRuc': {
         if (!value.trim()) return 'El RUC es requerido';
-        if (!/^\d{11}$/.test(value.trim())) return 'El RUC debe tener 11 dígitos';
+        const rucRegex = /^\d{11}$/;
+        if (!rucRegex.test(value.trim())) return 'El RUC debe tener 11 dígitos';
         return '';
+      }
 
       case 'companyPhone':
         if (!value.trim()) return 'El teléfono es requerido';
