@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,19 +12,98 @@ import type { AuthResult } from '@/models/authResult';
 import { useAuth } from '@/contexts/AuthContext';
 import { auth } from '@/firebase';
 import RecoverPassword from '@/components/created-components/RecoveryPassword';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-    const { setAuth } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [shakeError, setShakeError] = useState(false);
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [passwordTouched, setPasswordTouched] = useState(false);
+  const { setAuth } = useAuth();
+  const emailInputRef = useRef<HTMLInputElement>(null);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
 
   type Provider = 'google' | 'github';
 
   const providerStrategy: Record<Provider, () => Promise<string | AuthResult>> = {
     google: loginWithGoogle,
     github: loginWithGithub,
+  };
+
+  // Validación de email en tiempo real
+  const validateEmail = (value: string) => {
+    if (!value) {
+      setEmailError('');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(value)) {
+      setEmailError('Correo electrónico inválido');
+    } else {
+      setEmailError('');
+    }
+  };
+
+  // Validación de contraseña en tiempo real
+  const validatePassword = (value: string) => {
+    if (!value) {
+      setPasswordError('');
+      return;
+    }
+    if (value.length < 6) {
+      setPasswordError('La contraseña debe tener al menos 6 caracteres');
+    } else {
+      setPasswordError('');
+    }
+  };
+
+  // Manejar cambio de email
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setEmail(value);
+    // Solo validar si el campo ya fue tocado (para dar feedback mientras corrige)
+    if (emailTouched) {
+      validateEmail(value);
+    }
+  };
+
+  // Manejar cambio de contraseña
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setPassword(value);
+    // Solo validar si el campo ya fue tocado (para dar feedback mientras corrige)
+    if (passwordTouched) {
+      validatePassword(value);
+    }
+  };
+
+  // Manejar blur (pérdida de foco) de email
+  const handleEmailBlur = () => {
+    setEmailTouched(true);
+    validateEmail(email);
+  };
+
+  // Manejar blur (pérdida de foco) de contraseña
+  const handlePasswordBlur = () => {
+    setPasswordTouched(true);
+    validatePassword(password);
+  };
+
+  // Toggle mostrar/ocultar contraseña
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  // Trigger shake animation
+  const triggerShakeAnimation = () => {
+    setShakeError(true);
+    setTimeout(() => setShakeError(false), 650);
   };
 
   const getProviderLoginData = async (provider: Provider) => {
@@ -53,11 +132,45 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Marcar todos los campos como tocados para mostrar errores si existen
+    setEmailTouched(true);
+    setPasswordTouched(true);
+
+    // Validar campos vacíos y mostrar errores específicos
+    let hasErrors = false;
+
+    if (!email) {
+      setEmailError('El correo electrónico es requerido');
+      hasErrors = true;
+    } else if (emailError) {
+      hasErrors = true;
+    }
+
+    if (!password) {
+      setPasswordError('La contraseña es requerida');
+      hasErrors = true;
+    } else if (passwordError) {
+      hasErrors = true;
+    }
+
+    if (hasErrors) {
+      triggerShakeAnimation();
+      // Enfocar el primer campo con error
+      if (!email) {
+        emailInputRef.current?.focus();
+      } else if (!password) {
+        passwordInputRef.current?.focus();
+      }
+      return;
+    }
+
     setLoading(true);
     try {
       const result = await loginWithEmail(email, password);
 
       if (typeof result === "string") {
+        triggerShakeAnimation();
         toast.error(result);
         return;
       }
@@ -69,10 +182,12 @@ export default function LoginPage() {
         setAuth(firebaseUser, user, idToken);
         navigate(dashboard);
       } else if (error) {
+        triggerShakeAnimation();
         toast.error(error);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
+      triggerShakeAnimation();
       toast.error(message);
     } finally {
       setLoading(false);
@@ -85,7 +200,7 @@ export default function LoginPage() {
         <Spinner text="Iniciando sesión..." />
       }
       <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-black">
-        <div className="mx-auto grid w-[350px] gap-6">
+        <div className="mx-auto grid w-[350px] gap-6 animate-fadeIn">
           <div className="grid gap-2 text-center">
             <h1 className="text-3xl font-bold text-white my-4">Iniciar Sesión</h1>
             <div className='flex flex-col gap-4'>
@@ -93,14 +208,24 @@ export default function LoginPage() {
                 Ingresa con una cuenta existente.
               </p>
               <div className="flex flex-row gap-2">
-                <button onClick={() => getProviderLoginData('google')} className="w-full justify-center gap-2 flex flex-row items-center bg-white text-black border border-white hover:bg-gray-300 font-semibold py-2 px-4 rounded mb-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="25" height="25" viewBox="0 0 48 48">
+                <button
+                  onClick={() => getProviderLoginData('google')}
+                  className="w-full justify-center gap-2 flex flex-row items-center bg-white text-black border border-white hover:bg-gray-300 font-semibold py-2 px-4 rounded mb-2 transition-all duration-200 hover:scale-105 focus:ring-2 focus:ring-white focus:outline-none"
+                  aria-label="Iniciar sesión con Google"
+                  disabled={loading}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="25" height="25" viewBox="0 0 48 48" aria-hidden="true">
                     <path fill="#fbc02d" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12	s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20	s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#e53935" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039	l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4caf50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36	c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1565c0" d="M43.611,20.083L43.595,20L42,20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571	c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
                   </svg>
                   Google
                 </button>
-                <button onClick={() => getProviderLoginData('github')} className="w-full justify-center gap-2 flex flex-row items-center bg-white text-black border border-white hover:bg-gray-300 font-semibold py-2 px-4 rounded mb-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="25" height="25" viewBox="0 0 30 30">
+                <button
+                  onClick={() => getProviderLoginData('github')}
+                  className="w-full justify-center gap-2 flex flex-row items-center bg-white text-black border border-white hover:bg-gray-300 font-semibold py-2 px-4 rounded mb-2 transition-all duration-200 hover:scale-105 focus:ring-2 focus:ring-white focus:outline-none"
+                  aria-label="Iniciar sesión con GitHub"
+                  disabled={loading}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="25" height="25" viewBox="0 0 30 30" aria-hidden="true">
                       <path d="M15,3C8.373,3,3,8.373,3,15c0,5.623,3.872,10.328,9.092,11.63C12.036,26.468,12,26.28,12,26.047v-2.051 c-0.487,0-1.303,0-1.508,0c-0.821,0-1.551-0.353-1.905-1.009c-0.393-0.729-0.461-1.844-1.435-2.526 c-0.289-0.227-0.069-0.486,0.264-0.451c0.615,0.174,1.125,0.596,1.605,1.222c0.478,0.627,0.703,0.769,1.596,0.769 c0.433,0,1.081-0.025,1.691-0.121c0.328-0.833,0.895-1.6,1.588-1.962c-3.996-0.411-5.903-2.399-5.903-5.098 c0-1.162,0.495-2.286,1.336-3.233C9.053,10.647,8.706,8.73,9.435,8c1.798,0,2.885,1.166,3.146,1.481C13.477,9.174,14.461,9,15.495,9 c1.036,0,2.024,0.174,2.922,0.483C18.675,9.17,19.763,8,21.565,8c0.732,0.731,0.381,2.656,0.102,3.594 c0.836,0.945,1.328,2.066,1.328,3.226c0,2.697-1.904,4.684-5.894,5.097C18.199,20.49,19,22.1,19,23.313v2.734 c0,0.104-0.023,0.179-0.035,0.268C23.641,24.676,27,20.236,27,15C27,8.373,21.627,3,15,3z"></path>
                   </svg>
                   Github
@@ -116,37 +241,71 @@ export default function LoginPage() {
               <p className="text-balance text-muted-foreground">
                 Ingresa tu correo para acceder a tu panel de proyectos.
               </p>
-              <form onSubmit={handleLogin} className="grid gap-4">
+              <form onSubmit={handleLogin} className={`grid gap-4 ${shakeError ? 'animate-shake' : ''}`}>
                 <div className="grid gap-2">
                   <Label htmlFor="email">Correo Electrónico</Label>
                   <Input
+                    ref={emailInputRef}
                     id="email"
-                    type="email"
+                    type="text"
                     placeholder="nombre@empresa.com"
-                    required
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={handleEmailChange}
+                    onBlur={handleEmailBlur}
                     disabled={loading}
-                    className="bg-zinc-900 border-zinc-700 text-white focus:border-white"
+                    autoComplete="email"
+                    className={`bg-zinc-900 border-zinc-700 text-white focus:border-white transition-all ${
+                      emailError ? 'border-red-500 focus:border-red-500' : ''
+                    }`}
+                    aria-invalid={emailError ? 'true' : 'false'}
+                    aria-describedby={emailError ? 'email-error' : undefined}
+                    aria-required="true"
                   />
+                  {emailError && (
+                    <p id="email-error" className="text-red-500 text-sm mt-1 animate-fadeIn" role="alert">
+                      {emailError}
+                    </p>
+                  )}
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="password">Contraseña</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="********"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={loading}
-                    className="bg-zinc-900 border-zinc-700 text-white focus:border-white"
-                  />
+                  <div className="relative">
+                    <Input
+                      ref={passwordInputRef}
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="********"
+                      value={password}
+                      onChange={handlePasswordChange}
+                      onBlur={handlePasswordBlur}
+                      disabled={loading}
+                      className={`bg-zinc-900 border-zinc-700 text-white focus:border-white transition-all pr-10 ${
+                        passwordError ? 'border-red-500 focus:border-red-500' : ''
+                      }`}
+                      aria-invalid={passwordError ? 'true' : 'false'}
+                      aria-describedby={passwordError ? 'password-error' : undefined}
+                      aria-required="true"
+                    />
+                    <button
+                      type="button"
+                      onClick={togglePasswordVisibility}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-zinc-900 rounded"
+                      aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                      tabIndex={0}
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                  {passwordError && (
+                    <p id="password-error" className="text-red-500 text-sm mt-1 animate-fadeIn" role="alert">
+                      {passwordError}
+                    </p>
+                  )}
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-white text-black hover:bg-gray-200 hover:text-black font-semibold cursor-pointer"
-                  disabled={loading}
+                  className="w-full bg-white text-black hover:bg-gray-200 hover:text-black font-semibold cursor-pointer transition-all duration-200 hover:scale-105 focus:ring-2 focus:ring-white focus:outline-none"
+                  disabled={loading || !!emailError || !!passwordError}
                 >
                   {loading ? 'Cargando...' : 'Iniciar Sesión'}
                 </Button>
@@ -176,7 +335,7 @@ export default function LoginPage() {
             backgroundImage: `url('https://www.transparenttextures.com/patterns/subtle-zebra-3d.png')`,
           }}
         ></div>
-        <div className="relative z-10 text-center text-white">
+        <div className="relative z-10 text-center text-white animate-fadeIn">
           <div className="flex justify-center mb-4">
             <AbstractifyLogo width={180} height={180} />
           </div>
