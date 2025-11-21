@@ -137,29 +137,37 @@ export default function LoginPage() {
     setEmailTouched(true);
     setPasswordTouched(true);
 
-    // Validar campos vacíos y mostrar errores específicos
+    // Validar campos vacíos y formato
     let hasErrors = false;
 
     if (!email) {
       setEmailError('El correo electrónico es requerido');
       hasErrors = true;
-    } else if (emailError) {
-      hasErrors = true;
+    } else {
+      // Ejecutar validación de formato incluso si no se ha hecho blur
+      validateEmail(email);
+      if (emailError || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        hasErrors = true;
+      }
     }
 
     if (!password) {
       setPasswordError('La contraseña es requerida');
       hasErrors = true;
-    } else if (passwordError) {
-      hasErrors = true;
+    } else {
+      // Ejecutar validación de formato incluso si no se ha hecho blur
+      validatePassword(password);
+      if (passwordError || password.length < 6) {
+        hasErrors = true;
+      }
     }
 
     if (hasErrors) {
       triggerShakeAnimation();
       // Enfocar el primer campo con error
-      if (!email) {
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         emailInputRef.current?.focus();
-      } else if (!password) {
+      } else if (!password || password.length < 6) {
         passwordInputRef.current?.focus();
       }
       return;

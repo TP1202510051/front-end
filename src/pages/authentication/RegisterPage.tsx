@@ -157,16 +157,16 @@ export default function RegisterPage() {
     };
     setTouched(allTouched);
 
-    // Validar todos los campos
+    // Validar todos los campos (verificando valores con trim para evitar espacios en blanco)
     const newErrors = {
-      firstName: formData.firstName ? validateField('firstName', formData.firstName) : 'El nombre es requerido',
-      lastName: formData.lastName ? validateField('lastName', formData.lastName) : 'El apellido es requerido',
-      email: formData.email ? validateField('email', formData.email) : 'El correo electrónico es requerido',
+      firstName: formData.firstName.trim() ? validateField('firstName', formData.firstName) : 'El nombre es requerido',
+      lastName: formData.lastName.trim() ? validateField('lastName', formData.lastName) : 'El apellido es requerido',
+      email: formData.email.trim() ? validateField('email', formData.email) : 'El correo electrónico es requerido',
       password: formData.password ? validateField('password', formData.password) : 'La contraseña es requerida',
-      companyName: formData.companyName ? validateField('companyName', formData.companyName) : 'El nombre de la empresa es requerido',
-      companyRuc: formData.companyRuc ? validateField('companyRuc', formData.companyRuc) : 'El RUC es requerido',
-      companyPhone: formData.companyPhone ? validateField('companyPhone', formData.companyPhone) : 'El teléfono es requerido',
-      companyAddress: formData.companyAddress ? validateField('companyAddress', formData.companyAddress) : 'La dirección es requerida'
+      companyName: formData.companyName.trim() ? validateField('companyName', formData.companyName) : 'El nombre de la empresa es requerido',
+      companyRuc: formData.companyRuc.trim() ? validateField('companyRuc', formData.companyRuc) : 'El RUC es requerido',
+      companyPhone: formData.companyPhone.trim() ? validateField('companyPhone', formData.companyPhone) : 'El teléfono es requerido',
+      companyAddress: formData.companyAddress.trim() ? validateField('companyAddress', formData.companyAddress) : 'La dirección es requerida'
     };
     setErrors(newErrors);
 
