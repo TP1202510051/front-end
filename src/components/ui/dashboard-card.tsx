@@ -28,7 +28,7 @@ interface DashboardCardProps {
   lastEdited?: string;
   loadingProjects: React.Dispatch<React.SetStateAction<boolean>>;
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
-};
+}
 
 const DashboardCard = ({ id, imageUrl, title, lastEdited, loadingProjects, setProjects }: DashboardCardProps) => {
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
