@@ -30,7 +30,7 @@ export const useProjectCreation = () => {
       }
 
       // *** CREACIÓN ***
-      const result = await createProject(firebaseUser.uid, name);
+      const result = await createProject(name);
       toast.success('Proyecto creado con éxito!');
       navigate(`/design-interface/${result}/${name}`);
 

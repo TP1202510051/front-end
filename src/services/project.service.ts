@@ -1,40 +1,29 @@
 import type { Project } from "@/models/projectModel";
 import api from "@/utils/interceptors/authInterceptor";
 import { handleApiError } from "@/utils/handlers/errorHandler";
-
-interface ProjectRequest {
-  userId: string;
-  name: string;
-}
-
-interface ProjectAnswerResponse {
-  answer: number;
-}
+import { createStoreProject, deleteStoreProject, listProjects, renameStoreProject } from '@/api/projects';
+import { publicProblem } from '@/api/problems';
 
 const apiUrl = "/projects";
 
 export const createProject = async (
-  userId: string,
   name: string
-): Promise<ProjectAnswerResponse> => {
-  try {
-    const requestPayload: ProjectRequest = { userId, name };
-    const { data } = await api.post<ProjectAnswerResponse>(apiUrl, requestPayload);
-    return data;
-  } catch (error) {
-    handleApiError(error);
-    throw error;
-  }
+): Promise<string> => {
+  return (await createStoreProject(name)).id;
 };
 
 export const getProjectsByUserId = async (): Promise<Project[]> => {
-  try {
-    const { data } = await api.get<Project[]>(`${apiUrl}/user`);
-    return data;
-  } catch (error) {
-    handleApiError(error, ["NO_PROJECTS"]);
-    throw error;
-  }
+  const projects: Project[] = [];
+  const seen = new Set<string>();
+  let after: string | undefined;
+  do {
+    const page = await listProjects(after);
+    projects.push(...page.items);
+    after = page.nextCursor ?? undefined;
+    if (after && seen.has(after)) throw publicProblem(null);
+    if (after) seen.add(after);
+  } while (after);
+  return projects;
 };
 
 export const exportProject = async (projectId: string, projectName: string): Promise<void> => {
@@ -71,19 +60,9 @@ export const updateProjectName = async (
   projectId: string,
   newName: string
 ): Promise<void> => {
-  try {
-    await api.put(`${apiUrl}/${projectId}`, { name: newName });
-  } catch (error) {
-    handleApiError(error);
-    throw error;
-  }
+  await renameStoreProject(projectId, newName);
 };
 
 export const deleteProject = async (projectId: string): Promise<void> => {
-  try {
-    await api.delete(`${apiUrl}/${projectId}`);
-  } catch (error) {
-    handleApiError(error);
-    throw error;
-  }
+  await deleteStoreProject(projectId);
 };

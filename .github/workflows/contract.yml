@@ -1,0 +1,22 @@
+name: Versioned client contract
+on:
+  pull_request:
+    branches: [develop]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.1.0'
+          cache: npm
+      - run: npm ci
+      - run: npm run contract:check
+      - run: npm run test:contract
+      - run: npm run typecheck
