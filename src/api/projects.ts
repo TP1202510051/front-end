@@ -33,7 +33,8 @@ export async function createStoreProject(name: string): Promise<ProjectSummary> 
 
 export async function renameStoreProject(id: string, name: string): Promise<void> {
   try {
-    await platform.PATCH('/api/v1/projects/{id}', { params: { path: { id } }, body: { name }, signal: AbortSignal.timeout(15_000) })
+    const { data } = await platform.PATCH('/api/v1/projects/{id}', { params: { path: { id } }, body: { name }, signal: AbortSignal.timeout(15_000) })
+    if (!isProject(data)) throw publicProblem(null)
   } catch (error) { throw safeProblem(error) }
 }
 

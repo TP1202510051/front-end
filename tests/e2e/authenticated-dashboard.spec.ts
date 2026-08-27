@@ -82,3 +82,33 @@ test('network failures never render raw transport text', async ({ page }) => {
   await expect(page.getByText('No se pudo conectar. Comprueba tu conexión e inténtalo nuevamente.')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Reintentar' })).toBeVisible()
 })
+
+for (const method of ['POST', 'PATCH']) {
+  test(`${method} incompatible success requires refresh, never mutation retry`, async ({ page }) => {
+    let mutationBody = '{invalid json'
+    const mutations: string[] = []
+    await page.route('**/api/v1/projects**', route => {
+      if (route.request().method() === 'GET') return route.fulfill({ json: { items: [], nextCursor: null } })
+      mutations.push(route.request().method())
+      return route.fulfill({ status: 200, contentType: 'application/json', body: mutationBody })
+    })
+    await page.goto('/dashboard')
+    for (const body of ['{invalid json', '{}']) {
+      mutationBody = body
+      const problem = await page.evaluate(async (verb) => {
+        const modulePath = '/src/api/projects.ts'
+        const client = await import(modulePath)
+        try {
+          if (verb === 'POST') await client.createStoreProject('Nombre')
+          else await client.renameStoreProject('900001', 'Nombre')
+          return { unexpectedSuccess: true }
+        } catch (error) {
+          if (error instanceof Error && 'code' in error && 'action' in error) return { code: error.code, action: error.action }
+          throw error
+        }
+      }, method)
+      expect(problem).toEqual({ code: 'CONTRACT_MISMATCH', action: 'REFRESH' })
+    }
+    expect(mutations).toEqual([method, method])
+  })
+}

@@ -18,6 +18,10 @@ platform.use({
       const body: unknown = await response.clone().json().catch(() => null)
       throw publicProblem(body, response.status)
     }
+    if (response.status !== 204) {
+      try { await response.clone().json() }
+      catch { throw publicProblem(null) }
+    }
     return response
   },
   onError({ error }) { throw safeProblem(error) },
