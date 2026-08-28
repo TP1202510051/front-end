@@ -10,7 +10,12 @@
     "preview": "vite preview",
     "typecheck": "tsc -b --pretty false && tsc -p tsconfig.e2e.json --pretty false",
     "test:e2e": "playwright test",
-    "verify": "npm run lint && npm run typecheck && npm run build"
+    "contract:generate": "node scripts/contract.mjs generate",
+    "contract:check": "node scripts/contract.mjs check",
+    "contract:pair": "node scripts/contract.mjs pair",
+    "test:contract": "node --test scripts/contract.test.mjs",
+    "verify": "npm run contract:check && npm run test:contract && npm run lint && npm run typecheck && npm run build",
+    "verify:pair": "npm run contract:pair && npm run verify && npm run test:e2e"
   },
   "dependencies": {
     "@babel/standalone": "^7.28.4",
@@ -34,6 +39,7 @@
     "google-protobuf": "^3.21.4",
     "grpc-web": "^1.5.0",
     "lucide-react": "^0.514.0",
+    "openapi-fetch": "0.17.0",
     "prettier": "^3.6.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
@@ -69,6 +75,7 @@
     "eslint-plugin-react-hooks": "^4.3.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.0.0",
+    "openapi-typescript": "7.13.0",
     "process": "^0.11.10",
     "tw-animate-css": "^1.3.4",
     "typescript": "~5.8.3",

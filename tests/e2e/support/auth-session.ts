@@ -14,3 +14,7 @@ export function observeAuthSession(observer: AuthSessionObserver) {
   void observer(authenticatedEntrepreneur)
   return () => undefined
 }
+
+export async function getAccessToken(): Promise<string> {
+  return authenticatedEntrepreneur.getIdToken()
+}
