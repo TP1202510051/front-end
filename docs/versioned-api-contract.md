@@ -6,7 +6,26 @@ Capability pair: [back-end#62](https://github.com/TP1202510051/back-end/issues/6
 
 `contracts/openapi-v1.json` is the reviewed copy of the backend's live `/v3/api-docs/v1` schema. `src/api/schema.d.ts` is generated with the locked `openapi-typescript` version. `openapi-fetch` constrains paths, parameters and bodies; `src/api/projects.ts` is the UI-facing boundary. Firebase supplies the bearer token through `auth-session`, not request bodies. Project identifiers stay strings, including values larger than JavaScript's safe integer range.
 
-This slice migrates project metadata list/create/read/rename/delete to `/api/v1/projects`. It does not implement the structured Project document, Async Operations, Assistant or Generation. Their tickets extend this contract. Remaining legacy endpoints keep their existing clients until their vertical slices replace them; the old synchronous ZIP download is not a verified export.
+The metadata foundation migrates project list/create/read/rename/delete to `/api/v1/projects`. Async operation recovery extends it as described below; the structured Project document, Assistant and Generation remain separate slices. Remaining legacy endpoints keep their existing clients until their vertical slices replace them; the old synchronous ZIP download is not a verified export.
+
+## Async operation recovery extension
+
+For recovery work, read [back-end#63](https://github.com/TP1202510051/back-end/issues/63)
+and [front-end#94](https://github.com/TP1202510051/front-end/issues/94) together. Their paired
+branches use `feature/async-admission` and target `develop`.
+
+`src/api/operations.ts` exposes `getOperation(operationId)`, an authenticated, bounded REST
+read of `/api/v1/operations/{id}`. It verifies identity, safe integer version, known state/work
+type/actions, timestamps, progress bounds and local references before returning data. Unknown
+or malformed representations require refresh. A 404 does not distinguish another owner's work
+from a missing operation. `IDEMPOTENCY_KEY_REUSED` maps to local edit guidance for future domain
+commands; neither this client nor the backend provides generic arbitrary-work submission.
+
+Admission currently returns `QUEUED` with no percentage or result and only `REFRESH_STATUS`.
+The client does not infer completion, cancel work or invent progress. The progress interface
+and reconnect behavior remain [front-end#71](https://github.com/TP1202510051/front-end/issues/71)
+/ [back-end#66](https://github.com/TP1202510051/back-end/issues/66). Browser tests exercise this
+client seam with own, non-disclosing missing/foreign, and malformed operation responses.
 
 Failures never display server detail/title, provider text or arbitrary recovery instructions. The generated problem-code union selects local safe text and an exhaustive recovery action. Unknown codes or invalid successful payloads request an application refresh. Transport failures permit a deliberate retry; mutations are never automatically retried. A validated correlation UUID can be copied for support. Dashboard pagination preserves existing cards while loading another page.
 
