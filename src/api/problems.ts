@@ -1,4 +1,5 @@
 import type { components } from './schema'
+import { isUuid } from './validators'
 
 type ProblemCode = components['schemas']['ProblemCode']
 export type RecoveryAction = components['schemas']['RecoveryAction']
@@ -11,6 +12,7 @@ const recovery = {
   METHOD_NOT_ALLOWED: { message: 'La operación no está disponible para este recurso.', action: 'EDIT_REQUEST' },
   NOT_ACCEPTABLE: { message: 'El formato de respuesta solicitado no está disponible.', action: 'EDIT_REQUEST' },
   CONFLICT: { message: 'El estado cambió. Actualiza antes de volver a intentarlo.', action: 'REFRESH' },
+  IDEMPOTENCY_KEY_REUSED: { message: 'La clave ya corresponde a otra solicitud. Revisa los datos.', action: 'EDIT_REQUEST' },
   UNSUPPORTED_MEDIA_TYPE: { message: 'El formato de la solicitud no es compatible.', action: 'EDIT_REQUEST' },
   SEMANTIC_VALIDATION_FAILED: { message: 'La solicitud no cumple las reglas del proyecto.', action: 'EDIT_REQUEST' },
   RATE_LIMITED: { message: 'Espera un momento antes de volver a intentarlo.', action: 'RETRY_LATER' },
@@ -38,8 +40,7 @@ export function publicProblem(payload: unknown, status?: number): ApiProblem {
   if (payload && typeof payload === 'object' && 'code' in payload
       && typeof payload.code === 'string' && Object.prototype.hasOwnProperty.call(recovery, payload.code)) {
     const code = payload.code as ProblemCode
-    const correlationId = 'correlationId' in payload && typeof payload.correlationId === 'string'
-      && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(payload.correlationId)
+    const correlationId = 'correlationId' in payload && isUuid(payload.correlationId)
       ? payload.correlationId : undefined
     return new ApiProblem(code, recovery[code], correlationId)
   }
