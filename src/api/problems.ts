@@ -1,4 +1,5 @@
 import type { components } from './schema'
+import { isUuid } from './validators'
 
 type ProblemCode = components['schemas']['ProblemCode']
 export type RecoveryAction = components['schemas']['RecoveryAction']
@@ -39,8 +40,7 @@ export function publicProblem(payload: unknown, status?: number): ApiProblem {
   if (payload && typeof payload === 'object' && 'code' in payload
       && typeof payload.code === 'string' && Object.prototype.hasOwnProperty.call(recovery, payload.code)) {
     const code = payload.code as ProblemCode
-    const correlationId = 'correlationId' in payload && typeof payload.correlationId === 'string'
-      && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(payload.correlationId)
+    const correlationId = 'correlationId' in payload && isUuid(payload.correlationId)
       ? payload.correlationId : undefined
     return new ApiProblem(code, recovery[code], correlationId)
   }

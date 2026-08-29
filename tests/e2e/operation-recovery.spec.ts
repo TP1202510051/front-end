@@ -52,6 +52,7 @@ test('incompatible operation data cannot become a displayed state or executable 
     { ...queued, version: Number.MAX_SAFE_INTEGER + 1 }, { ...queued, state: 'INVENTED' },
     { ...queued, progress: 101 }, { ...queued, availableActions: ['EXECUTE_SCRIPT'] },
     { ...queued, failureCode: 'Provider error with SECRET' }, { ...queued, updatedAt: 'not-a-time' },
+    { ...queued, updatedAt: '2026-02-30T00:00:00Z' },
     { ...queued, resultReference: { type: 'export', id: 'https://untrusted.invalid' } }]) {
     response = invalid
     const code = await page.evaluate(async (id) => {
