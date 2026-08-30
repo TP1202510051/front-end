@@ -4,7 +4,7 @@ const operationId = '936a89df-0d03-4ea5-a446-821a9e3ec111'
 const queued = {
   operationId, workType: 'ASSISTANT_PROPOSAL', state: 'QUEUED', stage: 'QUEUED', progress: null,
   version: 1, createdAt: '2026-08-28T00:00:00Z', startedAt: null, updatedAt: '2026-08-28T00:00:00Z',
-  finishedAt: null, resultReference: null, failureCode: null, availableActions: ['REFRESH_STATUS'],
+  finishedAt: null, resultReference: null, failureCode: null, availableActions: ['CANCEL', 'REFRESH_STATUS'],
 }
 
 test('authenticated client recovers the durable operation without assuming invented progress', async ({ page }) => {
@@ -24,6 +24,25 @@ test('authenticated client recovers the durable operation without assuming inven
   }, operationId)
   expect(requested).toBe(true)
   expect(recovered).toEqual(queued)
+})
+
+test('authenticated client requests cancellation and trusts the returned durable state', async ({ page }) => {
+  await page.route('**/api/v1/projects*', route => route.fulfill({ json: { items: [], nextCursor: null } }))
+  const cancelled = { ...queued, state: 'CANCELLED', stage: 'CANCELLED', version: 2,
+    finishedAt: '2026-08-28T00:01:00Z', updatedAt: '2026-08-28T00:01:00Z',
+    availableActions: ['START_NEW_OPERATION', 'REFRESH_STATUS'] }
+  await page.route('**/api/v1/operations/**/cancellation', route => {
+    expect(route.request().method()).toBe('POST')
+    expect(route.request().headers().authorization).toBe('Bearer deterministic-e2e-token')
+    return route.fulfill({ json: cancelled })
+  })
+  await page.goto('/dashboard')
+  const result = await page.evaluate(async (id) => {
+    const path = '/src/api/operations.ts'
+    const { cancelOperation } = await import(/* @vite-ignore */ path)
+    return cancelOperation(id)
+  }, operationId)
+  expect(result).toEqual(cancelled)
 })
 
 test('foreign and missing operations use safe not-found recovery without server text', async ({ page }) => {

@@ -15,6 +15,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/operations/{id}/cancellation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["cancelOperation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{id}": {
         parameters: {
             query?: never;
@@ -61,27 +77,6 @@ export interface components {
             createdAt: string;
             imageUrl?: string | null;
         };
-        ProjectPage: {
-            items: components["schemas"]["ProjectSummary"][];
-            /** @description Pass as after to read the next page; null means complete */
-            nextCursor?: string | null;
-        };
-        /** @enum {string} */
-        ProblemCode: "BAD_REQUEST" | "AUTHENTICATION_REQUIRED" | "RESOURCE_NOT_FOUND" | "METHOD_NOT_ALLOWED" | "NOT_ACCEPTABLE" | "CONFLICT" | "IDEMPOTENCY_KEY_REUSED" | "UNSUPPORTED_MEDIA_TYPE" | "SEMANTIC_VALIDATION_FAILED" | "RATE_LIMITED" | "DEPENDENCY_UNAVAILABLE" | "INTERNAL_ERROR";
-        PublicProblem: {
-            type: string;
-            title: string;
-            /** Format: int32 */
-            status: number;
-            code: components["schemas"]["ProblemCode"];
-            detail: string;
-            /** Format: uuid */
-            correlationId: string;
-            recoveryAction: components["schemas"]["RecoveryAction"];
-            operationId?: string | null;
-        };
-        /** @enum {string} */
-        RecoveryAction: "EDIT_REQUEST" | "SIGN_IN" | "RETURN_TO_PROJECTS" | "REFRESH" | "RETRY_LATER" | "CONTACT_SUPPORT";
         AsyncOperationView: {
             /** Format: uuid */
             operationId: string;
@@ -107,11 +102,32 @@ export interface components {
             availableActions: components["schemas"]["OperationAction"][];
         };
         /** @enum {string} */
-        OperationAction: "REFRESH_STATUS";
+        OperationAction: "CANCEL" | "START_NEW_OPERATION" | "REFRESH_STATUS";
         OperationResourceReference: {
             type: string;
             id: string;
         } | null;
+        ProjectPage: {
+            items: components["schemas"]["ProjectSummary"][];
+            /** @description Pass as after to read the next page; null means complete */
+            nextCursor?: string | null;
+        };
+        /** @enum {string} */
+        ProblemCode: "BAD_REQUEST" | "AUTHENTICATION_REQUIRED" | "RESOURCE_NOT_FOUND" | "METHOD_NOT_ALLOWED" | "NOT_ACCEPTABLE" | "CONFLICT" | "IDEMPOTENCY_KEY_REUSED" | "UNSUPPORTED_MEDIA_TYPE" | "SEMANTIC_VALIDATION_FAILED" | "RATE_LIMITED" | "DEPENDENCY_UNAVAILABLE" | "INTERNAL_ERROR";
+        PublicProblem: {
+            type: string;
+            title: string;
+            /** Format: int32 */
+            status: number;
+            code: components["schemas"]["ProblemCode"];
+            detail: string;
+            /** Format: uuid */
+            correlationId: string;
+            recoveryAction: components["schemas"]["RecoveryAction"];
+            operationId?: string | null;
+        };
+        /** @enum {string} */
+        RecoveryAction: "EDIT_REQUEST" | "SIGN_IN" | "RETURN_TO_PROJECTS" | "REFRESH" | "RETRY_LATER" | "CONTACT_SUPPORT";
     };
     responses: never;
     parameters: never;
@@ -263,6 +279,127 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ProjectSummary"];
+                };
+            };
+            /** @description Public problem */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+        };
+    };
+    cancelOperation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AsyncOperationView"];
                 };
             };
             /** @description Public problem */
