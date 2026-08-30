@@ -18,7 +18,8 @@ function isOperation(value: unknown, operationId: string): value is AsyncOperati
     || (item.startedAt != null && !isOffsetTimestamp(item.startedAt)) || (item.finishedAt != null && !isOffsetTimestamp(item.finishedAt))
     || (item.progress != null && (typeof item.progress !== 'number' || !Number.isInteger(item.progress) || item.progress < 0 || item.progress > 100))
     || (item.failureCode != null && (typeof item.failureCode !== 'string' || !stableCodePattern.test(item.failureCode)))
-    || !Array.isArray(item.availableActions) || !item.availableActions.every(action => action === 'REFRESH_STATUS')) return false
+    || !Array.isArray(item.availableActions)
+    || !item.availableActions.every(action => ['CANCEL', 'START_NEW_OPERATION', 'REFRESH_STATUS'].includes(String(action)))) return false
   if (item.resultReference != null) {
     if (typeof item.resultReference !== 'object') return false
     const reference = item.resultReference as Record<string, unknown>
@@ -28,11 +29,23 @@ function isOperation(value: unknown, operationId: string): value is AsyncOperati
   return true
 }
 
-/** REST is authoritative. This read does not imply execution, retry, cancellation or a progress percentage. */
+/** REST is authoritative. This read does not imply execution, retry or an invented progress percentage. */
 export async function getOperation(operationId: string): Promise<AsyncOperation> {
   try {
     if (!isUuid(operationId)) throw publicProblem({ code: 'BAD_REQUEST' })
     const { data } = await platform.GET('/api/v1/operations/{id}', {
+      params: { path: { id: operationId } }, signal: AbortSignal.timeout(15_000),
+    })
+    if (!isOperation(data, operationId)) throw publicProblem(null)
+    return data
+  } catch (error) { throw safeProblem(error) }
+}
+
+/** Requests owner-scoped cancellation; the returned durable state remains authoritative. */
+export async function cancelOperation(operationId: string): Promise<AsyncOperation> {
+  try {
+    if (!isUuid(operationId)) throw publicProblem({ code: 'BAD_REQUEST' })
+    const { data } = await platform.POST('/api/v1/operations/{id}/cancellation', {
       params: { path: { id: operationId } }, signal: AbortSignal.timeout(15_000),
     })
     if (!isOperation(data, operationId)) throw publicProblem(null)
