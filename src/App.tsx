@@ -12,6 +12,7 @@ import ProfilePage from './pages/authentication/ProfilePage';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { EditingProvider } from './contexts/EditingContext.tsx';
+import { OperationMonitor } from './components/operations/OperationMonitor.tsx';
 
 const router = createBrowserRouter([
   // --- Rutas Públicas ---
@@ -66,6 +67,7 @@ function App() {
     <div className="min-h-screen text-white">
       <main>
         <EditingProvider>
+          <OperationMonitor />
           <RouterProvider router={router} />
           <ToastContainer
           position="top-right"

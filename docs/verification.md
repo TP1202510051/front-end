@@ -8,7 +8,7 @@ npm run verify
 npm run test:e2e
 ```
 
-`npm run verify` runs lint, the standalone TypeScript check, and the production build. The E2E command starts Vite in `e2e` mode, uses the deterministic authentication boundary, intercepts only the public backend request used by the smoke, and runs Playwright plus axe in the installed Chrome channel. It retains screenshots, traces, and the HTML report when a test fails.
+`npm run verify` runs lint, the standalone TypeScript check, and the production build. The E2E command starts Vite in `e2e` mode, uses deterministic authentication and realtime subscription boundaries, intercepts only public backend requests, and runs Playwright plus axe in the installed Chrome channel. Operation scenarios prove monotonic visible progress, stale-signal suppression, gap and reconnect REST recovery (including a remembered receipt whose first notification is lost), local-only stage labels, identity-expiry clearing, and non-disclosing missing/foreign behavior. It retains screenshots, traces, and the HTML report when a test fails.
 
 Port 4173 must be free: the test always starts its own server and refuses to reuse another application. The minimal accessibility gate rejects critical axe violations and attaches the complete axe scan to the HTML report; it is not a full WCAG compliance check.
 
