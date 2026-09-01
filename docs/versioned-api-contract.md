@@ -21,11 +21,16 @@ or malformed representations require refresh. A 404 does not distinguish another
 from a missing operation. `IDEMPOTENCY_KEY_REUSED` maps to local edit guidance for future domain
 commands; neither this client nor the backend provides generic arbitrary-work submission.
 
-Admission currently returns `QUEUED` with no percentage or result and only `REFRESH_STATUS`.
-The client does not infer completion, cancel work or invent progress. The progress interface
-and reconnect behavior remain [front-end#71](https://github.com/TP1202510051/front-end/issues/71)
-/ [back-end#66](https://github.com/TP1202510051/back-end/issues/66). Browser tests exercise this
-client seam with own, non-disclosing missing/foreign, and malformed operation responses.
+Admission returns `QUEUED` with no invented percentage or result. The owner-scoped progress
+interface from [front-end#71](https://github.com/TP1202510051/front-end/issues/71) /
+[back-end#66](https://github.com/TP1202510051/back-end/issues/66) subscribes to the exact private
+`/user/queue/operations` destination after authentication. Signals contain only operation UUID
+and monotonic version. Operation-starting REST flows call `registerOperationReceipt` immediately
+after accepting a durable receipt, before depending on WebSocket delivery. Any newer version,
+initial connection, or reconnect triggers the authoritative REST read. Stale signals are ignored, gaps converge through REST, a uniform 404
+forgets the identifier, and identity expiry clears visible and remembered progress. The browser
+transport exposes no business-command send interface. Stable server stage codes are mapped to
+local safe labels and unknown codes fall back to local operation-state text.
 
 Failures never display server detail/title, provider text or arbitrary recovery instructions. The generated problem-code union selects local safe text and an exhaustive recovery action. Unknown codes or invalid successful payloads request an application refresh. Transport failures permit a deliberate retry; mutations are never automatically retried. A validated correlation UUID can be copied for support. Dashboard pagination preserves existing cards while loading another page.
 

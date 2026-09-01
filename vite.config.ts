@@ -18,6 +18,15 @@ export default defineConfig(({ command, mode }) => {
     resolve: {
       alias: [
         {
+          find: '@/realtime/operation-channel',
+          replacement: path.resolve(
+            __dirname,
+            mode === 'e2e'
+              ? './tests/e2e/support/operation-channel.ts'
+              : './src/realtime/operation-channel.ts',
+          ),
+        },
+        {
           find: '@/auth/auth-session',
           replacement: path.resolve(
             __dirname,
