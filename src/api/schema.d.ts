@@ -63,6 +63,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/component-registries/{registryVersion}/templates/{templateVersion}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getRegistryPublication"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -111,6 +127,71 @@ export interface components {
             items: components["schemas"]["ProjectSummary"][];
             /** @description Pass as after to read the next page; null means complete */
             nextCursor?: string | null;
+        };
+        RegistryBindingView: {
+            name: string;
+            source: string;
+            required: boolean;
+        };
+        RegistryComponentView: {
+            type: string;
+            properties: {
+                [key: string]: components["schemas"]["RegistryPropertyView"];
+            };
+            slots: {
+                [key: string]: components["schemas"]["RegistrySlotView"];
+            };
+            bindings: components["schemas"]["RegistryBindingView"][];
+            constraints: string[];
+        };
+        RegistryCompositionView: {
+            schemaVersion: string;
+            registryVersion: string;
+            templateVersion: string;
+            pages: components["schemas"]["RegistryPageView"][];
+        };
+        RegistryInstanceView: {
+            id: string;
+            type: string;
+            properties: {
+                [key: string]: string;
+            };
+            bindings: {
+                [key: string]: string;
+            };
+            slots: {
+                [key: string]: string[];
+            };
+        };
+        RegistryPageView: {
+            id: string;
+            path: string;
+            rootComponentId: string;
+            components: components["schemas"]["RegistryInstanceView"][];
+        };
+        RegistryPropertyView: {
+            type: string;
+            required: boolean;
+            /** Format: int32 */
+            minLength: number;
+            /** Format: int32 */
+            maxLength: number;
+        };
+        RegistryPublicationView: {
+            registryVersion: string;
+            components: components["schemas"]["RegistryComponentView"][];
+            template: components["schemas"]["VerifiedTemplateView"];
+        };
+        RegistrySlotView: {
+            allowedTypes: string[];
+            /** Format: int32 */
+            minimum: number;
+            /** Format: int32 */
+            maximum: number;
+        };
+        VerifiedTemplateView: {
+            templateVersion: string;
+            composition: components["schemas"]["RegistryCompositionView"];
         };
         /** @enum {string} */
         ProblemCode: "BAD_REQUEST" | "AUTHENTICATION_REQUIRED" | "RESOURCE_NOT_FOUND" | "METHOD_NOT_ALLOWED" | "NOT_ACCEPTABLE" | "CONFLICT" | "IDEMPOTENCY_KEY_REUSED" | "UNSUPPORTED_MEDIA_TYPE" | "SEMANTIC_VALIDATION_FAILED" | "RATE_LIMITED" | "DEPENDENCY_UNAVAILABLE" | "INTERNAL_ERROR";
@@ -886,6 +967,128 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["AsyncOperationView"];
+                };
+            };
+            /** @description Public problem */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+        };
+    };
+    getRegistryPublication: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                registryVersion: string;
+                templateVersion: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RegistryPublicationView"];
                 };
             };
             /** @description Public problem */

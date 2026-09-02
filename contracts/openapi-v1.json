@@ -979,6 +979,149 @@
           }
         }
       }
+    },
+    "/api/v1/component-registries/{registryVersion}/templates/{templateVersion}" : {
+      "get" : {
+        "tags" : [ "component-registry-controller" ],
+        "operationId" : "getRegistryPublication",
+        "parameters" : [ {
+          "name" : "registryVersion",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "templateVersion",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RegistryPublicationView"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "422" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "429" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "503" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components" : {
@@ -1115,6 +1258,199 @@
             "type" : "string",
             "description" : "Pass as after to read the next page; null means complete",
             "nullable" : true
+          }
+        }
+      },
+      "RegistryBindingView" : {
+        "required" : [ "name", "required", "source" ],
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "source" : {
+            "type" : "string"
+          },
+          "required" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "RegistryComponentView" : {
+        "required" : [ "bindings", "constraints", "properties", "slots", "type" ],
+        "type" : "object",
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          },
+          "properties" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "$ref" : "#/components/schemas/RegistryPropertyView"
+            }
+          },
+          "slots" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "$ref" : "#/components/schemas/RegistrySlotView"
+            }
+          },
+          "bindings" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/RegistryBindingView"
+            }
+          },
+          "constraints" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "RegistryCompositionView" : {
+        "required" : [ "pages", "registryVersion", "schemaVersion", "templateVersion" ],
+        "type" : "object",
+        "properties" : {
+          "schemaVersion" : {
+            "type" : "string"
+          },
+          "registryVersion" : {
+            "type" : "string"
+          },
+          "templateVersion" : {
+            "type" : "string"
+          },
+          "pages" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/RegistryPageView"
+            }
+          }
+        }
+      },
+      "RegistryInstanceView" : {
+        "required" : [ "bindings", "id", "properties", "slots", "type" ],
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "properties" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          },
+          "bindings" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          },
+          "slots" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            }
+          }
+        }
+      },
+      "RegistryPageView" : {
+        "required" : [ "components", "id", "path", "rootComponentId" ],
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "path" : {
+            "type" : "string"
+          },
+          "rootComponentId" : {
+            "type" : "string"
+          },
+          "components" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/RegistryInstanceView"
+            }
+          }
+        }
+      },
+      "RegistryPropertyView" : {
+        "required" : [ "maxLength", "minLength", "required", "type" ],
+        "type" : "object",
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          },
+          "required" : {
+            "type" : "boolean"
+          },
+          "minLength" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "maxLength" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "RegistryPublicationView" : {
+        "required" : [ "components", "registryVersion", "template" ],
+        "type" : "object",
+        "properties" : {
+          "registryVersion" : {
+            "type" : "string"
+          },
+          "components" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/RegistryComponentView"
+            }
+          },
+          "template" : {
+            "$ref" : "#/components/schemas/VerifiedTemplateView"
+          }
+        }
+      },
+      "RegistrySlotView" : {
+        "required" : [ "allowedTypes", "maximum", "minimum" ],
+        "type" : "object",
+        "properties" : {
+          "allowedTypes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "minimum" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "maximum" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "VerifiedTemplateView" : {
+        "required" : [ "composition", "templateVersion" ],
+        "type" : "object",
+        "properties" : {
+          "templateVersion" : {
+            "type" : "string"
+          },
+          "composition" : {
+            "$ref" : "#/components/schemas/RegistryCompositionView"
           }
         }
       },

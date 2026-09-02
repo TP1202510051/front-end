@@ -35,7 +35,7 @@ export default defineConfig({
       VITE_FIREBASE_PROJECT_ID: 'abstractify-e2e',
       VITE_FIREBASE_STORAGE_BUCKET: 'abstractify-e2e.invalid',
     },
-    reuseExistingServer: false,
+    reuseExistingServer: !process.env.CI,
     url: 'http://127.0.0.1:4173',
   },
 })

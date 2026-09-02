@@ -17,7 +17,7 @@ const DesignInterfaceRender: React.FC = () => {
 
   const [isSaving, setIsSaving] = useState(false);
   const [selectedWindow, setSelectedWindow] = useState<AppWindow | null>(null);
-  const [liveCode, setLiveCode] = useState("");
+  const [assistantRevision, setAssistantRevision] = useState(0);
 
   const { target, showChat, closeChat, clearTarget } = useEditing();
 
@@ -59,11 +59,8 @@ const DesignInterfaceRender: React.FC = () => {
           )}
 
           <CodeInterface
-            projectId={projectId ?? ""}
-            webSocketCode={liveCode}
-            onWindowSelect={(window) => setSelectedWindow(window ?? null)}
-            setIsSaving={setIsSaving}
             selectedWindow={selectedWindow}
+            reloadKey={assistantRevision}
           />
         </div>
       </div>
@@ -86,7 +83,7 @@ const DesignInterfaceRender: React.FC = () => {
         <div className="flex-1 overflow-auto rounded-md">
           {target && (
             <ChatInterface
-              onCode={setLiveCode}
+              onCode={() => setAssistantRevision(revision => revision + 1)}
               projectId={projectId ?? ""}
               setIsSaving={setIsSaving}
               target={target}
