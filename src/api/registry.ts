@@ -5,11 +5,14 @@ import { isRegistryPublication, type RegistryPublication } from '@/registry/publ
 export const REGISTRY_VERSION = 'textile-store@1.0.0'
 export const TEMPLATE_VERSION = 'verified-textile-start@1.0.0'
 
-export async function getRegistryPublication(): Promise<RegistryPublication> {
+export async function getRegistryPublication(
+  registryVersion = REGISTRY_VERSION,
+  templateVersion = TEMPLATE_VERSION,
+): Promise<RegistryPublication> {
   try {
     const { data } = await platform.GET(
       '/api/v1/component-registries/{registryVersion}/templates/{templateVersion}',
-      { params: { path: { registryVersion: REGISTRY_VERSION, templateVersion: TEMPLATE_VERSION } },
+      { params: { path: { registryVersion, templateVersion } },
         signal: AbortSignal.timeout(15_000) },
     )
     if (!isRegistryPublication(data)) throw publicProblem(null)

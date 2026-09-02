@@ -2,6 +2,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   createUserWithEmailAndPassword,
+  sendEmailVerification,
 } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import type { UserProfileData } from '@/models/userProfileData';
@@ -19,6 +20,10 @@ import { toast } from "react-toastify";
 export const loginWithEmail = async (email: string, password: string): Promise<AuthResult | string> => {
   try {
     const result = await signInWithEmailAndPassword(auth, email, password);
+    if (!result.user.emailVerified) {
+      await signOut(auth);
+      return 'Verifica tu correo antes de iniciar sesión.';
+    }
     const idToken = await result.user.getIdToken();
     const profile = await getUserProfile(result.user.uid);
     const profileMapped: UserProfileData = profile ?? mapFirebaseUserToProfile(result.user);
@@ -91,6 +96,8 @@ export async function register(userData: UserProfileData, password: string) {
     };
 
     await setDoc(doc(db, 'users', user.uid), profileData);
+    await sendEmailVerification(user);
+    await signOut(auth);
     return { user, error: null };
   } catch (err: unknown) {
     const message = mapFirebaseError(err);

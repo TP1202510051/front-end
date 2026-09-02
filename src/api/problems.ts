@@ -22,7 +22,7 @@ const recovery = {
 
 /** Never displays server detail/title or arbitrary provider/transport messages. */
 export class ApiProblem extends Error {
-  readonly code: ProblemCode | 'CONTRACT_MISMATCH' | 'NETWORK_UNAVAILABLE'
+  readonly code: ProblemCode | 'AUTHORIZATION_DENIED' | 'CONTRACT_MISMATCH' | 'NETWORK_UNAVAILABLE'
   readonly action: RecoveryAction
   readonly correlationId?: string
 
@@ -37,6 +37,9 @@ export class ApiProblem extends Error {
 
 export function publicProblem(payload: unknown, status?: number): ApiProblem {
   if (status === 401) return new ApiProblem('AUTHENTICATION_REQUIRED', recovery.AUTHENTICATION_REQUIRED)
+  if (status === 403) return new ApiProblem('AUTHORIZATION_DENIED', {
+    message: 'No tienes permiso para realizar esta acción.', action: 'RETURN_TO_PROJECTS',
+  })
   if (payload && typeof payload === 'object' && 'code' in payload
       && typeof payload.code === 'string' && Object.prototype.hasOwnProperty.call(recovery, payload.code)) {
     const code = payload.code as ProblemCode

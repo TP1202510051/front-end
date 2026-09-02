@@ -86,12 +86,49 @@ export interface components {
         ProjectName: {
             name: string;
         };
-        ProjectSummary: {
-            /** @example 900001 */
+        AcceptedRevisionView: {
+            id: string;
+            /** Format: int64 */
+            number: number;
+            registryVersion: string;
+            templateVersion: string;
+            /** Format: date-time */
+            acceptedAt: string;
+            hash: string;
+            document: components["schemas"]["ProjectDocumentView"];
+        };
+        ProjectComponentView: {
+            id: string;
+            type: string;
+            properties: {
+                [key: string]: string;
+            };
+            bindings: {
+                [key: string]: string;
+            };
+            slots: {
+                [key: string]: string[];
+            };
+        };
+        ProjectDocumentView: {
+            schemaVersion: string;
+            registryVersion: string;
+            templateVersion: string;
+            pages: components["schemas"]["ProjectPageView"][];
+        };
+        ProjectPageView: {
+            id: string;
+            path: string;
+            rootComponentId: string;
+            components: components["schemas"]["ProjectComponentView"][];
+        };
+        StoreProjectView: {
             id: string;
             name: string;
+            /** Format: date-time */
             createdAt: string;
-            imageUrl?: string | null;
+            imageUrl?: string;
+            acceptedRevision: components["schemas"]["AcceptedRevisionView"];
         };
         AsyncOperationView: {
             /** Format: uuid */
@@ -123,6 +160,13 @@ export interface components {
             type: string;
             id: string;
         } | null;
+        ProjectSummary: {
+            /** @example 900001 */
+            id: string;
+            name: string;
+            createdAt: string;
+            imageUrl?: string | null;
+        };
         ProjectPage: {
             items: components["schemas"]["ProjectSummary"][];
             /** @description Pass as after to read the next page; null means complete */
@@ -359,7 +403,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ProjectSummary"];
+                    "*/*": components["schemas"]["StoreProjectView"];
                 };
             };
             /** @description Public problem */
@@ -601,7 +645,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ProjectSummary"];
+                    "*/*": components["schemas"]["StoreProjectView"];
                 };
             };
             /** @description Public problem */
