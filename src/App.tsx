@@ -13,6 +13,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { EditingProvider } from './contexts/EditingContext.tsx';
 import { OperationMonitor } from './components/operations/OperationMonitor.tsx';
+import VerifiedTemplatePage from './pages/verified-template/VerifiedTemplatePage.tsx';
 
 const router = createBrowserRouter([
   // --- Rutas Públicas ---
@@ -57,6 +58,10 @@ const router = createBrowserRouter([
       {
         path: '/design-interface/:projectId/:projectName',
         Component: DesignInterfaceRender,
+      },
+      {
+        path: '/verified-template',
+        Component: VerifiedTemplatePage,
       },
     ],
   },
