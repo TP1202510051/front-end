@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import type { AppWindow } from "@/models/windowModel";
 import ChatInterface from "../chat-interface/ChatInterface";
 import CodeInterface from "../code-interface/CodeInterface";
@@ -8,22 +8,56 @@ import { SavingStatus } from "@/components/created-components/SavingStatus";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEditing } from "@/contexts/EditingContext";
+import { getStoreProject, type StoreProject } from '@/api/projects'
+import { safeProblem, type ApiProblem } from '@/api/problems'
 
 const DesignInterfaceRender: React.FC = () => {
-  const { projectId, projectName } = useParams<{
+  const { projectId } = useParams<{
     projectId: string;
-    projectName: string;
   }>();
 
   const [isSaving, setIsSaving] = useState(false);
   const [selectedWindow, setSelectedWindow] = useState<AppWindow | null>(null);
   const [assistantRevision, setAssistantRevision] = useState(0);
+  const [project, setProject] = useState<StoreProject | null>(null);
+  const [problem, setProblem] = useState<ApiProblem | null>(null);
+  const navigate = useNavigate();
 
   const { target, showChat, closeChat, clearTarget } = useEditing();
 
   useEffect(() => {
     clearTarget();
+    let active = true;
+    setProject(null);
+    setProblem(null);
+    if (!projectId) {
+      setProblem(safeProblem(null));
+      return () => { active = false };
+    }
+    getStoreProject(projectId).then(value => {
+      if (active) setProject(value);
+    }).catch(error => {
+      if (active) setProblem(safeProblem(error));
+    });
+    return () => { active = false };
   }, [projectId]);
+
+  if (problem) {
+    return <main className="flex min-h-screen items-center justify-center bg-[var(--dashboard-background)] p-8">
+      <div role="alert" className="space-y-4 text-[var(--dashboard-foreground)]">
+        <p>{problem.message}</p>
+        <Button onClick={() => navigate(problem.code === 'AUTHENTICATION_REQUIRED' ? '/login' : '/dashboard')}>
+          {problem.code === 'AUTHENTICATION_REQUIRED' ? 'Iniciar sesión' : 'Volver a proyectos'}
+        </Button>
+      </div>
+    </main>;
+  }
+
+  if (!project) {
+    return <main role="status" className="flex min-h-screen items-center justify-center bg-[var(--dashboard-background)] text-[var(--dashboard-foreground)]">
+      Cargando proyecto…
+    </main>;
+  }
 
   // Ventanas de vista individual de producto
   const singleProductViews = [
@@ -40,7 +74,7 @@ const DesignInterfaceRender: React.FC = () => {
       <div className="flex flex-grow overflow-hidden">
         <Sidebar
           projectId={projectId ?? ""}
-          projectName={projectName ?? ""}
+          projectName={project.name}
           setIsSaving={setIsSaving}
           onSelectWindow={setSelectedWindow}
         />
@@ -48,6 +82,7 @@ const DesignInterfaceRender: React.FC = () => {
         <div className="w-full flex-grow flex flex-col items-center justify-center bg-[var(--dashboard-background)] p-4 relative">
           <div className="w-full flex justify-between items-center">
             <SavingStatus isSaving={isSaving} />
+            <p className="text-sm text-gray-400">Revisión aceptada {project.acceptedRevision.number}</p>
           </div>
 
           {isSingleProductView && (
@@ -61,6 +96,7 @@ const DesignInterfaceRender: React.FC = () => {
           <CodeInterface
             selectedWindow={selectedWindow}
             reloadKey={assistantRevision}
+            project={project}
           />
         </div>
       </div>

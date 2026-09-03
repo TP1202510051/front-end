@@ -5,15 +5,22 @@ import { Button } from '@/components/ui/button'
 import { useEditing } from '@/contexts/EditingContext'
 import type { AppWindow } from '@/models/windowModel'
 import { useRegistryPublication } from '@/registry/useRegistryPublication'
+import { publicationForProject } from '@/registry/publication'
+import type { StoreProject } from '@/api/projects'
 
 interface CodeInterfaceProps {
   selectedWindow: AppWindow | null
   reloadKey?: number
+  project: StoreProject
 }
 
-export default function CodeInterface({ selectedWindow, reloadKey }: CodeInterfaceProps) {
-  const { publication, failed } = useRegistryPublication(reloadKey)
+export default function CodeInterface({ selectedWindow, reloadKey, project }: CodeInterfaceProps) {
+  const revision = project.acceptedRevision
+  const { publication, failed } = useRegistryPublication(
+    reloadKey, revision.registryVersion, revision.templateVersion,
+  )
   const { openWindow } = useEditing()
+  const projectPublication = publication ? publicationForProject(publication, project) : null
 
   return (
     <div className="flex h-full w-full flex-col text-[var(--dialog-foreground)]">
@@ -27,12 +34,12 @@ export default function CodeInterface({ selectedWindow, reloadKey }: CodeInterfa
         </div>
       )}
       <main className="box-border min-h-[500px] flex-1 overflow-auto p-10">
-        {!selectedWindow && <p className="text-gray-500">Selecciona una ventana para ver su contenido…</p>}
-        {selectedWindow && !publication && !failed && <RenderSkeleton />}
-        {selectedWindow && failed && <p role="alert">No se pudo cargar el template verificado.</p>}
-        {selectedWindow && publication && (
-          <section aria-label={`Vista de ${selectedWindow.name}`}>
-            <RegistryRenderer publication={publication} />
+        {!publication && !failed && <RenderSkeleton />}
+        {failed && <p role="alert">No se pudo cargar el template verificado.</p>}
+        {publication && !projectPublication && <p role="alert">La revisión no coincide con el registro verificado.</p>}
+        {projectPublication && (
+          <section aria-label={selectedWindow ? `Vista de ${selectedWindow.name}` : 'Vista de la revisión aceptada'}>
+            <RegistryRenderer publication={projectPublication} />
           </section>
         )}
       </main>

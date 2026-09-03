@@ -1,7 +1,24 @@
 import type { components } from '@/api/schema'
+import type { StoreProject } from '@/api/projects'
 
 export type RegistryPublication = components['schemas']['RegistryPublicationView']
 export type RegistryInstance = components['schemas']['RegistryInstanceView']
+
+export function publicationForProject(
+  publication: RegistryPublication,
+  project: StoreProject,
+): RegistryPublication | null {
+  const revision = project.acceptedRevision
+  if (publication.registryVersion !== revision.registryVersion
+    || publication.template.templateVersion !== revision.templateVersion) return null
+  return {
+    ...publication,
+    template: {
+      ...publication.template,
+      composition: { ...revision.document, schemaVersion: 'registry-composition@1.0.0' },
+    },
+  }
+}
 
 function record(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
