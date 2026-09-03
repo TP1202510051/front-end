@@ -15,6 +15,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{id}/revisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["acceptRevision"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/operations/{id}/cancellation": {
         parameters: {
             query?: never;
@@ -129,6 +145,37 @@ export interface components {
             createdAt: string;
             imageUrl?: string;
             acceptedRevision: components["schemas"]["AcceptedRevisionView"];
+        };
+        OperationBatchInput: {
+            baseRevisionId: string;
+            idempotencyKey: string;
+            operations: components["schemas"]["ProjectOperationInput"][];
+        };
+        ProjectComponentInput: {
+            id: string;
+            type: string;
+            properties?: {
+                [key: string]: string;
+            };
+            bindings?: {
+                [key: string]: string;
+            };
+            slots?: {
+                [key: string]: string[];
+            };
+        };
+        ProjectOperationInput: {
+            /** @enum {string} */
+            kind: "SET_PROPERTY" | "INSERT_COMPONENT" | "REMOVE_COMPONENT" | "MOVE_COMPONENT";
+            pageId: string;
+            componentId?: string;
+            property?: string;
+            value?: string;
+            parentComponentId?: string;
+            slot?: string;
+            /** Format: int32 */
+            index?: number;
+            component?: components["schemas"]["ProjectComponentInput"];
         };
         AsyncOperationView: {
             /** Format: uuid */
@@ -394,6 +441,131 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ProjectName"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["StoreProjectView"];
+                };
+            };
+            /** @description Public problem */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+        };
+    };
+    acceptRevision: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OperationBatchInput"];
             };
         };
         responses: {

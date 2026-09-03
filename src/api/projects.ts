@@ -78,6 +78,24 @@ export async function getStoreProject(id: string): Promise<StoreProject> {
   } catch (error) { throw safeProblem(error) }
 }
 
+export type OperationBatch = components['schemas']['OperationBatchInput']
+
+/**
+ * Lleva una intención manual completa y espera la revisión que produjo.
+ *
+ * <p>La respuesta se valida igual que cualquier otra: una revisión que no cumple el contrato no
+ * puede pasar por aceptada, porque el Canvas la tomaría por verdad del servidor.
+ */
+export async function acceptRevision(id: string, batch: OperationBatch): Promise<StoreProject> {
+  try {
+    const { data } = await platform.POST('/api/v1/projects/{id}/revisions', {
+      params: { path: { id } }, body: batch, signal: AbortSignal.timeout(15_000),
+    })
+    if (!isStoreProject(data)) throw publicProblem(null)
+    return data
+  } catch (error) { throw safeProblem(error) }
+}
+
 export async function renameStoreProject(id: string, name: string): Promise<void> {
   try {
     const { data } = await platform.PATCH('/api/v1/projects/{id}', { params: { path: { id } }, body: { name }, signal: AbortSignal.timeout(15_000) })
