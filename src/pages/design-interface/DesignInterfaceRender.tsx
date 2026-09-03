@@ -8,6 +8,8 @@ import { SavingStatus } from "@/components/created-components/SavingStatus";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEditing } from "@/contexts/EditingContext";
+import { DocumentCanvas } from "@/components/renderers/DocumentCanvas";
+import type { ProjectDocument } from '@/canvas/intention'
 import { getStoreProject, type StoreProject } from '@/api/projects'
 import { safeProblem, type ApiProblem } from '@/api/problems'
 
@@ -20,6 +22,7 @@ const DesignInterfaceRender: React.FC = () => {
   const [selectedWindow, setSelectedWindow] = useState<AppWindow | null>(null);
   const [assistantRevision, setAssistantRevision] = useState(0);
   const [project, setProject] = useState<StoreProject | null>(null);
+  const [preview, setPreview] = useState<ProjectDocument | null>(null);
   const [problem, setProblem] = useState<ApiProblem | null>(null);
   const navigate = useNavigate();
 
@@ -29,6 +32,7 @@ const DesignInterfaceRender: React.FC = () => {
     clearTarget();
     let active = true;
     setProject(null);
+    setPreview(null);
     setProblem(null);
     if (!projectId) {
       setProblem(safeProblem(null));
@@ -82,8 +86,9 @@ const DesignInterfaceRender: React.FC = () => {
         <div className="w-full flex-grow flex flex-col items-center justify-center bg-[var(--dashboard-background)] p-4 relative">
           <div className="w-full flex justify-between items-center">
             <SavingStatus isSaving={isSaving} />
-            <p className="text-sm text-gray-400">Revisión aceptada {project.acceptedRevision.number}</p>
           </div>
+
+          <DocumentCanvas project={project} onAccepted={setProject} onPreview={setPreview} />
 
           {isSingleProductView && (
             <div className="text-sm text-gray-400 mb-4 italic border px-12 py-6">
@@ -96,7 +101,9 @@ const DesignInterfaceRender: React.FC = () => {
           <CodeInterface
             selectedWindow={selectedWindow}
             reloadKey={assistantRevision}
-            project={project}
+            project={preview
+              ? { ...project, acceptedRevision: { ...project.acceptedRevision, document: preview } }
+              : project}
           />
         </div>
       </div>
