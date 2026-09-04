@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { acceptRevision, getStoreProject, type StoreProject } from '@/api/projects'
 import { safeProblem } from '@/api/problems'
-import { intentionKey, setPropertyOperation, withProperty, type ProjectDocument } from '@/canvas/intention'
+import { intentionKey, outcomeIsUnknown, setPropertyOperation, withProperty,
+  type Intention, type ProjectDocument } from '@/canvas/intention'
 
 interface DocumentCanvasProps {
   project: StoreProject
@@ -13,6 +14,8 @@ interface DocumentCanvasProps {
 type Saving =
   | { status: 'settled' }
   | { status: 'pending' }
+  /** El servidor no llego a decir si la acepto; la intencion sigue viva con su clave. */
+  | { status: 'unconfirmed', message: string }
   | { status: 'rejected', message: string }
 
 /**
@@ -29,6 +32,7 @@ type Saving =
  */
 export function DocumentCanvas({ project, onAccepted, onPreview }: DocumentCanvasProps) {
   const [saving, setSaving] = useState<Saving>({ status: 'settled' })
+  const [unconfirmed, setUnconfirmed] = useState<Intention | null>(null)
 
   const document = project.acceptedRevision.document
   const page = document.pages[0]
@@ -39,32 +43,44 @@ export function DocumentCanvas({ project, onAccepted, onPreview }: DocumentCanva
     </section>
   }
 
-  async function save(heading: string) {
-    const trimmed = heading.trim()
-    if (!trimmed || trimmed === root!.properties.heading) return
-
+  async function attempt(intention: Intention) {
     // Primero se ve, y después se pregunta: eso es lo que hace que el Canvas responda.
-    onPreview(withProperty(document, page!.id, root!.id, 'heading', trimmed))
+    onPreview(withProperty(document, page!.id, root!.id, 'heading', intention.heading))
     setSaving({ status: 'pending' })
 
     try {
       const accepted = await acceptRevision(project.id, {
         baseRevisionId: project.acceptedRevision.id,
-        idempotencyKey: intentionKey(),
-        operations: [setPropertyOperation(page!.id, root!.id, 'heading', trimmed)],
+        idempotencyKey: intention.key,
+        operations: [setPropertyOperation(page!.id, root!.id, 'heading', intention.heading)],
       })
+      setUnconfirmed(null)
       setSaving({ status: 'settled' })
       onPreview(null)
       onAccepted(accepted)
     } catch (error) {
       const problem = safeProblem(error)
-      setSaving({ status: 'rejected', message: problem.message })
       onPreview(null)
+      if (outcomeIsUnknown(problem.action)) {
+        // Nadie sabe si llego a aceptarse. La intencion se guarda con su clave, de modo que
+        // reintentarla traiga de vuelta la revision que ya exista en vez de escribir otra igual.
+        setUnconfirmed(intention)
+        setSaving({ status: 'unconfirmed', message: problem.message })
+        return
+      }
+      setUnconfirmed(null)
+      setSaving({ status: 'rejected', message: problem.message })
       // El proyecto avanzó por otro lado: se trae lo que hay, en vez de dejar la pantalla mintiendo.
       if (problem.action === 'REFRESH') {
         await getStoreProject(project.id).then(onAccepted).catch(() => undefined)
       }
     }
+  }
+
+  function save(heading: string) {
+    const trimmed = heading.trim()
+    if (!trimmed || trimmed === root!.properties.heading) return
+    void attempt({ key: intentionKey(), heading: trimmed })
   }
 
   return (
@@ -97,7 +113,14 @@ export function DocumentCanvas({ project, onAccepted, onPreview }: DocumentCanva
           ? 'Cambio pendiente de confirmación…'
           : `Revisión aceptada ${project.acceptedRevision.number}`}
       </p>
-      {saving.status === 'rejected' && <p role="alert" className="text-xs">{saving.message}</p>}
+      {(saving.status === 'rejected' || saving.status === 'unconfirmed')
+        && <p role="alert" className="text-xs">{saving.message}</p>}
+      {saving.status === 'unconfirmed' && unconfirmed && (
+        <button type="button" onClick={() => void attempt(unconfirmed)}
+          className="rounded-md border px-3 py-1 text-xs">
+          Reintentar
+        </button>
+      )}
     </section>
   )
 }

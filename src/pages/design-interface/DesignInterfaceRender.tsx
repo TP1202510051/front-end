@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import type { AppWindow } from "@/models/windowModel";
 import ChatInterface from "../chat-interface/ChatInterface";
 import CodeInterface from "../code-interface/CodeInterface";
@@ -9,8 +9,9 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEditing } from "@/contexts/EditingContext";
 import { DocumentCanvas } from "@/components/renderers/DocumentCanvas";
+import { RevisionHistoryPanel } from "@/components/renderers/RevisionHistoryPanel";
 import type { ProjectDocument } from '@/canvas/intention'
-import { getStoreProject, type StoreProject } from '@/api/projects'
+import { getRevision, getStoreProject, type StoreProject } from '@/api/projects'
 import { safeProblem, type ApiProblem } from '@/api/problems'
 
 const DesignInterfaceRender: React.FC = () => {
@@ -23,6 +24,11 @@ const DesignInterfaceRender: React.FC = () => {
   const [assistantRevision, setAssistantRevision] = useState(0);
   const [project, setProject] = useState<StoreProject | null>(null);
   const [preview, setPreview] = useState<ProjectDocument | null>(null);
+  // La revision que se inspecciona vive en la direccion y no en el estado: asi una recarga sigue
+  // ensenando la misma, y el enlace lleva a donde dice que lleva.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const inspecting = searchParams.get('revision');
+  const [inspected, setInspected] = useState<StoreProject | null>(null);
   const [problem, setProblem] = useState<ApiProblem | null>(null);
   const navigate = useNavigate();
 
@@ -45,6 +51,18 @@ const DesignInterfaceRender: React.FC = () => {
     });
     return () => { active = false };
   }, [projectId]);
+
+  useEffect(() => {
+    let active = true;
+    setInspected(null);
+    if (!projectId || !inspecting) return () => { active = false };
+    getRevision(projectId, inspecting).then(value => {
+      if (active) setInspected(value);
+    }).catch(error => {
+      if (active) setProblem(safeProblem(error));
+    });
+    return () => { active = false };
+  }, [projectId, inspecting]);
 
   if (problem) {
     return <main className="flex min-h-screen items-center justify-center bg-[var(--dashboard-background)] p-8">
@@ -73,6 +91,12 @@ const DesignInterfaceRender: React.FC = () => {
   const isSingleProductView =
     selectedWindow && singleProductViews.includes(selectedWindow.name);
 
+  // Lo pendiente manda sobre lo aceptado, y una revision inspeccionada sobre la cabecera.
+  const settled = inspected ?? project;
+  const shown = preview
+    ? { ...settled, acceptedRevision: { ...settled.acceptedRevision, document: preview } }
+    : settled;
+
   return (
     <div className="w-full h-screen flex flex-col bg-[#202123] overflow-hidden relative">
       <div className="flex flex-grow overflow-hidden">
@@ -88,7 +112,18 @@ const DesignInterfaceRender: React.FC = () => {
             <SavingStatus isSaving={isSaving} />
           </div>
 
-          <DocumentCanvas project={project} onAccepted={setProject} onPreview={setPreview} />
+          {inspecting
+            ? <p role="status" className="text-xs text-[var(--dashboard-foreground)]">
+                {inspected
+                  ? `Viendo la revisión ${inspected.acceptedRevision.number}. Vuelve a la última para editar.`
+                  : 'Abriendo la revisión…'}
+              </p>
+            : <DocumentCanvas project={project} onAccepted={setProject} onPreview={setPreview} />}
+
+          <RevisionHistoryPanel projectId={projectId ?? ""}
+            acceptedRevisionId={project.acceptedRevision.id}
+            inspecting={inspecting ? Number(inspecting) : null}
+            onInspect={number => setSearchParams(number === null ? {} : { revision: String(number) })} />
 
           {isSingleProductView && (
             <div className="text-sm text-gray-400 mb-4 italic border px-12 py-6">
@@ -101,9 +136,7 @@ const DesignInterfaceRender: React.FC = () => {
           <CodeInterface
             selectedWindow={selectedWindow}
             reloadKey={assistantRevision}
-            project={preview
-              ? { ...project, acceptedRevision: { ...project.acceptedRevision, document: preview } }
-              : project}
+            project={shown}
           />
         </div>
       </div>

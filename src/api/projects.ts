@@ -37,7 +37,10 @@ function isStoreProject(value: unknown): value is StoreProject {
     || revision.registryVersion !== 'textile-store@1.0.0'
     || revision.templateVersion !== 'verified-textile-start@1.0.0'
     || typeof revision.acceptedAt !== 'string' || typeof revision.hash !== 'string'
-    || !/^[0-9a-f]{64}$/.test(revision.hash) || !record(revision.document)) return false
+    || !/^[0-9a-f]{64}$/.test(revision.hash) || typeof revision.origin !== 'string'
+    || !['VERIFIED_TEMPLATE', 'MANUAL_BATCH', 'ASSISTANT_PROPOSAL', 'IMPORT', 'MIGRATION']
+      .includes(revision.origin)
+    || !record(revision.document)) return false
   const document = revision.document
   return document.schemaVersion === 'project-document@1.0.0'
     && document.registryVersion === revision.registryVersion
@@ -79,6 +82,53 @@ export async function getStoreProject(id: string): Promise<StoreProject> {
 }
 
 export type OperationBatch = components['schemas']['OperationBatchInput']
+export type RevisionHistory = components['schemas']['RevisionHistoryView']
+export type RevisionSummary = components['schemas']['RevisionSummaryView']
+
+function isRevisionSummary(value: unknown): value is RevisionSummary {
+  if (!record(value)) return false
+  return typeof value.id === 'string' && /^[1-9][0-9]*$/.test(value.id)
+    && typeof value.number === 'number' && Number.isSafeInteger(value.number) && value.number >= 1
+    && (value.parentId == null || typeof value.parentId === 'string')
+    && typeof value.origin === 'string'
+    && ['VERIFIED_TEMPLATE', 'MANUAL_BATCH', 'ASSISTANT_PROPOSAL', 'IMPORT', 'MIGRATION']
+      .includes(value.origin)
+    && typeof value.actorId === 'string'
+    && value.registryVersion === 'textile-store@1.0.0'
+    && value.templateVersion === 'verified-textile-start@1.0.0'
+    && typeof value.hash === 'string' && /^[0-9a-f]{64}$/.test(value.hash)
+    && typeof value.acceptedAt === 'string'
+}
+
+/**
+ * Una pagina del historial, de la mas reciente hacia atras.
+ *
+ * <p>`before` es el numero por debajo del cual seguir leyendo. Se rechaza un cursor que no avanza,
+ * porque un cliente que lo repita se quedaria pidiendo la misma pagina para siempre.
+ */
+export async function listRevisions(id: string, before?: string): Promise<RevisionHistory> {
+  try {
+    const { data } = await platform.GET('/api/v1/projects/{id}/revisions', {
+      params: { path: { id }, query: { before, limit: 20 } }, signal: AbortSignal.timeout(15_000),
+    })
+    if (!data || !Array.isArray(data.items) || !data.items.every(isRevisionSummary)
+      || (data.nextCursor != null && (typeof data.nextCursor !== 'string'
+        || !/^[1-9][0-9]*$/.test(data.nextCursor) || data.nextCursor === before
+        || data.items.length === 0))) throw publicProblem(null)
+    return data
+  } catch (error) { throw safeProblem(error) }
+}
+
+/** Una revision concreta por su numero, con su documento completo. */
+export async function getRevision(id: string, number: string): Promise<StoreProject> {
+  try {
+    const { data } = await platform.GET('/api/v1/projects/{id}/revisions/{number}', {
+      params: { path: { id, number } }, signal: AbortSignal.timeout(15_000),
+    })
+    if (!isStoreProject(data)) throw publicProblem(null)
+    return data
+  } catch (error) { throw safeProblem(error) }
+}
 
 /**
  * Lleva una intención manual completa y espera la revisión que produjo.
