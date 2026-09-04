@@ -475,11 +475,21 @@
         },
         "responses" : {
           "201" : {
-            "description" : "Created",
+            "description" : "Accepted revision",
             "content" : {
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/StoreProjectView"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Revision conflict",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RevisionConflictView"
                 }
               }
             }
@@ -525,16 +535,6 @@
             }
           },
           "406" : {
-            "description" : "Public problem",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/PublicProblem"
-                }
-              }
-            }
-          },
-          "409" : {
             "description" : "Public problem",
             "content" : {
               "application/problem+json" : {
@@ -1611,6 +1611,10 @@
             "type" : "string",
             "enum" : [ "VERIFIED_TEMPLATE", "MANUAL_BATCH", "ASSISTANT_PROPOSAL", "IMPORT", "MIGRATION" ]
           },
+          "basedOnRevisionId" : {
+            "type" : "string",
+            "nullable" : true
+          },
           "document" : {
             "$ref" : "#/components/schemas/ProjectDocumentView"
           }
@@ -1806,6 +1810,52 @@
           },
           "component" : {
             "$ref" : "#/components/schemas/ProjectComponentInput"
+          }
+        }
+      },
+      "OperationConflictView" : {
+        "required" : [ "componentId", "kind", "pageId" ],
+        "type" : "object",
+        "properties" : {
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "PROPERTY_CHANGED", "TARGET_MISSING", "STRUCTURE_CHANGED" ]
+          },
+          "pageId" : {
+            "type" : "string"
+          },
+          "componentId" : {
+            "type" : "string"
+          },
+          "property" : {
+            "type" : "string",
+            "nullable" : true
+          },
+          "attempted" : {
+            "type" : "string",
+            "nullable" : true
+          },
+          "current" : {
+            "type" : "string",
+            "nullable" : true
+          }
+        }
+      },
+      "RevisionConflictView" : {
+        "required" : [ "baseRevisionId", "conflicts", "headRevisionId" ],
+        "type" : "object",
+        "properties" : {
+          "baseRevisionId" : {
+            "type" : "string"
+          },
+          "headRevisionId" : {
+            "type" : "string"
+          },
+          "conflicts" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/OperationConflictView"
+            }
           }
         }
       },

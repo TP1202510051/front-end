@@ -23,6 +23,7 @@ const recovery = {
 /** Never displays server detail/title or arbitrary provider/transport messages. */
 export class ApiProblem extends Error {
   readonly code: ProblemCode | 'AUTHORIZATION_DENIED' | 'CONTRACT_MISMATCH' | 'NETWORK_UNAVAILABLE'
+    | 'REVISION_CONFLICT'
   readonly action: RecoveryAction
   readonly correlationId?: string
 
@@ -35,8 +36,56 @@ export class ApiProblem extends Error {
   }
 }
 
+export type OperationConflict = components['schemas']['OperationConflictView']
+
+/**
+ * El unico desenlace que llega con detalle, y a proposito.
+ *
+ * <p>Un conflicto que no dice contra que se choco solo deja reintentar a ciegas. Lo que viaja aqui
+ * son datos del propio proyecto de quien pregunta, no interioridades del servidor.
+ */
+export class RevisionConflictProblem extends ApiProblem {
+  readonly baseRevisionId: string
+  readonly headRevisionId: string
+  readonly conflicts: OperationConflict[]
+
+  constructor(baseRevisionId: string, headRevisionId: string, conflicts: OperationConflict[]) {
+    super('REVISION_CONFLICT', {
+      message: 'Alguien cambió esto mientras lo editabas.', action: 'REFRESH',
+    })
+    this.baseRevisionId = baseRevisionId
+    this.headRevisionId = headRevisionId
+    this.conflicts = conflicts
+  }
+}
+
+const conflictKinds = ['PROPERTY_CHANGED', 'TARGET_MISSING', 'STRUCTURE_CHANGED']
+
+function isConflict(value: unknown): value is OperationConflict {
+  if (!value || typeof value !== 'object') return false
+  const conflict = value as Record<string, unknown>
+  return typeof conflict.kind === 'string' && conflictKinds.includes(conflict.kind)
+    && typeof conflict.pageId === 'string' && typeof conflict.componentId === 'string'
+    && (conflict.property == null || typeof conflict.property === 'string')
+    && (conflict.attempted == null || typeof conflict.attempted === 'string')
+    && (conflict.current == null || typeof conflict.current === 'string')
+}
+
+function revisionConflict(payload: unknown): RevisionConflictProblem | null {
+  if (!payload || typeof payload !== 'object') return null
+  const body = payload as Record<string, unknown>
+  if (typeof body.baseRevisionId !== 'string' || typeof body.headRevisionId !== 'string') return null
+  if (!Array.isArray(body.conflicts) || body.conflicts.length === 0
+    || !body.conflicts.every(isConflict)) return null
+  return new RevisionConflictProblem(body.baseRevisionId, body.headRevisionId, body.conflicts)
+}
+
 export function publicProblem(payload: unknown, status?: number): ApiProblem {
   if (status === 401) return new ApiProblem('AUTHENTICATION_REQUIRED', recovery.AUTHENTICATION_REQUIRED)
+  if (status === 409) {
+    const conflict = revisionConflict(payload)
+    if (conflict) return conflict
+  }
   if (status === 403) return new ApiProblem('AUTHORIZATION_DENIED', {
     message: 'No tienes permiso para realizar esta acción.', action: 'RETURN_TO_PROJECTS',
   })
