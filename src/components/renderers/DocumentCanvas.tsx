@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { acceptRevision, getStoreProject, type StoreProject } from '@/api/projects'
-import { safeProblem } from '@/api/problems'
+import { RevisionConflictProblem, safeProblem } from '@/api/problems'
+import { ConflictPanel } from '@/components/renderers/ConflictPanel'
 import { intentionKey, outcomeIsUnknown, setPropertyOperation, withProperty,
   type Intention, type ProjectDocument } from '@/canvas/intention'
 
@@ -33,6 +34,8 @@ type Saving =
 export function DocumentCanvas({ project, onAccepted, onPreview }: DocumentCanvasProps) {
   const [saving, setSaving] = useState<Saving>({ status: 'settled' })
   const [unconfirmed, setUnconfirmed] = useState<Intention | null>(null)
+  const [clash, setClash] = useState<RevisionConflictProblem | null>(null)
+  const [disputed, setDisputed] = useState<Intention | null>(null)
 
   const document = project.acceptedRevision.document
   const page = document.pages[0]
@@ -43,24 +46,34 @@ export function DocumentCanvas({ project, onAccepted, onPreview }: DocumentCanva
     </section>
   }
 
-  async function attempt(intention: Intention) {
+  async function attempt(intention: Intention, base: string) {
     // Primero se ve, y después se pregunta: eso es lo que hace que el Canvas responda.
     onPreview(withProperty(document, page!.id, root!.id, 'heading', intention.heading))
     setSaving({ status: 'pending' })
 
     try {
       const accepted = await acceptRevision(project.id, {
-        baseRevisionId: project.acceptedRevision.id,
+        baseRevisionId: base,
         idempotencyKey: intention.key,
         operations: [setPropertyOperation(page!.id, root!.id, 'heading', intention.heading)],
       })
       setUnconfirmed(null)
+      setClash(null)
       setSaving({ status: 'settled' })
       onPreview(null)
       onAccepted(accepted)
     } catch (error) {
       const problem = safeProblem(error)
       onPreview(null)
+      if (problem instanceof RevisionConflictProblem) {
+        // El servidor ya intento reaplicarlo y no pudo. Quien decide es quien edita, y para eso
+        // necesita ver contra que se choco: el panel lo ensena y ofrece las salidas que hay.
+        setUnconfirmed(null)
+        setDisputed(intention)
+        setClash(problem)
+        setSaving({ status: 'settled' })
+        return
+      }
       if (outcomeIsUnknown(problem.action)) {
         // Nadie sabe si llego a aceptarse. La intencion se guarda con su clave, de modo que
         // reintentarla traiga de vuelta la revision que ya exista en vez de escribir otra igual.
@@ -80,10 +93,39 @@ export function DocumentCanvas({ project, onAccepted, onPreview }: DocumentCanva
   function save(heading: string) {
     const trimmed = heading.trim()
     if (!trimmed || trimmed === root!.properties.heading) return
-    void attempt({ key: intentionKey(), heading: trimmed })
+    void attempt({ key: intentionKey(), heading: trimmed }, project.acceptedRevision.id)
+  }
+
+  /**
+   * Insistir con el cambio propio, ahora sobre la cabecera de verdad.
+   *
+   * <p>Con clave nueva, porque ya no es la misma intencion: la anterior se escribio contra una
+   * revision que quedo atras, y reenviarla igual volveria a chocar contra lo mismo.
+   */
+  async function keepMine() {
+    const intention = disputed
+    if (!intention) return
+    setClash(null)
+    try {
+      const fresh = await getStoreProject(project.id)
+      onAccepted(fresh)
+      await attempt({ key: intentionKey(), heading: intention.heading },
+        fresh.acceptedRevision.id)
+    } catch (error) {
+      setSaving({ status: 'rejected', message: safeProblem(error).message })
+    }
+  }
+
+  /** Dejar de disputar: se descarta el borrador y se mira lo que el proyecto tiene. */
+  async function keepAccepted() {
+    setClash(null)
+    setDisputed(null)
+    onPreview(null)
+    await getStoreProject(project.id).then(onAccepted).catch(() => undefined)
   }
 
   return (
+    <>
     <section aria-label="Canvas del proyecto" className="w-full max-w-3xl space-y-2">
       <form
         className="flex gap-2"
@@ -116,11 +158,15 @@ export function DocumentCanvas({ project, onAccepted, onPreview }: DocumentCanva
       {(saving.status === 'rejected' || saving.status === 'unconfirmed')
         && <p role="alert" className="text-xs">{saving.message}</p>}
       {saving.status === 'unconfirmed' && unconfirmed && (
-        <button type="button" onClick={() => void attempt(unconfirmed)}
+        <button type="button"
+          onClick={() => void attempt(unconfirmed, project.acceptedRevision.id)}
           className="rounded-md border px-3 py-1 text-xs">
           Reintentar
         </button>
       )}
     </section>
+    {clash && <ConflictPanel conflicts={clash.conflicts}
+      onKeepMine={() => void keepMine()} onKeepAccepted={() => void keepAccepted()} />}
+    </>
   )
 }

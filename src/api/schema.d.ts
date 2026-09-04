@@ -129,6 +129,7 @@ export interface components {
             hash: string;
             /** @enum {string} */
             origin: "VERIFIED_TEMPLATE" | "MANUAL_BATCH" | "ASSISTANT_PROPOSAL" | "IMPORT" | "MIGRATION";
+            basedOnRevisionId?: string | null;
             document: components["schemas"]["ProjectDocumentView"];
         };
         ProjectComponentView: {
@@ -194,6 +195,20 @@ export interface components {
             /** Format: int32 */
             index?: number;
             component?: components["schemas"]["ProjectComponentInput"];
+        };
+        OperationConflictView: {
+            /** @enum {string} */
+            kind: "PROPERTY_CHANGED" | "TARGET_MISSING" | "STRUCTURE_CHANGED";
+            pageId: string;
+            componentId: string;
+            property?: string | null;
+            attempted?: string | null;
+            current?: string | null;
+        };
+        RevisionConflictView: {
+            baseRevisionId: string;
+            headRevisionId: string;
+            conflicts: components["schemas"]["OperationConflictView"][];
         };
         AsyncOperationView: {
             /** Format: uuid */
@@ -729,7 +744,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Created */
+            /** @description Accepted revision */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -783,13 +798,13 @@ export interface operations {
                     "application/problem+json": components["schemas"]["PublicProblem"];
                 };
             };
-            /** @description Public problem */
+            /** @description Revision conflict */
             409: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["PublicProblem"];
+                    "*/*": components["schemas"]["RevisionConflictView"];
                 };
             };
             /** @description Public problem */
