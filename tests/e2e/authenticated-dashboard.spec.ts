@@ -37,6 +37,7 @@ test('textile entrepreneur creates opens and reloads the initial Accepted revisi
       id: '9001', number: 1, registryVersion: 'textile-store@1.0.0',
       templateVersion: 'verified-textile-start@1.0.0', acceptedAt: '2026-09-02T10:00:00',
       hash: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+      origin: 'VERIFIED_TEMPLATE',
       document: {
         schemaVersion: 'project-document@1.0.0', registryVersion: 'textile-store@1.0.0',
         templateVersion: 'verified-textile-start@1.0.0', pages: [{ id: 'home', path: '/',
@@ -156,6 +157,7 @@ function storeProject(id: string, name: string) {
       id: '9001', number: 1, registryVersion: 'textile-store@1.0.0',
       templateVersion: 'verified-textile-start@1.0.0', acceptedAt: '2026-09-02T10:00:00',
       hash: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+      origin: 'VERIFIED_TEMPLATE',
       document: { schemaVersion: 'project-document@1.0.0', registryVersion: 'textile-store@1.0.0',
         templateVersion: 'verified-textile-start@1.0.0', pages: [] },
     },

@@ -297,6 +297,160 @@
       }
     },
     "/api/v1/projects/{id}/revisions" : {
+      "get" : {
+        "tags" : [ "project-controller" ],
+        "operationId" : "listRevisions",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        }, {
+          "name" : "before",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "maximum" : 100,
+            "minimum" : 1,
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RevisionHistoryView"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "422" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "429" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "503" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          }
+        }
+      },
       "post" : {
         "tags" : [ "project-controller" ],
         "operationId" : "acceptRevision",
@@ -990,6 +1144,151 @@
         }
       }
     },
+    "/api/v1/projects/{id}/revisions/{number}" : {
+      "get" : {
+        "tags" : [ "project-controller" ],
+        "operationId" : "getRevision",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        }, {
+          "name" : "number",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StoreProjectView"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "422" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "429" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "503" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/operations/{id}" : {
       "get" : {
         "tags" : [ "async-operation-controller" ],
@@ -1285,7 +1584,7 @@
         }
       },
       "AcceptedRevisionView" : {
-        "required" : [ "acceptedAt", "document", "hash", "id", "number", "registryVersion", "templateVersion" ],
+        "required" : [ "acceptedAt", "document", "hash", "id", "number", "origin", "registryVersion", "templateVersion" ],
         "type" : "object",
         "properties" : {
           "id" : {
@@ -1307,6 +1606,10 @@
           },
           "hash" : {
             "type" : "string"
+          },
+          "origin" : {
+            "type" : "string",
+            "enum" : [ "VERIFIED_TEMPLATE", "MANUAL_BATCH", "ASSISTANT_PROPOSAL", "IMPORT", "MIGRATION" ]
           },
           "document" : {
             "$ref" : "#/components/schemas/ProjectDocumentView"
@@ -1627,6 +1930,59 @@
             "type" : "string",
             "description" : "Pass as after to read the next page; null means complete",
             "nullable" : true
+          }
+        }
+      },
+      "RevisionHistoryView" : {
+        "required" : [ "items" ],
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/RevisionSummaryView"
+            }
+          },
+          "nextCursor" : {
+            "type" : "string",
+            "nullable" : true
+          }
+        }
+      },
+      "RevisionSummaryView" : {
+        "required" : [ "acceptedAt", "actorId", "hash", "id", "number", "origin", "registryVersion", "templateVersion" ],
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "number" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "parentId" : {
+            "type" : "string",
+            "nullable" : true
+          },
+          "origin" : {
+            "type" : "string",
+            "enum" : [ "VERIFIED_TEMPLATE", "MANUAL_BATCH", "ASSISTANT_PROPOSAL", "IMPORT", "MIGRATION" ]
+          },
+          "actorId" : {
+            "type" : "string"
+          },
+          "registryVersion" : {
+            "type" : "string"
+          },
+          "templateVersion" : {
+            "type" : "string"
+          },
+          "hash" : {
+            "type" : "string"
+          },
+          "acceptedAt" : {
+            "type" : "string",
+            "format" : "date-time"
           }
         }
       },

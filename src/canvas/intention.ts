@@ -39,11 +39,29 @@ export function withProperty(
 }
 
 /**
- * Una identidad por intención, no por reintento.
+ * Una identidad por intención, no por envío.
  *
- * <p>Si el envío se pierde y se repite, la clave viaja igual y el servidor devuelve la revisión que
- * ya aceptó en vez de escribir una segunda.
+ * <p>La distinción es la que hace que la idempotencia sirva de algo: si se generase una clave en
+ * cada envío, un reintento seria una intención nueva a ojos del servidor y acabaria escribiendo una
+ * segunda revisión con el mismo cambio.
  */
 export function intentionKey(): string {
   return crypto.randomUUID()
+}
+
+/** Una intención concreta, con la identidad que la acompaña mientras no se resuelva. */
+export interface Intention {
+  key: string
+  heading: string
+}
+
+/**
+ * Si el servidor contestó de verdad o se quedó sin contestar.
+ *
+ * <p>Un rechazo -no cabe en el proyecto, la base se quedó vieja- es una respuesta: la intención está
+ * resuelta y su clave no vuelve a usarse. Una caída de red o un fallo del servidor no dicen si
+ * llegó a aceptarse, y ahi es donde reintentar con la misma clave evita duplicar lo ya aceptado.
+ */
+export function outcomeIsUnknown(action: string): boolean {
+  return action === 'RETRY_LATER' || action === 'CONTACT_SUPPORT'
 }
