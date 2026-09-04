@@ -4,19 +4,19 @@ export function projectAt(revisionId: string, number: number, heading: string) {
   return {
     id: '42', name: 'Confecciones del Sol', createdAt: '2026-09-03T10:00:00', imageUrl: null,
     acceptedRevision: {
-      id: revisionId, number, registryVersion: 'textile-store@1.0.0',
-      templateVersion: 'verified-textile-start@1.0.0', acceptedAt: '2026-09-03T10:00:00',
+      id: revisionId, number, registryVersion: 'textile-store@1.1.0',
+      templateVersion: 'verified-textile-start@1.1.0', acceptedAt: '2026-09-03T10:00:00',
       hash: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
       origin: number === 1 ? 'VERIFIED_TEMPLATE' : 'MANUAL_BATCH',
       document: {
-        schemaVersion: 'project-document@1.0.0', registryVersion: 'textile-store@1.0.0',
-        templateVersion: 'verified-textile-start@1.0.0', pages: [{ id: 'home', path: '/',
-          rootComponentId: 'hero-main', components: [
+        schemaVersion: 'project-document@1.0.0', registryVersion: 'textile-store@1.1.0',
+        templateVersion: 'verified-textile-start@1.1.0', pages: [{ id: 'home', path: '/',
+          kind: 'HOME', rootComponentId: 'hero-main', components: [
             { id: 'hero-main', type: 'layout.hero', properties: { heading,
-              subheading: 'Prendas listas' }, bindings: { collection: 'featured' },
+              subheading: 'Prendas listas' }, bindings: { collection: 'featured' }, interactions: {},
               slots: { actions: ['hero-action'] } },
             { id: 'hero-action', type: 'action.link', properties: { label: 'Ver colección' },
-              bindings: {}, slots: {} },
+              bindings: {}, interactions: { activate: 'home' }, slots: {} },
           ] }],
       },
     },
@@ -26,15 +26,15 @@ export function projectAt(revisionId: string, number: number, heading: string) {
 function summary(id: string, number: number, parentId: string | null) {
   return {
     id, number, parentId, origin: number === 1 ? 'VERIFIED_TEMPLATE' : 'MANUAL_BATCH',
-    actorId: 'demo-textile-a-v1', registryVersion: 'textile-store@1.0.0',
-    templateVersion: 'verified-textile-start@1.0.0',
+    actorId: 'demo-textile-a-v1', registryVersion: 'textile-store@1.1.0',
+    templateVersion: 'verified-textile-start@1.1.0',
     hash: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
     acceptedAt: '2026-09-03T10:00:00',
   }
 }
 
 const registry = {
-  registryVersion: 'textile-store@1.0.0',
+  registryVersion: 'textile-store@1.1.0',
   components: [{
     type: 'layout.hero',
     properties: {
@@ -47,11 +47,17 @@ const registry = {
   }, {
     type: 'action.link',
     properties: { label: { type: 'TEXT', required: true, minLength: 1, maxLength: 40 } },
-    slots: {}, bindings: [], constraints: [],
+    slots: {}, bindings: [], interactions: [{ name: 'activate', required: true }],
+    constraints: [],
   }],
-  template: { templateVersion: 'verified-textile-start@1.0.0', composition: {
-    schemaVersion: 'registry-composition@1.0.0', registryVersion: 'textile-store@1.0.0',
-    templateVersion: 'verified-textile-start@1.0.0',
+  pages: [
+    { kind: 'HOME', required: true, path: '/', rootTypes: ['layout.hero'] },
+    { kind: 'CATALOG', required: true, path: '/catalogo', rootTypes: ['catalog.grid'] },
+    { kind: 'CONTENT', required: false, path: null, rootTypes: ['content.section'] },
+  ],
+  template: { templateVersion: 'verified-textile-start@1.1.0', composition: {
+    schemaVersion: 'registry-composition@1.0.0', registryVersion: 'textile-store@1.1.0',
+    templateVersion: 'verified-textile-start@1.1.0',
     pages: projectAt('9001', 1, 'Mi tienda').acceptedRevision.document.pages,
   } },
 }

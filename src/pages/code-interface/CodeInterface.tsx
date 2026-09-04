@@ -12,9 +12,11 @@ interface CodeInterfaceProps {
   selectedWindow: AppWindow | null
   reloadKey?: number
   project: StoreProject
+  /** La pagina que se esta mirando; sin ella se dibuja la primera. */
+  pageId?: string | null
 }
 
-export default function CodeInterface({ selectedWindow, reloadKey, project }: CodeInterfaceProps) {
+export default function CodeInterface({ selectedWindow, reloadKey, project, pageId }: CodeInterfaceProps) {
   const revision = project.acceptedRevision
   const { publication, failed } = useRegistryPublication(
     reloadKey, revision.registryVersion, revision.templateVersion,
@@ -39,7 +41,7 @@ export default function CodeInterface({ selectedWindow, reloadKey, project }: Co
         {publication && !projectPublication && <p role="alert">La revisión no coincide con el registro verificado.</p>}
         {projectPublication && (
           <section aria-label={selectedWindow ? `Vista de ${selectedWindow.name}` : 'Vista de la revisión aceptada'}>
-            <RegistryRenderer publication={projectPublication} />
+            <RegistryRenderer publication={projectPublication} pageId={pageId} />
           </section>
         )}
       </main>
