@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 const publication = {
-  registryVersion: 'textile-store@1.0.0',
+  registryVersion: 'textile-store@1.1.0',
   components: [{
     type: 'layout.hero',
     properties: {
@@ -10,27 +10,31 @@ const publication = {
     },
     slots: { actions: { allowedTypes: ['action.link'], minimum: 1, maximum: 1 } },
     bindings: [{ name: 'collection', source: 'catalog.collection', required: true }],
-    constraints: ['TOP_LEVEL_ONLY'],
+    interactions: [], constraints: ['TOP_LEVEL_ONLY'],
   }, {
     type: 'action.link',
     properties: { label: { type: 'TEXT', required: true, minLength: 1, maxLength: 40 } },
-    slots: {}, bindings: [], constraints: [],
+    slots: {}, bindings: [], interactions: [{ name: 'activate', required: true }],
+    constraints: [],
   }],
+  pages: [
+    { kind: 'HOME', required: true, path: '/', rootTypes: ['layout.hero'] },
+  ],
   template: {
-    templateVersion: 'verified-textile-start@1.0.0',
+    templateVersion: 'verified-textile-start@1.1.0',
     composition: {
       schemaVersion: 'registry-composition@1.0.0',
-      registryVersion: 'textile-store@1.0.0',
-      templateVersion: 'verified-textile-start@1.0.0',
+      registryVersion: 'textile-store@1.1.0',
+      templateVersion: 'verified-textile-start@1.1.0',
       pages: [{
-        id: 'home', path: '/', rootComponentId: 'hero-main',
+        id: 'home', kind: 'HOME', path: '/', rootComponentId: 'hero-main',
         components: [{
           id: 'hero-main', type: 'layout.hero',
           properties: { heading: 'Confecciones Andinas', subheading: 'Prendas listas para acompañarte cada día' },
-          bindings: { collection: 'featured' }, slots: { actions: ['hero-action'] },
+          bindings: { collection: 'featured' }, interactions: {}, slots: { actions: ['hero-action'] },
         }, {
           id: 'hero-action', type: 'action.link', properties: { label: 'Ver colección' },
-          bindings: {}, slots: {},
+          bindings: {}, interactions: { activate: 'home' }, slots: {},
         }],
       }],
     },
@@ -46,7 +50,7 @@ test('renders the verified template deterministically from typed registry data',
 
   await expect(page.getByRole('heading', { name: 'Confecciones Andinas' })).toBeVisible()
   await expect(page.getByText('Prendas listas para acompañarte cada día')).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Ver colección' })).toHaveAttribute('href', '#catalog')
+  await expect(page.getByRole('link', { name: 'Ver colección' })).toHaveAttribute('href', '/')
 })
 
 test('invalid registry properties produce a useful validation state', async ({ page }) => {

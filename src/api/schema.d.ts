@@ -141,6 +141,9 @@ export interface components {
             bindings: {
                 [key: string]: string;
             };
+            interactions: {
+                [key: string]: string;
+            };
             slots: {
                 [key: string]: string[];
             };
@@ -153,6 +156,8 @@ export interface components {
         };
         ProjectPageView: {
             id: string;
+            /** @enum {string} */
+            kind: "HOME" | "CATALOG" | "CONTENT";
             path: string;
             rootComponentId: string;
             components: components["schemas"]["ProjectComponentView"][];
@@ -179,13 +184,16 @@ export interface components {
             bindings?: {
                 [key: string]: string;
             };
+            interactions?: {
+                [key: string]: string;
+            };
             slots?: {
                 [key: string]: string[];
             };
         };
         ProjectOperationInput: {
             /** @enum {string} */
-            kind: "SET_PROPERTY" | "INSERT_COMPONENT" | "REMOVE_COMPONENT" | "MOVE_COMPONENT";
+            kind: "SET_PROPERTY" | "INSERT_COMPONENT" | "REMOVE_COMPONENT" | "MOVE_COMPONENT" | "ADD_PAGE" | "REMOVE_PAGE" | "MOVE_PAGE";
             pageId: string;
             componentId?: string;
             property?: string;
@@ -194,6 +202,9 @@ export interface components {
             slot?: string;
             /** Format: int32 */
             index?: number;
+            /** @enum {string} */
+            pageKind?: "HOME" | "CATALOG" | "CONTENT";
+            path?: string;
             component?: components["schemas"]["ProjectComponentInput"];
         };
         OperationConflictView: {
@@ -284,6 +295,7 @@ export interface components {
                 [key: string]: components["schemas"]["RegistrySlotView"];
             };
             bindings: components["schemas"]["RegistryBindingView"][];
+            interactions: components["schemas"]["RegistryInteractionView"][];
             constraints: string[];
         };
         RegistryCompositionView: {
@@ -301,12 +313,28 @@ export interface components {
             bindings: {
                 [key: string]: string;
             };
+            interactions: {
+                [key: string]: string;
+            };
             slots: {
                 [key: string]: string[];
             };
         };
+        RegistryInteractionView: {
+            name: string;
+            required: boolean;
+        };
+        RegistryPageDefinitionView: {
+            /** @enum {string} */
+            kind: "HOME" | "CATALOG" | "CONTENT";
+            required: boolean;
+            path?: string | null;
+            rootTypes: string[];
+        };
         RegistryPageView: {
             id: string;
+            /** @enum {string} */
+            kind: "HOME" | "CATALOG" | "CONTENT";
             path: string;
             rootComponentId: string;
             components: components["schemas"]["RegistryInstanceView"][];
@@ -322,6 +350,7 @@ export interface components {
         RegistryPublicationView: {
             registryVersion: string;
             components: components["schemas"]["RegistryComponentView"][];
+            pages: components["schemas"]["RegistryPageDefinitionView"][];
             template: components["schemas"]["VerifiedTemplateView"];
         };
         RegistrySlotView: {

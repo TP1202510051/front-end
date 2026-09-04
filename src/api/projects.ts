@@ -1,4 +1,5 @@
 import { platform } from './client'
+import { isPublished } from './registry'
 import { publicProblem, safeProblem } from './problems'
 import type { components } from './schema'
 
@@ -27,6 +28,8 @@ function slotsRecord(value: unknown): value is Record<string, string[]> {
     && item.every(child => typeof child === 'string'))
 }
 
+const DOCUMENT_SCHEMAS = ['project-document@1.0.0', 'project-document@1.1.0']
+
 function isStoreProject(value: unknown): value is StoreProject {
   if (!record(value)) return false
   const item = value
@@ -34,15 +37,16 @@ function isStoreProject(value: unknown): value is StoreProject {
   const revision = item.acceptedRevision
   if (typeof revision.id !== 'string' || !/^[1-9][0-9]*$/.test(revision.id)
     || typeof revision.number !== 'number' || !Number.isSafeInteger(revision.number) || revision.number < 1
-    || revision.registryVersion !== 'textile-store@1.0.0'
-    || revision.templateVersion !== 'verified-textile-start@1.0.0'
+    || !isPublished(revision.registryVersion, revision.templateVersion)
     || typeof revision.acceptedAt !== 'string' || typeof revision.hash !== 'string'
     || !/^[0-9a-f]{64}$/.test(revision.hash) || typeof revision.origin !== 'string'
     || !['VERIFIED_TEMPLATE', 'MANUAL_BATCH', 'ASSISTANT_PROPOSAL', 'IMPORT', 'MIGRATION']
       .includes(revision.origin)
     || !record(revision.document)) return false
   const document = revision.document
-  return document.schemaVersion === 'project-document@1.0.0'
+  // Las dos formas publicadas del documento. Rechazar la anterior dejaria sin abrir las revisiones
+  // que se aceptaron con ella, que son justo las que el historial ensena.
+  return DOCUMENT_SCHEMAS.includes(document.schemaVersion as string)
     && document.registryVersion === revision.registryVersion
     && document.templateVersion === revision.templateVersion
     && Array.isArray(document.pages) && document.pages.every((page: unknown) => record(page)
@@ -94,8 +98,7 @@ function isRevisionSummary(value: unknown): value is RevisionSummary {
     && ['VERIFIED_TEMPLATE', 'MANUAL_BATCH', 'ASSISTANT_PROPOSAL', 'IMPORT', 'MIGRATION']
       .includes(value.origin)
     && typeof value.actorId === 'string'
-    && value.registryVersion === 'textile-store@1.0.0'
-    && value.templateVersion === 'verified-textile-start@1.0.0'
+    && isPublished(value.registryVersion, value.templateVersion)
     && typeof value.hash === 'string' && /^[0-9a-f]{64}$/.test(value.hash)
     && typeof value.acceptedAt === 'string'
 }

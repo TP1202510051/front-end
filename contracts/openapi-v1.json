@@ -1621,7 +1621,7 @@
         }
       },
       "ProjectComponentView" : {
-        "required" : [ "bindings", "id", "properties", "slots", "type" ],
+        "required" : [ "bindings", "id", "interactions", "properties", "slots", "type" ],
         "type" : "object",
         "properties" : {
           "id" : {
@@ -1637,6 +1637,12 @@
             }
           },
           "bindings" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          },
+          "interactions" : {
             "type" : "object",
             "additionalProperties" : {
               "type" : "string"
@@ -1675,11 +1681,15 @@
         }
       },
       "ProjectPageView" : {
-        "required" : [ "components", "id", "path", "rootComponentId" ],
+        "required" : [ "components", "id", "kind", "path", "rootComponentId" ],
         "type" : "object",
         "properties" : {
           "id" : {
             "type" : "string"
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "HOME", "CATALOG", "CONTENT" ]
           },
           "path" : {
             "type" : "string"
@@ -1766,6 +1776,12 @@
               "type" : "string"
             }
           },
+          "interactions" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          },
           "slots" : {
             "type" : "object",
             "additionalProperties" : {
@@ -1783,7 +1799,7 @@
         "properties" : {
           "kind" : {
             "type" : "string",
-            "enum" : [ "SET_PROPERTY", "INSERT_COMPONENT", "REMOVE_COMPONENT", "MOVE_COMPONENT" ]
+            "enum" : [ "SET_PROPERTY", "INSERT_COMPONENT", "REMOVE_COMPONENT", "MOVE_COMPONENT", "ADD_PAGE", "REMOVE_PAGE", "MOVE_PAGE" ]
           },
           "pageId" : {
             "minLength" : 1,
@@ -1807,6 +1823,13 @@
           "index" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "pageKind" : {
+            "type" : "string",
+            "enum" : [ "HOME", "CATALOG", "CONTENT" ]
+          },
+          "path" : {
+            "type" : "string"
           },
           "component" : {
             "$ref" : "#/components/schemas/ProjectComponentInput"
@@ -2052,7 +2075,7 @@
         }
       },
       "RegistryComponentView" : {
-        "required" : [ "bindings", "constraints", "properties", "slots", "type" ],
+        "required" : [ "bindings", "constraints", "interactions", "properties", "slots", "type" ],
         "type" : "object",
         "properties" : {
           "type" : {
@@ -2074,6 +2097,12 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/RegistryBindingView"
+            }
+          },
+          "interactions" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/RegistryInteractionView"
             }
           },
           "constraints" : {
@@ -2106,7 +2135,7 @@
         }
       },
       "RegistryInstanceView" : {
-        "required" : [ "bindings", "id", "properties", "slots", "type" ],
+        "required" : [ "bindings", "id", "interactions", "properties", "slots", "type" ],
         "type" : "object",
         "properties" : {
           "id" : {
@@ -2127,6 +2156,12 @@
               "type" : "string"
             }
           },
+          "interactions" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          },
           "slots" : {
             "type" : "object",
             "additionalProperties" : {
@@ -2138,12 +2173,51 @@
           }
         }
       },
+      "RegistryInteractionView" : {
+        "required" : [ "name", "required" ],
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "required" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "RegistryPageDefinitionView" : {
+        "required" : [ "kind", "required", "rootTypes" ],
+        "type" : "object",
+        "properties" : {
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "HOME", "CATALOG", "CONTENT" ]
+          },
+          "required" : {
+            "type" : "boolean"
+          },
+          "path" : {
+            "type" : "string",
+            "nullable" : true
+          },
+          "rootTypes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
       "RegistryPageView" : {
-        "required" : [ "components", "id", "path", "rootComponentId" ],
+        "required" : [ "components", "id", "kind", "path", "rootComponentId" ],
         "type" : "object",
         "properties" : {
           "id" : {
             "type" : "string"
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "HOME", "CATALOG", "CONTENT" ]
           },
           "path" : {
             "type" : "string"
@@ -2180,7 +2254,7 @@
         }
       },
       "RegistryPublicationView" : {
-        "required" : [ "components", "registryVersion", "template" ],
+        "required" : [ "components", "pages", "registryVersion", "template" ],
         "type" : "object",
         "properties" : {
           "registryVersion" : {
@@ -2190,6 +2264,12 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/RegistryComponentView"
+            }
+          },
+          "pages" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/RegistryPageDefinitionView"
             }
           },
           "template" : {

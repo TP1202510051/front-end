@@ -1,8 +1,10 @@
 import type { components } from '@/api/schema'
 import type { StoreProject } from '@/api/projects'
+import { isPublished } from '@/api/registry'
 
 export type RegistryPublication = components['schemas']['RegistryPublicationView']
 export type RegistryInstance = components['schemas']['RegistryInstanceView']
+export type RegistryPage = components['schemas']['RegistryPageView']
 
 export function publicationForProject(
   publication: RegistryPublication,
@@ -31,9 +33,10 @@ function strings(value: unknown): value is string[] {
 export function isRegistryPublication(value: unknown): value is RegistryPublication {
   if (!record(value)) return false
   const publication = value as Partial<RegistryPublication>
-  if (publication.registryVersion !== 'textile-store@1.0.0'
+  if (!publication.template
+    || !isPublished(publication.registryVersion, publication.template.templateVersion)
     || !Array.isArray(publication.components)
-    || publication.template?.templateVersion !== 'verified-textile-start@1.0.0') return false
+    || !Array.isArray(publication.pages)) return false
   const composition = publication.template.composition
   if (composition.registryVersion !== publication.registryVersion
     || composition.templateVersion !== publication.template.templateVersion
@@ -77,12 +80,26 @@ export function publicationIssue(publication: RegistryPublication): string | nul
     if (!instances.has(page.rootComponentId)) return 'ROOT_COMPONENT_NOT_FOUND'
     for (const instance of page.components) {
       const definition = definitions.get(instance.type)
-      if (!definition || !['layout.hero', 'action.link'].includes(instance.type)) return 'COMPONENT_TYPE_UNKNOWN'
+      if (!definition) return 'COMPONENT_TYPE_UNKNOWN'
       if (definition.constraints.includes('TOP_LEVEL_ONLY') && instance.id !== page.rootComponentId) {
         return 'TOP_LEVEL_ONLY_REQUIRED'
       }
       for (const name of Object.keys(instance.properties).sort()) {
         if (!(name in definition.properties)) return 'PROPERTY_NOT_ALLOWED'
+      }
+      // Un enlace sin destino, o con uno que no existe, no es un enlace.
+      const declared = new Map((definition.interactions ?? []).map(entry => [entry.name, entry]))
+      for (const name of Object.keys(instance.interactions ?? {}).sort()) {
+        if (!declared.has(name)) return 'INTERACTION_NOT_ALLOWED'
+        const target = (instance.interactions ?? {})[name]
+        if (!publication.template.composition.pages.some(candidate => candidate.id === target)) {
+          return 'INTERACTION_TARGET_NOT_FOUND'
+        }
+      }
+      for (const [name, interaction] of [...declared].sort(([left], [right]) => left.localeCompare(right))) {
+        if (interaction.required && (instance.interactions ?? {})[name] == null) {
+          return 'REQUIRED_INTERACTION_MISSING'
+        }
       }
       for (const [name, property] of Object.entries(definition.properties).sort(([left], [right]) => left.localeCompare(right))) {
         const propertyValue = instance.properties[name]

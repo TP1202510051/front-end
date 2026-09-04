@@ -10,8 +10,12 @@ import { Button } from "@/components/ui/button";
 import { useEditing } from "@/contexts/EditingContext";
 import { DocumentCanvas } from "@/components/renderers/DocumentCanvas";
 import { RevisionHistoryPanel } from "@/components/renderers/RevisionHistoryPanel";
+import { PageNavigator } from "@/components/renderers/PageNavigator";
+import { CanvasWidth, WIDTHS } from "@/components/renderers/CanvasWidth";
+import { useRegistryPublication } from "@/registry/useRegistryPublication";
 import type { ProjectDocument } from '@/canvas/intention'
-import { getRevision, getStoreProject, type StoreProject } from '@/api/projects'
+import { acceptRevision, getRevision, getStoreProject, type StoreProject } from '@/api/projects'
+import { intentionKey } from '@/canvas/intention'
 import { safeProblem, type ApiProblem } from '@/api/problems'
 
 const DesignInterfaceRender: React.FC = () => {
@@ -29,6 +33,11 @@ const DesignInterfaceRender: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const inspecting = searchParams.get('revision');
   const [inspected, setInspected] = useState<StoreProject | null>(null);
+  const openedPage = searchParams.get('page');
+  const [width, setWidth] = useState<number>(WIDTHS[WIDTHS.length - 1]);
+  const [pageProblem, setPageProblem] = useState<string | null>(null);
+  // Que paginas exige el dominio lo dice el registro, no una lista escrita aqui.
+  const { publication } = useRegistryPublication(assistantRevision);
   const [problem, setProblem] = useState<ApiProblem | null>(null);
   const navigate = useNavigate();
 
@@ -91,6 +100,28 @@ const DesignInterfaceRender: React.FC = () => {
   const isSingleProductView =
     selectedWindow && singleProductViews.includes(selectedWindow.name);
 
+  /**
+   * Lleva una tanda de operaciones de pagina y se queda con lo que el servidor acepte.
+   *
+   * <p>No ofrece resolver un conflicto como hace el Canvas: aqui se dice lo que paso y se recarga.
+   * Reconciliar una reordenacion pidiendo que elija la duena es una capacidad aparte.
+   */
+  async function applyOperations(operations: Record<string, unknown>[]) {
+    if (!project) return;
+    setPageProblem(null);
+    try {
+      const accepted = await acceptRevision(project.id, {
+        baseRevisionId: project.acceptedRevision.id,
+        idempotencyKey: intentionKey(),
+        operations: operations as never,
+      });
+      setProject(accepted);
+    } catch (error) {
+      setPageProblem(safeProblem(error).message);
+      await getStoreProject(project.id).then(setProject).catch(() => undefined);
+    }
+  }
+
   // Lo pendiente manda sobre lo aceptado, y una revision inspeccionada sobre la cabecera.
   const settled = inspected ?? project;
   const shown = preview
@@ -120,6 +151,14 @@ const DesignInterfaceRender: React.FC = () => {
               </p>
             : <DocumentCanvas project={project} onAccepted={setProject} onPreview={setPreview} />}
 
+          <PageNavigator project={shown} definitions={publication?.pages ?? []}
+            selected={openedPage}
+            onSelect={pageId => setSearchParams(pageId === null ? {} : { page: pageId })}
+            onOperations={operations => void applyOperations(operations)}
+            problem={pageProblem} />
+
+          <CanvasWidth width={width} onWidth={setWidth} />
+
           <RevisionHistoryPanel projectId={projectId ?? ""}
             acceptedRevisionId={project.acceptedRevision.id}
             inspecting={inspecting ? Number(inspecting) : null}
@@ -133,11 +172,14 @@ const DesignInterfaceRender: React.FC = () => {
             </div>
           )}
 
-          <CodeInterface
-            selectedWindow={selectedWindow}
-            reloadKey={assistantRevision}
-            project={shown}
-          />
+          <div style={{ width: `${width}px`, maxWidth: '100%' }} className="mx-auto">
+            <CodeInterface
+              selectedWindow={selectedWindow}
+              reloadKey={assistantRevision}
+              project={shown}
+              pageId={openedPage}
+            />
+          </div>
         </div>
       </div>
 
