@@ -153,6 +153,8 @@ export interface components {
             registryVersion: string;
             templateVersion: string;
             pages: components["schemas"]["ProjectPageView"][];
+            blocks: components["schemas"]["ProjectBlockView"][];
+            blockInstances: components["schemas"]["BlockInstanceView"][];
         };
         ProjectPageView: {
             id: string;
@@ -193,7 +195,7 @@ export interface components {
         };
         ProjectOperationInput: {
             /** @enum {string} */
-            kind: "SET_PROPERTY" | "INSERT_COMPONENT" | "REMOVE_COMPONENT" | "MOVE_COMPONENT" | "ADD_PAGE" | "REMOVE_PAGE" | "MOVE_PAGE";
+            kind: "SET_PROPERTY" | "INSERT_COMPONENT" | "REMOVE_COMPONENT" | "MOVE_COMPONENT" | "ADD_PAGE" | "REMOVE_PAGE" | "MOVE_PAGE" | "CREATE_BLOCK" | "INSTANTIATE_BLOCK" | "SET_BLOCK_PROPERTY" | "DETACH_BLOCK";
             pageId: string;
             componentId?: string;
             property?: string;
@@ -206,6 +208,9 @@ export interface components {
             pageKind?: "HOME" | "CATALOG" | "CONTENT";
             path?: string;
             component?: components["schemas"]["ProjectComponentInput"];
+            blockId?: string;
+            instanceId?: string;
+            name?: string;
         };
         OperationConflictView: {
             /** @enum {string} */
@@ -380,6 +385,22 @@ export interface components {
         };
         /** @enum {string} */
         RecoveryAction: "EDIT_REQUEST" | "SIGN_IN" | "RETURN_TO_PROJECTS" | "REFRESH" | "RETRY_LATER" | "CONTACT_SUPPORT";
+        ProjectBlockView: {
+            id: string;
+            name: string;
+            rootComponentId: string;
+            components: components["schemas"]["ProjectComponentView"][];
+        };
+        BlockInstanceView: {
+            id: string;
+            blockId: string;
+            pageId: string;
+            rootComponentId: string;
+            componentIds: {
+                [key: string]: string;
+            };
+            detached: boolean;
+        };
     };
     responses: never;
     parameters: never;

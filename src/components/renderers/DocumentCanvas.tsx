@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { acceptRevision, getStoreProject, type StoreProject } from '@/api/projects'
 import { RevisionConflictProblem, safeProblem } from '@/api/problems'
 import { ConflictPanel } from '@/components/renderers/ConflictPanel'
-import { intentionKey, outcomeIsUnknown, setPropertyOperation, withProperty,
+import { intentionKey, outcomeIsUnknown,
   type Intention, type ProjectDocument } from '@/canvas/intention'
+import { propertyOperation, withAnyProperty } from '@/canvas/blocks'
 
 interface DocumentCanvasProps {
   project: StoreProject
@@ -30,6 +31,10 @@ type Saving =
  *
  * <p>Sólo se edita texto. Insertar, quitar y mover existen en el contrato y en el servidor, pero
  * todavía no tienen gesto aquí.
+ *
+ * <p>Si la raíz de la portada pertenece a una instancia vinculada, el cambio sale como edición
+ * compartida y no como local: el servidor rechaza tocar suelto lo que un bloque manda, así que
+ * mandarlo local sería mandar un rechazo seguro.
  */
 export function DocumentCanvas({ project, onAccepted, onPreview }: DocumentCanvasProps) {
   const [saving, setSaving] = useState<Saving>({ status: 'settled' })
@@ -48,14 +53,14 @@ export function DocumentCanvas({ project, onAccepted, onPreview }: DocumentCanva
 
   async function attempt(intention: Intention, base: string) {
     // Primero se ve, y después se pregunta: eso es lo que hace que el Canvas responda.
-    onPreview(withProperty(document, page!.id, root!.id, 'heading', intention.heading))
+    onPreview(withAnyProperty(document, page!.id, root!.id, 'heading', intention.heading))
     setSaving({ status: 'pending' })
 
     try {
       const accepted = await acceptRevision(project.id, {
         baseRevisionId: base,
         idempotencyKey: intention.key,
-        operations: [setPropertyOperation(page!.id, root!.id, 'heading', intention.heading)],
+        operations: [propertyOperation(document, page!.id, root!.id, 'heading', intention.heading)],
       })
       setUnconfirmed(null)
       setClash(null)

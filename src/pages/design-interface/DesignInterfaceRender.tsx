@@ -8,6 +8,7 @@ import { SavingStatus } from "@/components/created-components/SavingStatus";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEditing } from "@/contexts/EditingContext";
+import { ProjectBlocks } from "@/components/renderers/ProjectBlocks";
 import { DocumentCanvas } from "@/components/renderers/DocumentCanvas";
 import { RevisionHistoryPanel } from "@/components/renderers/RevisionHistoryPanel";
 import { PageNavigator } from "@/components/renderers/PageNavigator";
@@ -107,7 +108,7 @@ const DesignInterfaceRender: React.FC = () => {
    * Reconciliar una reordenacion pidiendo que elija la duena es una capacidad aparte.
    */
   async function applyOperations(operations: Record<string, unknown>[]) {
-    if (!project) return;
+    if (!project || inspecting) return;
     setPageProblem(null);
     try {
       const accepted = await acceptRevision(project.id, {
@@ -138,7 +139,7 @@ const DesignInterfaceRender: React.FC = () => {
           onSelectWindow={setSelectedWindow}
         />
 
-        <div className="w-full flex-grow flex flex-col items-center justify-center bg-[var(--dashboard-background)] p-4 relative">
+        <div className="w-full flex-grow flex flex-col items-center justify-start gap-3 overflow-y-auto bg-[var(--dashboard-background)] p-4 relative">
           <div className="w-full flex justify-between items-center">
             <SavingStatus isSaving={isSaving} />
           </div>
@@ -153,9 +154,16 @@ const DesignInterfaceRender: React.FC = () => {
 
           <PageNavigator project={shown} definitions={publication?.pages ?? []}
             selected={openedPage}
-            onSelect={pageId => setSearchParams(pageId === null ? {} : { page: pageId })}
+            readOnly={Boolean(inspecting)}
+            onSelect={pageId => setSearchParams(current => {
+              const next = new URLSearchParams(current)
+              if (pageId === null) next.delete('page'); else next.set('page', pageId)
+              return next
+            })}
             onOperations={operations => void applyOperations(operations)}
             problem={pageProblem} />
+
+          <ProjectBlocks publication={publication} project={settled} pageId={openedPage} onAccepted={setProject} readOnly={Boolean(inspecting)} />
 
           <CanvasWidth width={width} onWidth={setWidth} />
 
