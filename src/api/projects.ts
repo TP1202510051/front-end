@@ -28,7 +28,26 @@ function slotsRecord(value: unknown): value is Record<string, string[]> {
     && item.every(child => typeof child === 'string'))
 }
 
-const DOCUMENT_SCHEMAS = ['project-document@1.0.0', 'project-document@1.1.0', 'project-document@1.2.0']
+const DOCUMENT_SCHEMAS = ['project-document@1.0.0', 'project-document@1.1.0',
+  'project-document@1.2.0', 'project-document@1.3.0']
+const BLOCK_SCHEMAS = ['project-document@1.2.0', 'project-document@1.3.0']
+
+/**
+ * El Theme del documento, cuando el esquema dice que tiene que traerlo.
+ *
+ * <p>Misma regla que con los bloques: el esquema que lo estrena lo declara obligatorio, y uno
+ * anterior nace sin el y se lee sin ninguno. Las reglas llegan ya acotadas desde el servidor, asi
+ * que aqui solo se comprueba la forma; volver a decidir cual es segura seria abrir un segundo
+ * criterio, y el que deja pasar de mas siempre gana.
+ */
+function themeValid(document: Record<string, unknown>): boolean {
+  const theme = document.theme
+  if (theme == null) return document.schemaVersion !== 'project-document@1.3.0'
+  if (!record(theme) || !stringRecord(theme.tokens) || !Array.isArray(theme.rules)) return false
+  return theme.rules.every(rule => record(rule)
+    && typeof rule.selector === 'string' && stringRecord(rule.declarations)
+    && (rule.media === undefined || rule.media === null || typeof rule.media === 'string'))
+}
 
 /**
  * Los bloques del documento, cuando el esquema dice que tiene que traerlos.
@@ -41,7 +60,7 @@ const DOCUMENT_SCHEMAS = ['project-document@1.0.0', 'project-document@1.1.0', 'p
 function blockMetadataValid(document: Record<string, unknown>): boolean {
   const blocks = document.blocks
   const instances = document.blockInstances
-  if (blocks == null && instances == null) return document.schemaVersion !== 'project-document@1.2.0'
+  if (blocks == null && instances == null) return !BLOCK_SCHEMAS.includes(document.schemaVersion as string)
   return Array.isArray(blocks) && blocks.every(block => record(block)
     && typeof block.id === 'string' && typeof block.name === 'string'
     && typeof block.rootComponentId === 'string' && Array.isArray(block.components)
@@ -71,6 +90,7 @@ function isStoreProject(value: unknown): value is StoreProject {
   // Las formas publicadas del documento. Rechazar una anterior dejaria sin abrir las revisiones
   // que se aceptaron con ella, que son justo las que el historial ensena.
   return DOCUMENT_SCHEMAS.includes(document.schemaVersion as string) && blockMetadataValid(document)
+    && themeValid(document)
     && document.registryVersion === revision.registryVersion
     && document.templateVersion === revision.templateVersion
     && Array.isArray(document.pages) && document.pages.every((page: unknown) => record(page)

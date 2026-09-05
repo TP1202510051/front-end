@@ -62,7 +62,7 @@ function children(root: RegistryInstance, page: RegistryPage): RegistryInstance[
 function Hero({ root, page, pages }: { root: RegistryInstance, page: RegistryPage, pages: RegistryPage[] }) {
   const actions = children(root, page)
   return (
-    <section aria-label="Portada" data-collection={root.bindings.collection}
+    <section aria-label="Portada" data-component-id={root.id} data-collection={root.bindings.collection}
       className="mx-auto w-full rounded-3xl bg-slate-950 p-10 text-white">
       <h1 className="text-4xl font-semibold">{root.properties.heading}</h1>
       <p className="mt-4 text-lg text-slate-200">{root.properties.subheading}</p>
@@ -73,7 +73,7 @@ function Hero({ root, page, pages }: { root: RegistryInstance, page: RegistryPag
 
 function Grid({ root, page, pages }: { root: RegistryInstance, page: RegistryPage, pages: RegistryPage[] }) {
   return (
-    <section aria-label="Catálogo" data-collection={root.bindings.collection}
+    <section aria-label="Catálogo" data-component-id={root.id} data-collection={root.bindings.collection}
       className="mx-auto w-full rounded-3xl border p-8">
       <h1 className="text-3xl font-semibold">{root.properties.heading}</h1>
       <p className="mt-3 text-sm text-slate-500">
@@ -86,7 +86,7 @@ function Grid({ root, page, pages }: { root: RegistryInstance, page: RegistryPag
 
 function Section({ root, page, pages }: { root: RegistryInstance, page: RegistryPage, pages: RegistryPage[] }) {
   return (
-    <section aria-label="Contenido" className="mx-auto w-full rounded-3xl border p-8">
+    <section aria-label="Contenido" data-component-id={root.id} className="mx-auto w-full rounded-3xl border p-8">
       <h1 className="text-3xl font-semibold">{root.properties.heading}</h1>
       <p className="mt-3 whitespace-pre-line">{root.properties.body}</p>
       {children(root, page).map(action => <Link key={action.id} action={action} pages={pages} />)}

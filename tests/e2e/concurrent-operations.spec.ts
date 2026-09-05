@@ -96,7 +96,7 @@ test('an independent change that the server reapplied does not interrupt the ent
       () => projectAt('9001', 1, 'Mi tienda'))
 
     await page.getByLabel('Titular de la portada').fill('Tejidos del valle')
-    await page.getByRole('button', { name: 'Guardar' }).click()
+    await page.getByRole('button', { name: 'Guardar', exact: true }).click()
 
     await expect(canvas(page).getByRole('status')).toHaveText('Revisión aceptada 3')
     await expect(page.getByRole('heading', { name: 'Tejidos del valle' })).toBeVisible()
@@ -116,7 +116,7 @@ test('a same-property conflict shows what the project says now and both ways out
   }, () => projectAt('9002', 2, 'Lo que puso la otra'))
 
   await page.getByLabel('Titular de la portada').fill('Lo que quise poner')
-  await page.getByRole('button', { name: 'Guardar' }).click()
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click()
 
   const clash = page.getByRole('region', { name: 'Conflicto con el proyecto' })
   await expect(clash.getByText('Lo que puso la otra'), 'Sin el valor de ahora no hay decision')
@@ -134,7 +134,7 @@ test('keeping the accepted value drops the draft and shows what the project has'
     'Lo que puso la otra'), () => projectAt('9002', 2, 'Lo que puso la otra'))
 
   await page.getByLabel('Titular de la portada').fill('Lo que quise poner')
-  await page.getByRole('button', { name: 'Guardar' }).click()
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click()
   await page.getByRole('region', { name: 'Conflicto con el proyecto' })
     .getByRole('button', { name: 'Quedarme con lo aceptado' }).click()
 
@@ -153,7 +153,7 @@ test('a deleted target is reported and the client never offers to recreate it', 
     () => projectAt('9002', 2, 'Lo que puso la otra'))
 
   await page.getByLabel('Titular de la portada').fill('Da igual lo que ponga')
-  await page.getByRole('button', { name: 'Guardar' }).click()
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click()
 
   const clash = page.getByRole('region', { name: 'Conflicto con el proyecto' })
   await expect(clash).toBeVisible()

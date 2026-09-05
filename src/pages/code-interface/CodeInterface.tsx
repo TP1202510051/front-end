@@ -1,5 +1,6 @@
 import { MessageCircle } from 'lucide-react'
 import { RegistryRenderer } from '@/components/renderers/RegistryRenderer'
+import { StoreSurface } from '@/components/renderers/StoreSurface'
 import { RenderSkeleton } from '@/components/skeletons/RenderSkeleton'
 import { Button } from '@/components/ui/button'
 import { useEditing } from '@/contexts/EditingContext'
@@ -41,7 +42,9 @@ export default function CodeInterface({ selectedWindow, reloadKey, project, page
         {publication && !projectPublication && <p role="alert">La revisión no coincide con el registro verificado.</p>}
         {projectPublication && (
           <section aria-label={selectedWindow ? `Vista de ${selectedWindow.name}` : 'Vista de la revisión aceptada'}>
-            <RegistryRenderer publication={projectPublication} pageId={pageId} />
+            <StoreSurface document={revision.document}>
+              <RegistryRenderer publication={projectPublication} pageId={pageId} />
+            </StoreSurface>
           </section>
         )}
       </main>

@@ -94,7 +94,7 @@ test('the change shows at once as pending and settles into the accepted revision
   }, () => projectAt('9001', 1, 'Mi tienda'))
 
   await page.getByLabel('Titular de la portada').fill('Tejidos del valle')
-  await page.getByRole('button', { name: 'Guardar' }).click()
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click()
 
   // Se ve antes de que el servidor conteste, y se ve que todavia no esta confirmado.
   await expect(page.getByRole('heading', { name: 'Tejidos del valle' })).toBeVisible()
@@ -115,7 +115,7 @@ test('a rejected intention is taken back instead of being shown as accepted', as
     () => projectAt('9001', 1, 'Mi tienda'))
 
   await page.getByLabel('Titular de la portada').fill('Titular que no cabe')
-  await page.getByRole('button', { name: 'Guardar' }).click()
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click()
 
   await expect(canvasOf(page).getByRole('alert')).toHaveText('La solicitud no cumple las reglas del proyecto.')
   await expect(page.getByRole('heading', { name: 'Mi tienda' })).toBeVisible()
@@ -132,7 +132,7 @@ test('a stale base reconciles with whatever the project became', async ({ page }
   }, () => served)
 
   await page.getByLabel('Titular de la portada').fill('Mi intento')
-  await page.getByRole('button', { name: 'Guardar' }).click()
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click()
 
   await expect(canvasOf(page).getByRole('alert'))
     .toHaveText('El estado cambió. Actualiza antes de volver a intentarlo.')

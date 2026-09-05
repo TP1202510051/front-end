@@ -1620,8 +1620,56 @@
           }
         }
       },
+      "BlockInstanceView" : {
+        "required" : [ "blockId", "componentIds", "detached", "id", "pageId", "rootComponentId" ],
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "blockId" : {
+            "type" : "string"
+          },
+          "pageId" : {
+            "type" : "string"
+          },
+          "rootComponentId" : {
+            "type" : "string"
+          },
+          "componentIds" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          },
+          "detached" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "ProjectBlockView" : {
+        "required" : [ "components", "id", "name", "rootComponentId" ],
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "rootComponentId" : {
+            "type" : "string"
+          },
+          "components" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ProjectComponentView"
+            }
+          }
+        }
+      },
       "ProjectComponentView" : {
-        "required" : [ "bindings", "id", "interactions", "properties", "slots", "type" ],
+        "required" : [ "bindings", "id", "interactions", "properties", "slots", "styles", "type" ],
         "type" : "object",
         "properties" : {
           "id" : {
@@ -1656,11 +1704,17 @@
                 "type" : "string"
               }
             }
+          },
+          "styles" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
           }
         }
       },
       "ProjectDocumentView" : {
-        "required" : [ "blockInstances", "blocks", "pages", "registryVersion", "schemaVersion", "templateVersion" ],
+        "required" : [ "blockInstances", "blocks", "pages", "registryVersion", "schemaVersion", "templateVersion", "theme" ],
         "type" : "object",
         "properties" : {
           "schemaVersion" : {
@@ -1689,6 +1743,9 @@
             "items" : {
               "$ref" : "#/components/schemas/BlockInstanceView"
             }
+          },
+          "theme" : {
+            "$ref" : "#/components/schemas/ProjectThemeView"
           }
         }
       },
@@ -1717,6 +1774,24 @@
           }
         }
       },
+      "ProjectThemeView" : {
+        "required" : [ "rules", "tokens" ],
+        "type" : "object",
+        "properties" : {
+          "tokens" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          },
+          "rules" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/StyleRuleView"
+            }
+          }
+        }
+      },
       "StoreProjectView" : {
         "required" : [ "acceptedRevision", "createdAt", "id", "name" ],
         "type" : "object",
@@ -1736,6 +1811,25 @@
           },
           "acceptedRevision" : {
             "$ref" : "#/components/schemas/AcceptedRevisionView"
+          }
+        }
+      },
+      "StyleRuleView" : {
+        "required" : [ "declarations", "selector" ],
+        "type" : "object",
+        "properties" : {
+          "media" : {
+            "type" : "string",
+            "description" : "Condicion de ancho, o ausente si la regla vale siempre"
+          },
+          "selector" : {
+            "type" : "string"
+          },
+          "declarations" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
           }
         }
       },
@@ -1806,16 +1900,16 @@
         }
       },
       "ProjectOperationInput" : {
-        "required" : [ "kind", "pageId" ],
+        "required" : [ "kind" ],
         "type" : "object",
         "properties" : {
           "kind" : {
             "type" : "string",
-            "enum" : [ "SET_PROPERTY", "INSERT_COMPONENT", "REMOVE_COMPONENT", "MOVE_COMPONENT", "ADD_PAGE", "REMOVE_PAGE", "MOVE_PAGE", "CREATE_BLOCK", "INSTANTIATE_BLOCK", "SET_BLOCK_PROPERTY", "DETACH_BLOCK" ]
+            "enum" : [ "SET_PROPERTY", "INSERT_COMPONENT", "REMOVE_COMPONENT", "MOVE_COMPONENT", "ADD_PAGE", "REMOVE_PAGE", "MOVE_PAGE", "CREATE_BLOCK", "INSTANTIATE_BLOCK", "SET_BLOCK_PROPERTY", "DETACH_BLOCK", "SET_THEME_TOKEN", "SET_PROJECT_STYLES", "SET_COMPONENT_STYLE", "SET_BLOCK_STYLE" ]
           },
           "pageId" : {
-            "minLength" : 1,
-            "type" : "string"
+            "type" : "string",
+            "description" : "La pagina que toca; ausente cuando la operacion es del proyecto entero"
           },
           "componentId" : {
             "type" : "string"
@@ -1853,9 +1947,14 @@
             "type" : "string"
           },
           "name" : {
-            "type" : "string",
             "maxLength" : 120,
-            "minLength" : 0
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "css" : {
+            "maxLength" : 20000,
+            "minLength" : 0,
+            "type" : "string"
           }
         }
       },
@@ -2337,7 +2436,7 @@
         "enum" : [ "BAD_REQUEST", "AUTHENTICATION_REQUIRED", "RESOURCE_NOT_FOUND", "METHOD_NOT_ALLOWED", "NOT_ACCEPTABLE", "CONFLICT", "IDEMPOTENCY_KEY_REUSED", "UNSUPPORTED_MEDIA_TYPE", "SEMANTIC_VALIDATION_FAILED", "RATE_LIMITED", "DEPENDENCY_UNAVAILABLE", "INTERNAL_ERROR" ]
       },
       "PublicProblem" : {
-        "required" : [ "code", "correlationId", "detail", "recoveryAction", "status", "title", "type" ],
+        "required" : [ "code", "correlationId", "detail", "issues", "recoveryAction", "status", "title", "type" ],
         "type" : "object",
         "properties" : {
           "type" : {
@@ -2366,60 +2465,20 @@
           "operationId" : {
             "type" : "string",
             "nullable" : true
+          },
+          "issues" : {
+            "type" : "array",
+            "description" : "Sitio y codigo de cada regla no admitida",
+            "items" : {
+              "type" : "string",
+              "description" : "Sitio y codigo de cada regla no admitida"
+            }
           }
         }
       },
       "RecoveryAction" : {
         "type" : "string",
         "enum" : [ "EDIT_REQUEST", "SIGN_IN", "RETURN_TO_PROJECTS", "REFRESH", "RETRY_LATER", "CONTACT_SUPPORT" ]
-      },
-      "ProjectBlockView" : {
-        "type" : "object",
-        "required" : [ "components", "id", "name", "rootComponentId" ],
-        "properties" : {
-          "id" : {
-            "type" : "string"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "rootComponentId" : {
-            "type" : "string"
-          },
-          "components" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/ProjectComponentView"
-            }
-          }
-        }
-      },
-      "BlockInstanceView" : {
-        "type" : "object",
-        "required" : [ "blockId", "componentIds", "detached", "id", "pageId", "rootComponentId" ],
-        "properties" : {
-          "id" : {
-            "type" : "string"
-          },
-          "blockId" : {
-            "type" : "string"
-          },
-          "pageId" : {
-            "type" : "string"
-          },
-          "rootComponentId" : {
-            "type" : "string"
-          },
-          "componentIds" : {
-            "type" : "object",
-            "additionalProperties" : {
-              "type" : "string"
-            }
-          },
-          "detached" : {
-            "type" : "boolean"
-          }
-        }
       }
     },
     "securitySchemes" : {

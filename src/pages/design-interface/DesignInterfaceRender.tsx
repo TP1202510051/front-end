@@ -9,6 +9,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEditing } from "@/contexts/EditingContext";
 import { ProjectBlocks } from "@/components/renderers/ProjectBlocks";
+import { ThemeEditor } from "@/components/renderers/ThemeEditor";
 import { DocumentCanvas } from "@/components/renderers/DocumentCanvas";
 import { RevisionHistoryPanel } from "@/components/renderers/RevisionHistoryPanel";
 import { PageNavigator } from "@/components/renderers/PageNavigator";
@@ -164,6 +165,8 @@ const DesignInterfaceRender: React.FC = () => {
             problem={pageProblem} />
 
           <ProjectBlocks publication={publication} project={settled} pageId={openedPage} onAccepted={setProject} readOnly={Boolean(inspecting)} />
+
+          <ThemeEditor project={settled} onAccepted={setProject} readOnly={Boolean(inspecting)} />
 
           <CanvasWidth width={width} onWidth={setWidth} />
 
