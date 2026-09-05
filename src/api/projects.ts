@@ -30,6 +30,14 @@ function slotsRecord(value: unknown): value is Record<string, string[]> {
 
 const DOCUMENT_SCHEMAS = ['project-document@1.0.0', 'project-document@1.1.0', 'project-document@1.2.0']
 
+/**
+ * Los bloques del documento, cuando el esquema dice que tiene que traerlos.
+ *
+ * <p>El esquema que los estrenó los declara obligatorios, así que una respuesta que dice ser de ese
+ * esquema y no los trae no es compatible y se rechaza. Los anteriores nacieron sin ellos y se leen
+ * sin ninguno, que es exactamente lo que tenían: exigírselos dejaría sin abrir las revisiones que el
+ * historial enseña. Uno anterior que sí los trae -porque ganó bloques después- también vale.
+ */
 function blockMetadataValid(document: Record<string, unknown>): boolean {
   const blocks = document.blocks
   const instances = document.blockInstances
@@ -60,7 +68,7 @@ function isStoreProject(value: unknown): value is StoreProject {
       .includes(revision.origin)
     || !record(revision.document)) return false
   const document = revision.document
-  // Las dos formas publicadas del documento. Rechazar la anterior dejaria sin abrir las revisiones
+  // Las formas publicadas del documento. Rechazar una anterior dejaria sin abrir las revisiones
   // que se aceptaron con ella, que son justo las que el historial ensena.
   return DOCUMENT_SCHEMAS.includes(document.schemaVersion as string) && blockMetadataValid(document)
     && document.registryVersion === revision.registryVersion

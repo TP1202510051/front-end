@@ -37,8 +37,8 @@ function projectWith(revisionId: string, number: number, pages: ReturnType<typeo
       hash: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
       origin: number === 1 ? 'VERIFIED_TEMPLATE' : 'MANUAL_BATCH', basedOnRevisionId: null,
       document: {
-        schemaVersion: 'project-document@1.1.0', registryVersion: 'textile-store@1.1.0',
-        templateVersion: 'verified-textile-start@1.1.0', pages,
+        schemaVersion: 'project-document@1.2.0', registryVersion: 'textile-store@1.1.0',
+        templateVersion: 'verified-textile-start@1.1.0', pages, blocks: [], blockInstances: [],
       },
     },
   }
@@ -244,5 +244,44 @@ test('detached content can be edited locally without changing the shared definit
   await expect(rendered(page).getByRole('heading', { name: 'Nuestro equipo local', exact: true })).toBeVisible()
   expect((sent as unknown as { operations: unknown[] }).operations[0]).toMatchObject({
     kind: 'SET_PROPERTY', pageId: 'equipo', componentId: 'copy:seccion', property: 'heading', value: 'Nuestro equipo local',
+  })
+})
+test('a document that claims the block schema without carrying it is refused', async ({ page }) => {
+  // Decir que se es del esquema que estrenó los bloques y no traerlos no es una revisión vieja: es
+  // una respuesta incompatible, y abrirla pintaría una identidad compartida que nadie escribió.
+  const incompatible = projectWith('9100', 7, [homePage(), catalogPage()]) as {
+    acceptedRevision: { document: Record<string, unknown> }
+  }
+  delete incompatible.acceptedRevision.document.blocks
+  delete incompatible.acceptedRevision.document.blockInstances
+  await page.route('**/api/v1/component-registries/**', route => route.fulfill({ json: publication }))
+  await page.route('**/windows/project/42', route => route.fulfill({ json: [] }))
+  await page.route('**/categories/project/42', route => route.fulfill({ json: [] }))
+  await page.route('**/api/v1/projects**', route => route.fulfill({ json: incompatible }))
+  await page.goto('/design-interface/42/Confecciones%20del%20Sol')
+  await expect(page.getByText('La respuesta del servicio no es compatible. Actualiza la aplicación.')).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Bloques del proyecto' })).toHaveCount(0)
+})
+
+test('the Canvas edits a linked page root as a shared change, not a local one', async ({ page }) => {
+  // El gesto principal del Canvas escribe sobre la raíz de la portada. Si esa raíz pertenece a una
+  // instancia vinculada, mandarlo como edición local sería mandar un rechazo seguro.
+  let sent: Record<string, unknown> | null = null
+  const home = homePage()
+  const shared = projectWith('9200', 8, [home, catalogPage()]) as {
+    acceptedRevision: { document: Record<string, unknown> }
+  }
+  shared.acceptedRevision.document.blocks = [{ id: 'portada', name: 'Portada compartida',
+    rootComponentId: 'hero-main', components: home.components }]
+  shared.acceptedRevision.document.blockInstances = [{ id: 'inicio', blockId: 'portada',
+    pageId: 'home', rootComponentId: 'hero-main',
+    componentIds: { 'hero-main': 'hero-main', 'hero-action': 'hero-action' }, detached: false }]
+  await open(page, () => shared, body => { sent = body; return { status: 201, json: shared } })
+  await page.getByLabel('Titular de la portada').fill('Tejidos del valle')
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click()
+  await expect.poll(() => sent).not.toBeNull()
+  expect((sent as unknown as { operations: unknown[] }).operations[0]).toMatchObject({
+    kind: 'SET_BLOCK_PROPERTY', pageId: 'home', instanceId: 'inicio',
+    componentId: 'hero-main', property: 'heading', value: 'Tejidos del valle',
   })
 })
