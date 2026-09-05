@@ -1,5 +1,8 @@
 import AxeBuilder from '@axe-core/playwright'
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
+
+/** La portada dibujada desde el registro: donde el titular del proyecto se ve como texto. */
+const rendered = (page: Page) => page.getByRole('region', { name: 'Portada' })
 
 test('authenticated textile entrepreneur can open the dashboard accessibly', async ({ page }) => {
   await page.route('**/api/v1/projects*', async (route) => {
@@ -100,15 +103,15 @@ test('textile entrepreneur creates opens and reloads the initial Accepted revisi
 
   await expect(page).toHaveURL(/\/design-interface\/42\/Confecciones%20del%20Sol$/)
   await expect(page.getByText('Revisión aceptada 1')).toBeVisible()
-  await expect(page.getByText('Mi tienda persistida')).toBeVisible()
+  await expect(rendered(page).getByText('Mi tienda persistida')).toBeVisible()
   await page.reload()
   await expect(page.getByText('Revisión aceptada 1')).toBeVisible()
-  await expect(page.getByText('Mi tienda persistida')).toBeVisible()
+  await expect(rendered(page).getByText('Mi tienda persistida')).toBeVisible()
   await page.goto('/dashboard')
   await expect(page.getByText('Confecciones del Sol', { exact: true })).toBeVisible()
   await page.getByText('Confecciones del Sol', { exact: true }).click()
   await expect(page).toHaveURL(/\/design-interface\/42\/Confecciones%20del%20Sol$/)
-  await expect(page.getByText('Mi tienda persistida')).toBeVisible()
+  await expect(rendered(page).getByText('Mi tienda persistida')).toBeVisible()
   expect(projectReads).toBeGreaterThanOrEqual(2)
 })
 

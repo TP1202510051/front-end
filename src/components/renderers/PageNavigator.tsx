@@ -13,6 +13,7 @@ interface PageNavigatorProps {
   onSelect: (pageId: string | null) => void
   onOperations: (operations: Operation[]) => void
   problem: string | null
+  readOnly?: boolean
 }
 
 /** De la ruta sale el identificador: legible, y el mismo que la empresaria acaba de escribir. */
@@ -28,7 +29,7 @@ function slugOf(path: string): string {
  * catálogo deja de ser una tienda, y ofrecer el botón sería ofrecer un rechazo.
  */
 export function PageNavigator({
-  project, definitions, selected, onSelect, onOperations, problem,
+  project, definitions, selected, onSelect, onOperations, problem, readOnly = false,
 }: PageNavigatorProps) {
   const [path, setPath] = useState('')
   const [title, setTitle] = useState('')
@@ -72,16 +73,16 @@ export function PageNavigator({
               : <button type="button" onClick={() => onSelect(page.id)}
                   className="rounded-md border px-2 py-0.5">Abrir {page.path}</button>}
             <button type="button" onClick={() => move(page, index - 1)}
-              disabled={index === 0} className="rounded-md border px-2 py-0.5 disabled:opacity-40">
+              disabled={readOnly || index === 0} className="rounded-md border px-2 py-0.5 disabled:opacity-40">
               Subir {page.path}
             </button>
             <button type="button" onClick={() => move(page, index + 1)}
-              disabled={index === pages.length - 1}
+              disabled={readOnly || index === pages.length - 1}
               className="rounded-md border px-2 py-0.5 disabled:opacity-40">
               Bajar {page.path}
             </button>
             {!required.has(page.kind) && (
-              <button type="button"
+              <button type="button" disabled={readOnly}
                 onClick={() => onOperations([{ kind: 'REMOVE_PAGE', pageId: page.id }])}
                 className="rounded-md border px-2 py-0.5">Quitar {page.path}</button>
             )}
@@ -89,7 +90,7 @@ export function PageNavigator({
         ))}
       </ul>
 
-      <form className="flex flex-wrap gap-2" onSubmit={event => { event.preventDefault(); add() }}>
+      {!readOnly && <form className="flex flex-wrap gap-2" onSubmit={event => { event.preventDefault(); add() }}>
         <label className="sr-only" htmlFor="page-path">Ruta de la página nueva</label>
         <input id="page-path" name="path" value={path} placeholder="/historia"
           onChange={event => setPath(event.target.value)}
@@ -100,7 +101,7 @@ export function PageNavigator({
           className="rounded-md border px-2 py-1 text-[var(--dashboard-foreground)]" />
         <button type="submit" disabled={!path.trim() || !title.trim()}
           className="rounded-md border px-2 py-0.5 disabled:opacity-40">Añadir página</button>
-      </form>
+      </form>}
     </section>
   )
 }

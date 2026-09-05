@@ -28,7 +28,23 @@ function slotsRecord(value: unknown): value is Record<string, string[]> {
     && item.every(child => typeof child === 'string'))
 }
 
-const DOCUMENT_SCHEMAS = ['project-document@1.0.0', 'project-document@1.1.0']
+const DOCUMENT_SCHEMAS = ['project-document@1.0.0', 'project-document@1.1.0', 'project-document@1.2.0']
+
+function blockMetadataValid(document: Record<string, unknown>): boolean {
+  const blocks = document.blocks
+  const instances = document.blockInstances
+  if (blocks == null && instances == null) return document.schemaVersion !== 'project-document@1.2.0'
+  return Array.isArray(blocks) && blocks.every(block => record(block)
+    && typeof block.id === 'string' && typeof block.name === 'string'
+    && typeof block.rootComponentId === 'string' && Array.isArray(block.components)
+    && block.components.every(node => record(node) && typeof node.id === 'string'
+      && typeof node.type === 'string' && stringRecord(node.properties)
+      && stringRecord(node.bindings) && slotsRecord(node.slots)))
+    && Array.isArray(instances) && instances.every(instance => record(instance)
+      && typeof instance.id === 'string' && typeof instance.blockId === 'string'
+      && typeof instance.pageId === 'string' && typeof instance.rootComponentId === 'string'
+      && typeof instance.detached === 'boolean' && stringRecord(instance.componentIds))
+}
 
 function isStoreProject(value: unknown): value is StoreProject {
   if (!record(value)) return false
@@ -46,7 +62,7 @@ function isStoreProject(value: unknown): value is StoreProject {
   const document = revision.document
   // Las dos formas publicadas del documento. Rechazar la anterior dejaria sin abrir las revisiones
   // que se aceptaron con ella, que son justo las que el historial ensena.
-  return DOCUMENT_SCHEMAS.includes(document.schemaVersion as string)
+  return DOCUMENT_SCHEMAS.includes(document.schemaVersion as string) && blockMetadataValid(document)
     && document.registryVersion === revision.registryVersion
     && document.templateVersion === revision.templateVersion
     && Array.isArray(document.pages) && document.pages.every((page: unknown) => record(page)

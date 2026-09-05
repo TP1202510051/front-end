@@ -1660,7 +1660,7 @@
         }
       },
       "ProjectDocumentView" : {
-        "required" : [ "pages", "registryVersion", "schemaVersion", "templateVersion" ],
+        "required" : [ "blockInstances", "blocks", "pages", "registryVersion", "schemaVersion", "templateVersion" ],
         "type" : "object",
         "properties" : {
           "schemaVersion" : {
@@ -1676,6 +1676,18 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/ProjectPageView"
+            }
+          },
+          "blocks" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ProjectBlockView"
+            }
+          },
+          "blockInstances" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/BlockInstanceView"
             }
           }
         }
@@ -1799,7 +1811,7 @@
         "properties" : {
           "kind" : {
             "type" : "string",
-            "enum" : [ "SET_PROPERTY", "INSERT_COMPONENT", "REMOVE_COMPONENT", "MOVE_COMPONENT", "ADD_PAGE", "REMOVE_PAGE", "MOVE_PAGE" ]
+            "enum" : [ "SET_PROPERTY", "INSERT_COMPONENT", "REMOVE_COMPONENT", "MOVE_COMPONENT", "ADD_PAGE", "REMOVE_PAGE", "MOVE_PAGE", "CREATE_BLOCK", "INSTANTIATE_BLOCK", "SET_BLOCK_PROPERTY", "DETACH_BLOCK" ]
           },
           "pageId" : {
             "minLength" : 1,
@@ -1833,6 +1845,17 @@
           },
           "component" : {
             "$ref" : "#/components/schemas/ProjectComponentInput"
+          },
+          "blockId" : {
+            "type" : "string"
+          },
+          "instanceId" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string",
+            "maxLength" : 120,
+            "minLength" : 0
           }
         }
       },
@@ -2349,6 +2372,54 @@
       "RecoveryAction" : {
         "type" : "string",
         "enum" : [ "EDIT_REQUEST", "SIGN_IN", "RETURN_TO_PROJECTS", "REFRESH", "RETRY_LATER", "CONTACT_SUPPORT" ]
+      },
+      "ProjectBlockView" : {
+        "type" : "object",
+        "required" : [ "components", "id", "name", "rootComponentId" ],
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "rootComponentId" : {
+            "type" : "string"
+          },
+          "components" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ProjectComponentView"
+            }
+          }
+        }
+      },
+      "BlockInstanceView" : {
+        "type" : "object",
+        "required" : [ "blockId", "componentIds", "detached", "id", "pageId", "rootComponentId" ],
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "blockId" : {
+            "type" : "string"
+          },
+          "pageId" : {
+            "type" : "string"
+          },
+          "rootComponentId" : {
+            "type" : "string"
+          },
+          "componentIds" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          },
+          "detached" : {
+            "type" : "boolean"
+          }
+        }
       }
     },
     "securitySchemes" : {
