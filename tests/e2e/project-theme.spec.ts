@@ -211,3 +211,29 @@ test('an inspected revision shows its theme without offering to write over it', 
   await expect(editor(page).getByRole('button', { name: 'Guardar token' })).toHaveCount(0)
   await expect.poll(() => sheetOf(page)).toMatch(/\.abstractify-store \.hero/)
 })
+
+/**
+ * Un choque del Theme es un choque, no una respuesta incompatible.
+ *
+ * <p>El Theme es del proyecto entero, asi que su conflicto no nombra pagina. Exigirla degradaba el
+ * caso a "actualiza la aplicacion", que le decia a la empresaria que el problema era suyo cuando lo
+ * que habia era una decision que tomar.
+ */
+test('a theme conflict is offered as a decision, not as an incompatible response', async ({ page }) => {
+  await open(page, () => projectWith('9007', 8, brand), () => ({
+    status: 409,
+    json: {
+      baseRevisionId: '9007', headRevisionId: '9008',
+      conflicts: [{
+        kind: 'PROPERTY_CHANGED', pageId: null, componentId: null,
+        property: 'color-marca', attempted: '#000000', current: '#1b3a5c',
+      }],
+    },
+  }))
+  await editor(page).getByLabel('Nombre del token').fill('color-marca')
+  await editor(page).getByLabel('Valor del token').fill('#000000')
+  await editor(page).getByRole('button', { name: 'Guardar token' }).click()
+
+  await expect(editor(page).getByRole('alert')).toHaveText(/cambió esto mientras lo editabas/)
+  await expect(editor(page).getByRole('alert')).not.toHaveText(/Actualiza la aplicación/)
+})

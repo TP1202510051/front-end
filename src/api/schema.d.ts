@@ -251,8 +251,8 @@ export interface components {
         OperationConflictView: {
             /** @enum {string} */
             kind: "PROPERTY_CHANGED" | "TARGET_MISSING" | "STRUCTURE_CHANGED";
-            pageId: string;
-            componentId: string;
+            pageId?: string | null;
+            componentId?: string | null;
             property?: string | null;
             attempted?: string | null;
             current?: string | null;

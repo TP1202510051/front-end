@@ -166,7 +166,7 @@ const DesignInterfaceRender: React.FC = () => {
 
           <ProjectBlocks publication={publication} project={settled} pageId={openedPage} onAccepted={setProject} readOnly={Boolean(inspecting)} />
 
-          <ThemeEditor project={settled} onAccepted={setProject} readOnly={Boolean(inspecting)} />
+          <ThemeEditor project={settled} pageId={openedPage} onAccepted={setProject} readOnly={Boolean(inspecting)} />
 
           <CanvasWidth width={width} onWidth={setWidth} />
 

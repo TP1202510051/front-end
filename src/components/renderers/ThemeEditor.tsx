@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { acceptRevision, getStoreProject, type OperationBatch, type StoreProject } from '@/api/projects'
 import { intentionKey, outcomeIsUnknown, type ProjectOperation } from '@/canvas/intention'
 import { safeProblem } from '@/api/problems'
+import { linkedInstanceOf } from '@/canvas/blocks'
 
 interface ThemeEditorProps {
   project: StoreProject
+  pageId: string | null
   onAccepted: (project: StoreProject) => void
   readOnly: boolean
 }
@@ -43,7 +45,7 @@ function explain(issue: string): string {
  *
  * <p>Lo que no se admite se explica por su sitio y su codigo, sin repetir lo que se escribio.
  */
-export function ThemeEditor({ project, onAccepted, readOnly }: ThemeEditorProps) {
+export function ThemeEditor({ project, pageId, onAccepted, readOnly }: ThemeEditorProps) {
   // El contrato lo declara obligatorio, pero una revision anterior al Theme no lo trae y se abre
   // igual -eso es lo que la tolerancia de esquemas promete-. El tipo dice una cosa y el historial
   // otra, y quien pinta tiene que sobrevivir a la segunda.
@@ -51,6 +53,9 @@ export function ThemeEditor({ project, onAccepted, readOnly }: ThemeEditorProps)
   const [css, setCss] = useState<string | null>(null)
   const [tokenName, setTokenName] = useState('')
   const [tokenValue, setTokenValue] = useState('')
+  const [styledId, setStyledId] = useState('')
+  const [styleProperty, setStyleProperty] = useState('')
+  const [styleValue, setStyleValue] = useState('')
   const [pending, setPending] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
   const [issues, setIssues] = useState<string[]>([])
@@ -58,6 +63,13 @@ export function ThemeEditor({ project, onAccepted, readOnly }: ThemeEditorProps)
 
   const written = css ?? sheetText(theme)
   const disabled = pending || Boolean(uncertain) || readOnly
+  const document_ = project.acceptedRevision.document
+  const page = document_.pages.find(item => item.id === pageId) ?? document_.pages[0]
+  const styledComponentId = page?.components.some(node => node.id === styledId)
+    ? styledId : page?.rootComponentId ?? ''
+  // Un nodo enlazado se estiliza por su bloque, igual que se edita su texto: si no, el estilo lo
+  // separaria de sus copias sin que nadie lo hubiera pedido, y el servidor lo rechaza.
+  const linked = page ? linkedInstanceOf(document_, page.id, styledComponentId) : undefined
 
   async function send(batch: OperationBatch) {
     setPending(true); setProblem(null); setIssues([])
@@ -129,6 +141,40 @@ export function ThemeEditor({ project, onAccepted, readOnly }: ThemeEditorProps)
           disabled={disabled} onChange={event => setCss(event.target.value)} />
       </label>
       <button type="submit" className={buttonStyle} disabled={disabled}>Guardar CSS</button>
+    </form>}
+
+    {!readOnly && page && <form className="flex flex-wrap items-end gap-2" onSubmit={event => {
+      event.preventDefault()
+      void apply(linked
+        ? { kind: 'SET_BLOCK_STYLE', pageId: page.id, instanceId: linked.id,
+            componentId: styledComponentId, property: styleProperty.trim(), value: styleValue.trim() }
+        : { kind: 'SET_COMPONENT_STYLE', pageId: page.id,
+            componentId: styledComponentId, property: styleProperty.trim(), value: styleValue.trim() })
+    }}>
+      <label>Componente de {page.path}
+        <select className={fieldStyle} value={styledComponentId} disabled={disabled}
+          onChange={event => setStyledId(event.target.value)}>
+          {page.components.map(node => <option key={node.id} value={node.id}>
+            {node.properties.heading ?? node.properties.label ?? node.type}
+          </option>)}
+        </select>
+      </label>
+      <label>Propiedad
+        <input className={fieldStyle} value={styleProperty} disabled={disabled} maxLength={40}
+          onChange={event => setStyleProperty(event.target.value)} required />
+      </label>
+      <label>Valor
+        <input className={fieldStyle} value={styleValue} disabled={disabled}
+          onChange={event => setStyleValue(event.target.value)} />
+      </label>
+      <button type="submit" className={buttonStyle} disabled={disabled || !styleProperty.trim()}>
+        {linked ? 'Guardar estilo compartido' : 'Guardar estilo del componente'}
+      </button>
+      <p className="w-full text-xs">
+        {linked
+          ? 'Este componente pertenece a un bloque vinculado: el estilo entra en todas sus copias.'
+          : 'Un valor vacío quita el estilo. Pisa al tema, porque se escribe después.'}
+      </p>
     </form>}
 
     {readOnly && <>

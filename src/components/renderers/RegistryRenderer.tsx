@@ -46,7 +46,8 @@ function destination(action: RegistryInstance, pages: RegistryPage[]): string {
 
 function Link({ action, pages }: { action: RegistryInstance, pages: RegistryPage[] }) {
   return (
-    <a className="mt-6 inline-block rounded-full bg-white px-5 py-2 text-slate-950"
+    <a data-component-id={action.id}
+      className="mt-6 inline-block rounded-full bg-white px-5 py-2 text-slate-950"
       href={destination(action, pages)}>
       {action.properties.label}
     </a>

@@ -1959,7 +1959,7 @@
         }
       },
       "OperationConflictView" : {
-        "required" : [ "componentId", "kind", "pageId" ],
+        "required" : [ "kind" ],
         "type" : "object",
         "properties" : {
           "kind" : {
@@ -1967,10 +1967,12 @@
             "enum" : [ "PROPERTY_CHANGED", "TARGET_MISSING", "STRUCTURE_CHANGED" ]
           },
           "pageId" : {
-            "type" : "string"
+            "type" : "string",
+            "nullable" : true
           },
           "componentId" : {
-            "type" : "string"
+            "type" : "string",
+            "nullable" : true
           },
           "property" : {
             "type" : "string",

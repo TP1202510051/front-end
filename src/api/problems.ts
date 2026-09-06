@@ -82,8 +82,12 @@ const conflictKinds = ['PROPERTY_CHANGED', 'TARGET_MISSING', 'STRUCTURE_CHANGED'
 function isConflict(value: unknown): value is OperationConflict {
   if (!value || typeof value !== 'object') return false
   const conflict = value as Record<string, unknown>
+  // Ni la pagina ni el componente son obligatorios: un choque de la pagina entera no nombra
+  // componente, y uno del Theme no nombra pagina. Exigirlos degradaba esos choques a
+  // "respuesta incompatible", que le decia a la empresaria que actualizara en vez de decidir.
   return typeof conflict.kind === 'string' && conflictKinds.includes(conflict.kind)
-    && typeof conflict.pageId === 'string' && typeof conflict.componentId === 'string'
+    && (conflict.pageId == null || typeof conflict.pageId === 'string')
+    && (conflict.componentId == null || typeof conflict.componentId === 'string')
     && (conflict.property == null || typeof conflict.property === 'string')
     && (conflict.attempted == null || typeof conflict.attempted === 'string')
     && (conflict.current == null || typeof conflict.current === 'string')
