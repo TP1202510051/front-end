@@ -42,7 +42,7 @@ export default function CodeInterface({ selectedWindow, reloadKey, project, page
         {publication && !projectPublication && <p role="alert">La revisión no coincide con el registro verificado.</p>}
         {projectPublication && (
           <section aria-label={selectedWindow ? `Vista de ${selectedWindow.name}` : 'Vista de la revisión aceptada'}>
-            <StoreSurface document={revision.document}>
+            <StoreSurface projectId={project.id} document={revision.document}>
               <RegistryRenderer publication={projectPublication} pageId={pageId} />
             </StoreSurface>
           </section>
