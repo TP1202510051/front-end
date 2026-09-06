@@ -35,18 +35,39 @@ export async function listAssets(projectId: string): Promise<ProjectAsset[]> {
 }
 
 /**
- * Sube un fichero.
+ * Sube un fichero, contando cuanto lleva subido.
  *
- * <p>Va por fetch y no por el cliente tipado porque este envio es multipart y su respuesta se juzga
- * igual que cualquier otra: lo que no tiene la forma del contrato no se pinta.
+ * <p>Va por XMLHttpRequest y no por fetch porque fetch no cuenta lo que sube: solo sabe decir que
+ * sigue en marcha. Una imagen de varios megas en una conexion lenta necesita algo mas que eso, y la
+ * respuesta se juzga igual que cualquier otra -lo que no tiene la forma del contrato no se pinta-.
  */
 export async function uploadAsset(
   projectId: string, file: File, alternativeText: string,
+  onProgress?: (fraction: number) => void,
 ): Promise<ProjectAsset> {
+  const token = await getAccessToken()
+  if (!token) throw publicProblem(null, 401)
   const body = new FormData()
   body.append('file', file)
   body.append('alternativeText', alternativeText)
-  const data = await send(`/api/v1/projects/${projectId}/assets`, { method: 'POST', body })
+
+  const data = await new Promise<unknown>((resolve, reject) => {
+    const request = new XMLHttpRequest()
+    request.open('POST', `${base()}/api/v1/projects/${projectId}/assets`)
+    request.setRequestHeader('Authorization', `Bearer ${token}`)
+    request.timeout = 30_000
+    request.upload.addEventListener('progress', event => {
+      if (event.lengthComputable && onProgress) onProgress(event.loaded / event.total)
+    })
+    const parsed = () => { try { return JSON.parse(request.responseText) as unknown } catch { return null } }
+    request.addEventListener('load', () => {
+      if (request.status >= 200 && request.status < 300) resolve(parsed())
+      else reject(publicProblem(parsed(), request.status))
+    })
+    request.addEventListener('error', () => reject(safeProblem(new Error('network'))))
+    request.addEventListener('timeout', () => reject(safeProblem(new Error('timeout'))))
+    request.send(body)
+  })
   if (!isAsset(data)) throw publicProblem(null)
   return data
 }
@@ -99,19 +120,6 @@ export async function readAssetObjectUrl(
   // Solo imagenes: lo que el servidor diga que es otra cosa no se pinta, aunque haya llegado.
   if (!blob.type.startsWith('image/')) throw publicProblem(null)
   return URL.createObjectURL(blob)
-}
-
-async function send(path: string, init: RequestInit): Promise<unknown> {
-  const token = await getAccessToken()
-  if (!token) throw publicProblem(null, 401)
-  const response = await fetch(`${base()}${path}`, {
-    ...init,
-    headers: { ...(init.headers ?? {}), Authorization: `Bearer ${token}` },
-    signal: AbortSignal.timeout(30_000),
-  }).catch(error => { throw safeProblem(error) })
-  const body: unknown = await response.json().catch(() => null)
-  if (!response.ok) throw publicProblem(body, response.status)
-  return body
 }
 
 function base(): string {

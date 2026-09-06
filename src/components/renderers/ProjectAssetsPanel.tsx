@@ -27,13 +27,26 @@ const refusals: Record<string, string> = {
   STORAGE_UNAVAILABLE: 'El almacén no está disponible. Lo que ya subiste se sigue viendo.',
 }
 
+/**
+ * Los fallos de autorizacion no vienen con codigo de asset, sino con el de la respuesta.
+ *
+ * <p>Lo ajeno y lo que no esta se contestan igual a proposito, asi que aqui no se distinguen: hacerlo
+ * convertiria un identificador en una forma de averiguar que existe. Lo que si se distingue es haber
+ * perdido la sesion, que se arregla de otra manera.
+ */
+const authorizations: Partial<Record<string, string>> = {
+  AUTHENTICATION_REQUIRED: 'Tu sesión caducó. Inicia sesión otra vez para subir medios.',
+  AUTHORIZATION_DENIED: 'No tienes permiso sobre este proyecto.',
+  RESOURCE_NOT_FOUND: 'Ese medio ya no está en el proyecto.',
+}
+
 /** El desglose viene como "$.asset CODIGO"; lo que se pinta es lo que el codigo significa. */
-function explain(issues: string[], fallback: string): string {
-  for (const issue of issues) {
+function explain(problem: { issues: string[], code: string, message: string }): string {
+  for (const issue of problem.issues) {
     const code = issue.slice(issue.lastIndexOf(' ') + 1)
     if (refusals[code]) return refusals[code]
   }
-  return fallback
+  return authorizations[problem.code] ?? problem.message
 }
 
 /**
@@ -47,8 +60,12 @@ export function ProjectAssetsPanel({ projectId, readOnly }: ProjectAssetsPanelPr
   const [alternativeText, setAlternativeText] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [pending, setPending] = useState(false)
+  const [uploaded, setUploaded] = useState<number | null>(null)
   const [problem, setProblem] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
+  // Un texto por fila, no uno compartido: con uno solo, guardar la descripcion de una imagen
+  // escribia lo que se habia tecleado para otra.
+  const [descriptions, setDescriptions] = useState<Record<string, string>>({})
 
   useEffect(() => {
     let live = true
@@ -65,10 +82,10 @@ export function ProjectAssetsPanel({ projectId, readOnly }: ProjectAssetsPanelPr
       setAssets(await listAssets(projectId))
       setFile(null)
       setAlternativeText('')
+      setDescriptions({})
     } catch (error) {
-      const failure = safeProblem(error)
-      setProblem(explain(failure.issues, failure.message))
-    } finally { setPending(false) }
+      setProblem(explain(safeProblem(error)))
+    } finally { setPending(false); setUploaded(null) }
   }
 
   return <section aria-label="Medios del proyecto"
@@ -77,7 +94,7 @@ export function ProjectAssetsPanel({ projectId, readOnly }: ProjectAssetsPanelPr
 
     {!readOnly && <form className="flex flex-wrap items-end gap-2" onSubmit={event => {
       event.preventDefault()
-      if (file) void attempt(() => uploadAsset(projectId, file, alternativeText.trim()))
+      if (file) void attempt(() => uploadAsset(projectId, file, alternativeText.trim(), setUploaded))
     }}>
       <label>Imagen
         <input className={fieldStyle} type="file" accept="image/png,image/jpeg" disabled={pending}
@@ -93,7 +110,13 @@ export function ProjectAssetsPanel({ projectId, readOnly }: ProjectAssetsPanelPr
       <p className="w-full text-xs">PNG o JPEG, hasta 5 MB. La descripción es obligatoria.</p>
     </form>}
 
-    {pending && <p role="status">Subiendo…</p>}
+    {pending && (uploaded === null
+      ? <p role="status">Subiendo…</p>
+      : <p role="status">
+          Subiendo…{' '}
+          <progress aria-label="Progreso de la subida" value={uploaded} max={1} />{' '}
+          {Math.round(uploaded * 100)}%
+        </p>)}
     {problem && <p role="alert">{problem}</p>}
     {loaded && assets.length === 0 && !problem && <p>Todavía no hay medios.</p>}
 
@@ -107,10 +130,16 @@ export function ProjectAssetsPanel({ projectId, readOnly }: ProjectAssetsPanelPr
           </p>
           {/* La identidad es lo que el CSS cita; por eso se puede copiar de aqui. */}
           <code className="block overflow-x-auto text-xs">asset({asset.id})</code>
-          {!readOnly && <div className="flex flex-wrap gap-2">
+          {!readOnly && <div className="flex flex-wrap items-end gap-2">
+            <label>Descripción de esta imagen
+              <input className={fieldStyle} maxLength={300} disabled={pending}
+                value={descriptions[asset.id] ?? asset.alternativeText}
+                onChange={event => setDescriptions(current =>
+                  ({ ...current, [asset.id]: event.target.value }))} />
+            </label>
             <button type="button" className={buttonStyle} disabled={pending}
               onClick={() => void attempt(() => describeAsset(projectId, asset.id,
-                alternativeText.trim() || asset.alternativeText))}>
+                (descriptions[asset.id] ?? asset.alternativeText).trim()))}>
               Guardar descripción
             </button>
             <button type="button" className={buttonStyle} disabled={pending}

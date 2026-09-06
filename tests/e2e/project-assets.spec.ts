@@ -95,6 +95,7 @@ interface Options {
   citing?: string | null
   onUpload?: (request: { body: string | null }) => unknown
   contentStatus?: number
+  onContent?: (url: string) => void
 }
 
 async function open(page: Page, options: Options = {}) {
@@ -115,11 +116,14 @@ async function open(page: Page, options: Options = {}) {
   })
   // La de contenido va la ultima porque Playwright resuelve la ultima registrada primero: la de
   // listado tambien casa con /assets/<id>/content, y devolveria JSON donde se esperan bytes.
-  await page.route('**/api/v1/projects/42/assets/*/content*', route => route.fulfill(
-    (options.contentStatus ?? 200) === 200
-      ? { status: 200, contentType: 'image/png', body: PNG }
-      : { status: options.contentStatus!, contentType: 'application/problem+json',
-          json: { code: 'RESOURCE_NOT_FOUND', correlationId: '11111111-2222-3333-4444-555555555555' } }))
+  await page.route('**/api/v1/projects/42/assets/*/content*', route => {
+    options.onContent?.(route.request().url())
+    return route.fulfill(
+      (options.contentStatus ?? 200) === 200
+        ? { status: 200, contentType: 'image/png', body: PNG }
+        : { status: options.contentStatus!, contentType: 'application/problem+json',
+            json: { code: 'RESOURCE_NOT_FOUND', correlationId: '11111111-2222-3333-4444-555555555555' } })
+  })
   await page.goto('/design-interface/42/Confecciones%20del%20Sol')
   await expect(panel(page)).toBeVisible()
 }
@@ -191,7 +195,7 @@ test('each refusal says what to change, and they do not say the same thing', asy
     await panel(page).getByLabel('Imagen').setInputFiles({
       name: 'portada.png', mimeType: 'image/png', buffer: PNG,
     })
-    await panel(page).getByLabel('Descripción').fill('Una portada')
+    await panel(page).getByLabel('Descripción', { exact: true }).fill('Una portada')
     await panel(page).getByRole('button', { name: 'Subir imagen' }).click()
 
     await expect(panel(page).getByRole('alert')).toHaveText(refusal.text)
@@ -213,7 +217,7 @@ test('an accepted upload shows what the server verified, not the local file', as
   await panel(page).getByLabel('Imagen').setInputFiles({
     name: 'portada.png', mimeType: 'image/png', buffer: PNG,
   })
-  await panel(page).getByLabel('Descripción').fill('Una portada')
+  await panel(page).getByLabel('Descripción', { exact: true }).fill('Una portada')
   await panel(page).getByRole('button', { name: 'Subir imagen' }).click()
 
   await expect.poll(() => sent).not.toBeNull()
@@ -231,4 +235,70 @@ test('an inspected revision does not offer to upload or retire', async ({ page }
   await expect(panel(page).getByText('Portada')).toBeVisible()
   await expect(panel(page).getByRole('button', { name: 'Subir imagen' })).toHaveCount(0)
   await expect(panel(page).getByRole('button', { name: 'Retirar imagen' })).toHaveCount(0)
+})
+
+/**
+ * Se pinta una derivada, no el original.
+ *
+ * <p>Son las anchuras que la tienda ensena; traer el original entero para pintarlo pequeno gasta
+ * banda que nadie ve. La mas ancha que exista es la que mejor se ve en pantallas densas.
+ */
+test('the surface asks for a derivative width and not the canonical original', async ({ page }) => {
+  const asked: string[] = []
+  await open(page, {
+    assets: [asset(OWNED, 'Portada')], citing: OWNED,
+    onContent: url => asked.push(url),
+  })
+
+  await expect.poll(() => sheetOf(page)).toMatch(/url\("blob:/)
+  expect(asked.some(url => url.includes('width=360'))).toBe(true)
+})
+
+/**
+ * Cada fila escribe su propia descripcion.
+ *
+ * <p>Con un solo texto compartido, guardar la de una imagen escribia lo que se habia tecleado para
+ * otra, o no escribia nada. La descripcion es de la imagen, no del panel.
+ */
+test('each row writes its own description', async ({ page }) => {
+  const sent: Record<string, unknown>[] = []
+  const first = asset(OWNED, 'Primera')
+  const second = asset('d'.repeat(64), 'Segunda')
+  await open(page, { assets: [first, second] })
+  await page.route('**/api/v1/projects/42/assets/*', async route => {
+    if (route.request().method() !== 'PATCH') return route.fallback()
+    sent.push({ url: route.request().url(), body: route.request().postDataJSON() })
+    return route.fulfill({ json: second })
+  })
+
+  const row = panel(page).getByRole('listitem').filter({ hasText: 'Segunda' })
+  await row.getByLabel('Descripción de esta imagen').fill('Segunda, corregida')
+  await row.getByRole('button', { name: 'Guardar descripción' }).click()
+
+  await expect.poll(() => sent.length).toBe(1)
+  expect(sent[0].url).toContain(second.id)
+  expect(sent[0].body).toEqual({ alternativeText: 'Segunda, corregida' })
+})
+
+/**
+ * Subir dice que esta en marcha.
+ *
+ * <p>El progreso real -cuanto lleva subido- lo cuenta XMLHttpRequest y se pinta en un {@code
+ * progress}, pero aqui no se puede comprobar: Playwright intercepta la peticion dentro del propio
+ * navegador, asi que no llega a haber subida que contar. Afirmarlo con una prueba seria afirmar algo
+ * sobre el arnes y no sobre la aplicacion.
+ */
+test('the upload says it is under way', async ({ page }) => {
+  await open(page, {
+    assets: [],
+    onUpload: () => new Promise(resolve => setTimeout(
+      () => resolve({ status: 201, json: asset(OWNED, 'Una portada') }), 600)),
+  })
+  await panel(page).getByLabel('Imagen').setInputFiles({
+    name: 'portada.png', mimeType: 'image/png', buffer: PNG,
+  })
+  await panel(page).getByLabel('Descripción', { exact: true }).fill('Una portada')
+  await panel(page).getByRole('button', { name: 'Subir imagen' }).click()
+
+  await expect(panel(page).getByRole('status')).toHaveText(/Subiendo/)
 })
