@@ -116,7 +116,7 @@ test('retrying an unanswered save reuses its identity and shows the original acc
   await expect(page.getByRole('heading', { name: 'Mi tienda' })).toBeVisible()
 
   await page.getByLabel('Titular de la portada').fill('Tejidos del valle')
-  await page.getByRole('button', { name: 'Guardar' }).click()
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click()
   await expect(canvas(page).getByRole('alert'))
     .toHaveText('El servicio no está disponible temporalmente.')
   await expect(canvas(page).getByRole('status')).toHaveText('Revisión aceptada 1')
@@ -140,7 +140,7 @@ test('a refused save leaves nothing to retry', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Mi tienda' })).toBeVisible()
 
   await page.getByLabel('Titular de la portada').fill('No cabe')
-  await page.getByRole('button', { name: 'Guardar' }).click()
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click()
 
   await expect(canvas(page).getByRole('alert'))
     .toHaveText('La solicitud no cumple las reglas del proyecto.')
@@ -181,7 +181,7 @@ test('history pages backwards and an inspected revision survives a reload', asyn
   await history.getByRole('button', { name: 'Ver revisión 1' }).click()
   await expect(page).toHaveURL(/\?revision=1$/)
   await expect(page.getByRole('heading', { name: 'Como empezo' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Guardar' }),
+  await expect(page.getByRole('button', { name: 'Guardar', exact: true }),
     'Una revision pasada se mira, no se edita').toHaveCount(0)
 
   await page.reload()

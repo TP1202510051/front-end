@@ -20,20 +20,38 @@ const recovery = {
   INTERNAL_ERROR: { message: 'No se pudo completar la solicitud.', action: 'CONTACT_SUPPORT' },
 } satisfies Record<ProblemCode, Recovery>
 
-/** Never displays server detail/title or arbitrary provider/transport messages. */
+/**
+ * Never displays server detail/title or arbitrary provider/transport messages.
+ *
+ * <p>{@link ApiProblem.issues} es la excepcion, y viaja con la misma desconfianza con la que llego:
+ * el servidor ya solo manda sitios y codigos, y aqui se vuelve a comprobar que eso es lo que hay.
+ * Un mensaje de error se pinta sin pensarlo mucho, asi que es justo por donde volveria lo que la
+ * validacion nego. Comprobarlo dos veces cuesta una linea.
+ */
 export class ApiProblem extends Error {
   readonly code: ProblemCode | 'AUTHORIZATION_DENIED' | 'CONTRACT_MISMATCH' | 'NETWORK_UNAVAILABLE'
     | 'REVISION_CONFLICT'
   readonly action: RecoveryAction
   readonly correlationId?: string
+  /** Sitio y codigo de cada regla no admitida, ya filtrados por forma. */
+  readonly issues: string[]
 
-  constructor(code: ApiProblem['code'], guidance: Recovery, correlationId?: string) {
+  constructor(code: ApiProblem['code'], guidance: Recovery, correlationId?: string, issues?: unknown) {
     super(guidance.message)
     this.name = 'ApiProblem'
     this.code = code
     this.action = guidance.action
     this.correlationId = correlationId
+    this.issues = safeIssues(issues)
   }
+}
+
+const SAFE_ISSUE = /^\$[A-Za-z0-9_.[\]-]{0,200} [A-Z][A-Z_]{2,60}$/
+
+export function safeIssues(issues: unknown): string[] {
+  return Array.isArray(issues)
+    ? issues.filter((issue): issue is string => typeof issue === 'string' && SAFE_ISSUE.test(issue)).slice(0, 20)
+    : []
 }
 
 export type OperationConflict = components['schemas']['OperationConflictView']
@@ -64,8 +82,12 @@ const conflictKinds = ['PROPERTY_CHANGED', 'TARGET_MISSING', 'STRUCTURE_CHANGED'
 function isConflict(value: unknown): value is OperationConflict {
   if (!value || typeof value !== 'object') return false
   const conflict = value as Record<string, unknown>
+  // Ni la pagina ni el componente son obligatorios: un choque de la pagina entera no nombra
+  // componente, y uno del Theme no nombra pagina. Exigirlos degradaba esos choques a
+  // "respuesta incompatible", que le decia a la empresaria que actualizara en vez de decidir.
   return typeof conflict.kind === 'string' && conflictKinds.includes(conflict.kind)
-    && typeof conflict.pageId === 'string' && typeof conflict.componentId === 'string'
+    && (conflict.pageId == null || typeof conflict.pageId === 'string')
+    && (conflict.componentId == null || typeof conflict.componentId === 'string')
     && (conflict.property == null || typeof conflict.property === 'string')
     && (conflict.attempted == null || typeof conflict.attempted === 'string')
     && (conflict.current == null || typeof conflict.current === 'string')
@@ -94,7 +116,8 @@ export function publicProblem(payload: unknown, status?: number): ApiProblem {
     const code = payload.code as ProblemCode
     const correlationId = 'correlationId' in payload && isUuid(payload.correlationId)
       ? payload.correlationId : undefined
-    return new ApiProblem(code, recovery[code], correlationId)
+    return new ApiProblem(code, recovery[code], correlationId,
+      'issues' in payload ? payload.issues : undefined)
   }
   return new ApiProblem('CONTRACT_MISMATCH', { message: 'La respuesta del servicio no es compatible. Actualiza la aplicación.', action: 'REFRESH' })
 }

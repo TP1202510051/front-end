@@ -132,6 +132,22 @@ export interface components {
             basedOnRevisionId?: string | null;
             document: components["schemas"]["ProjectDocumentView"];
         };
+        BlockInstanceView: {
+            id: string;
+            blockId: string;
+            pageId: string;
+            rootComponentId: string;
+            componentIds: {
+                [key: string]: string;
+            };
+            detached: boolean;
+        };
+        ProjectBlockView: {
+            id: string;
+            name: string;
+            rootComponentId: string;
+            components: components["schemas"]["ProjectComponentView"][];
+        };
         ProjectComponentView: {
             id: string;
             type: string;
@@ -147,6 +163,9 @@ export interface components {
             slots: {
                 [key: string]: string[];
             };
+            styles: {
+                [key: string]: string;
+            };
         };
         ProjectDocumentView: {
             schemaVersion: string;
@@ -155,6 +174,7 @@ export interface components {
             pages: components["schemas"]["ProjectPageView"][];
             blocks: components["schemas"]["ProjectBlockView"][];
             blockInstances: components["schemas"]["BlockInstanceView"][];
+            theme: components["schemas"]["ProjectThemeView"];
         };
         ProjectPageView: {
             id: string;
@@ -164,6 +184,12 @@ export interface components {
             rootComponentId: string;
             components: components["schemas"]["ProjectComponentView"][];
         };
+        ProjectThemeView: {
+            tokens: {
+                [key: string]: string;
+            };
+            rules: components["schemas"]["StyleRuleView"][];
+        };
         StoreProjectView: {
             id: string;
             name: string;
@@ -171,6 +197,14 @@ export interface components {
             createdAt: string;
             imageUrl?: string;
             acceptedRevision: components["schemas"]["AcceptedRevisionView"];
+        };
+        StyleRuleView: {
+            /** @description Condicion de ancho, o ausente si la regla vale siempre */
+            media?: string;
+            selector: string;
+            declarations: {
+                [key: string]: string;
+            };
         };
         OperationBatchInput: {
             baseRevisionId: string;
@@ -195,8 +229,9 @@ export interface components {
         };
         ProjectOperationInput: {
             /** @enum {string} */
-            kind: "SET_PROPERTY" | "INSERT_COMPONENT" | "REMOVE_COMPONENT" | "MOVE_COMPONENT" | "ADD_PAGE" | "REMOVE_PAGE" | "MOVE_PAGE" | "CREATE_BLOCK" | "INSTANTIATE_BLOCK" | "SET_BLOCK_PROPERTY" | "DETACH_BLOCK";
-            pageId: string;
+            kind: "SET_PROPERTY" | "INSERT_COMPONENT" | "REMOVE_COMPONENT" | "MOVE_COMPONENT" | "ADD_PAGE" | "REMOVE_PAGE" | "MOVE_PAGE" | "CREATE_BLOCK" | "INSTANTIATE_BLOCK" | "SET_BLOCK_PROPERTY" | "DETACH_BLOCK" | "SET_THEME_TOKEN" | "SET_PROJECT_STYLES" | "SET_COMPONENT_STYLE" | "SET_BLOCK_STYLE";
+            /** @description La pagina que toca; ausente cuando la operacion es del proyecto entero */
+            pageId?: string;
             componentId?: string;
             property?: string;
             value?: string;
@@ -211,12 +246,13 @@ export interface components {
             blockId?: string;
             instanceId?: string;
             name?: string;
+            css?: string;
         };
         OperationConflictView: {
             /** @enum {string} */
             kind: "PROPERTY_CHANGED" | "TARGET_MISSING" | "STRUCTURE_CHANGED";
-            pageId: string;
-            componentId: string;
+            pageId?: string | null;
+            componentId?: string | null;
             property?: string | null;
             attempted?: string | null;
             current?: string | null;
@@ -382,25 +418,11 @@ export interface components {
             correlationId: string;
             recoveryAction: components["schemas"]["RecoveryAction"];
             operationId?: string | null;
+            /** @description Sitio y codigo de cada regla no admitida */
+            issues: string[];
         };
         /** @enum {string} */
         RecoveryAction: "EDIT_REQUEST" | "SIGN_IN" | "RETURN_TO_PROJECTS" | "REFRESH" | "RETRY_LATER" | "CONTACT_SUPPORT";
-        ProjectBlockView: {
-            id: string;
-            name: string;
-            rootComponentId: string;
-            components: components["schemas"]["ProjectComponentView"][];
-        };
-        BlockInstanceView: {
-            id: string;
-            blockId: string;
-            pageId: string;
-            rootComponentId: string;
-            componentIds: {
-                [key: string]: string;
-            };
-            detached: boolean;
-        };
     };
     responses: never;
     parameters: never;
