@@ -152,3 +152,145 @@ export function parseMoney(written: string, currency: string): Money | null {
   const [units, cents = ''] = decimal.split('.')
   return { amount: Number(units) * 100 + Number(cents.padEnd(2, '0')), currency }
 }
+
+export type ProductCategory = components['schemas']['ProductCategoryView']
+export type ProductCollection = components['schemas']['ProductCollectionView']
+export type CatalogBinding = components['schemas']['CatalogBindingView']
+export type CatalogResolution = components['schemas']['CatalogResolutionView']
+
+function isCategory(value: unknown): value is ProductCategory {
+  if (!value || typeof value !== 'object') return false
+  const category = value as Record<string, unknown>
+  return typeof category.id === 'string' && typeof category.name === 'string'
+    && typeof category.createdAt === 'string' && typeof category.updatedAt === 'string'
+}
+
+function isCollection(value: unknown): value is ProductCollection {
+  if (!value || typeof value !== 'object') return false
+  const collection = value as Record<string, unknown>
+  return typeof collection.id === 'string' && typeof collection.name === 'string'
+    && Array.isArray(collection.productIds)
+    && collection.productIds.every(id => typeof id === 'string')
+    && typeof collection.createdAt === 'string' && typeof collection.updatedAt === 'string'
+}
+
+export async function listCategories(projectId: string): Promise<ProductCategory[]> {
+  try {
+    const { data } = await platform.GET('/api/v1/projects/{projectId}/categories', {
+      params: { path: { projectId } }, signal: AbortSignal.timeout(WAIT),
+    })
+    if (!Array.isArray(data) || !data.every(isCategory)) throw publicProblem(null)
+    return data
+  } catch (error) { throw safeProblem(error) }
+}
+
+export async function createCategory(projectId: string, name: string): Promise<ProductCategory> {
+  try {
+    const { data } = await platform.POST('/api/v1/projects/{projectId}/categories', {
+      params: { path: { projectId } }, body: { name }, signal: AbortSignal.timeout(WAIT),
+    })
+    if (!isCategory(data)) throw publicProblem(null)
+    return data
+  } catch (error) { throw safeProblem(error) }
+}
+
+export async function removeCategory(projectId: string, categoryId: string): Promise<void> {
+  try {
+    await platform.DELETE('/api/v1/projects/{projectId}/categories/{categoryId}', {
+      params: { path: { projectId, categoryId } }, signal: AbortSignal.timeout(WAIT),
+    })
+  } catch (error) { throw safeProblem(error) }
+}
+
+/** Clasificar en nada es un estado real, y por eso el nulo viaja en vez de omitirse. */
+export async function classifyProduct(
+  projectId: string, productId: string, categoryId: string | null,
+): Promise<void> {
+  try {
+    await platform.PUT('/api/v1/projects/{projectId}/products/{productId}/category', {
+      params: { path: { projectId, productId } }, body: { categoryId },
+      signal: AbortSignal.timeout(WAIT),
+    })
+  } catch (error) { throw safeProblem(error) }
+}
+
+export async function listCollections(projectId: string): Promise<ProductCollection[]> {
+  try {
+    const { data } = await platform.GET('/api/v1/projects/{projectId}/collections', {
+      params: { path: { projectId } }, signal: AbortSignal.timeout(WAIT),
+    })
+    if (!Array.isArray(data) || !data.every(isCollection)) throw publicProblem(null)
+    return data
+  } catch (error) { throw safeProblem(error) }
+}
+
+export async function createCollection(projectId: string, name: string): Promise<ProductCollection> {
+  try {
+    const { data } = await platform.POST('/api/v1/projects/{projectId}/collections', {
+      params: { path: { projectId } }, body: { name }, signal: AbortSignal.timeout(WAIT),
+    })
+    if (!isCollection(data)) throw publicProblem(null)
+    return data
+  } catch (error) { throw safeProblem(error) }
+}
+
+export async function removeCollection(projectId: string, collectionId: string): Promise<void> {
+  try {
+    await platform.DELETE('/api/v1/projects/{projectId}/collections/{collectionId}', {
+      params: { path: { projectId, collectionId } }, signal: AbortSignal.timeout(WAIT),
+    })
+  } catch (error) { throw safeProblem(error) }
+}
+
+/** Los miembros se mandan enteros y en orden: ese orden es lo que la tienda ensena. */
+export async function curateCollection(
+  projectId: string, collectionId: string, productIds: string[],
+): Promise<ProductCollection> {
+  try {
+    const { data } = await platform.PUT('/api/v1/projects/{projectId}/collections/{collectionId}/members', {
+      params: { path: { projectId, collectionId } }, body: { productIds },
+      signal: AbortSignal.timeout(WAIT),
+    })
+    if (!isCollection(data)) throw publicProblem(null)
+    return data
+  } catch (error) { throw safeProblem(error) }
+}
+
+/** La galeria se manda entera; la primera es la portada. */
+export async function illustrateProduct(
+  projectId: string, productId: string, assetIds: string[],
+): Promise<string[]> {
+  try {
+    const { data } = await platform.PUT('/api/v1/projects/{projectId}/products/{productId}/media', {
+      params: { path: { projectId, productId } }, body: { assetIds },
+      signal: AbortSignal.timeout(WAIT),
+    })
+    if (!Array.isArray(data) || !data.every(id => typeof id === 'string')) throw publicProblem(null)
+    return data
+  } catch (error) { throw safeProblem(error) }
+}
+
+/**
+ * Que ensena de verdad una binding, preguntado al servidor.
+ *
+ * <p>El Canvas no lo resuelve por su cuenta a proposito: si lo hiciera, la vista previa y la tienda
+ * podrian ensenar cosas distintas en cuanto una de las dos se quedara vieja, y quien edita no
+ * tendria forma de saber cual van a ver sus clientas.
+ */
+export async function resolveBinding(
+  projectId: string, binding: CatalogBinding,
+): Promise<CatalogResolution> {
+  try {
+    const { data } = await platform.GET('/api/v1/projects/{projectId}/catalog/resolution', {
+      params: { path: { projectId }, query: {
+        scope: binding.target, reference: binding.reference ?? undefined,
+        limit: binding.limit, order: binding.order,
+      } },
+      signal: AbortSignal.timeout(WAIT),
+    })
+    const resolution = data as { products?: unknown, outcome?: unknown } | undefined
+    if (!resolution || !Array.isArray(resolution.products) || !resolution.products.every(isProduct)
+        || typeof resolution.outcome !== 'string') throw publicProblem(null)
+    return { products: resolution.products, outcome: resolution.outcome as CatalogResolution['outcome'] }
+  } catch (error) { throw safeProblem(error) }
+}

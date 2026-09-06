@@ -52,14 +52,21 @@ export function isRegistryPublication(value: unknown): value is RegistryPublicat
         && Number(slot.minimum) >= 0 && Number(slot.maximum) >= Number(slot.minimum))
       && Array.isArray(component.bindings) && component.bindings.every(binding => record(binding)
         && typeof binding.name === 'string' && typeof binding.source === 'string'
-        && typeof binding.required === 'boolean')
+        && typeof binding.required === 'boolean'
+        // Los objetivos permitidos no son opcionales: son lo que hace que elegir sea de una lista.
+        // Sin exigirlos aqui, una publicacion incompleta pasaria y reventaria mas adelante al
+        // preguntarle a algo que no esta, lejos de donde estaba el problema.
+        && strings(binding.targets))
       && Array.isArray(component.constraints)
       && component.constraints.every(constraint => constraint === 'TOP_LEVEL_ONLY'))
     && composition.pages.every(page => typeof page.id === 'string' && typeof page.path === 'string'
       && typeof page.rootComponentId === 'string' && Array.isArray(page.components)
       && page.components.every(instance => typeof instance.id === 'string' && typeof instance.type === 'string'
         && record(instance.properties) && Object.values(instance.properties).every(item => typeof item === 'string')
-        && record(instance.bindings) && Object.values(instance.bindings).every(item => typeof item === 'string')
+        && record(instance.bindings) && Object.values(instance.bindings).every(item => record(item)
+          && typeof (item as Record<string, unknown>).target === 'string'
+          && typeof (item as Record<string, unknown>).limit === 'number'
+          && typeof (item as Record<string, unknown>).order === 'string')
         && record(instance.slots) && Object.values(instance.slots).every(strings)))
 }
 
@@ -111,7 +118,10 @@ export function publicationIssue(publication: RegistryPublication): string | nul
       const bindings = new Map(definition.bindings.map(binding => [binding.name, binding]))
       for (const name of Object.keys(instance.bindings).sort()) {
         if (!bindings.has(name)) return 'BINDING_NOT_ALLOWED'
-        if (!instance.bindings[name].trim()) return 'BINDING_VALUE_EMPTY'
+        // Que apunte a algo que este componente no sabe ensenar. Sin elegir no es un error: es lo
+        // que se ve antes de decidir, y tiene su propio estado al resolver.
+        if (!bindings.get(name)!.targets.includes(instance.bindings[name].target))
+          return 'BINDING_TARGET_NOT_ALLOWED'
       }
       for (const binding of definition.bindings) {
         if (binding.required && instance.bindings[binding.name] == null) return 'REQUIRED_BINDING_MISSING'
