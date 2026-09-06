@@ -75,13 +75,18 @@ function boundTo(root: RegistryInstance): string {
   return binding.reference ? `${binding.target}:${binding.reference}` : binding.target
 }
 
-function Hero({ root, page, pages }: { root: RegistryInstance, page: RegistryPage, pages: RegistryPage[] }) {
+function Hero({ root, page, pages }: {
+  root: RegistryInstance, page: RegistryPage, pages: RegistryPage[],
+}) {
   const actions = children(root, page)
   return (
     <section aria-label="Portada" data-component-id={root.id} data-collection={boundTo(root)}
       className="mx-auto w-full rounded-3xl bg-slate-950 p-10 text-white">
       <h1 className="text-4xl font-semibold">{root.properties.heading}</h1>
       <p className="mt-4 text-lg text-slate-200">{root.properties.subheading}</p>
+      {/* La portada declara una vinculación de catálogo que no dibuja: es un banner, no una
+          rejilla. La vinculación queda observable en data-collection, y si sobra es el registro
+          quien tiene que dejar de declararla, no este renderizador quien invente qué enseñar. */}
       {actions.map(action => <Link key={action.id} action={action} pages={pages} />)}
     </section>
   )

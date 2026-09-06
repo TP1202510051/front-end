@@ -106,6 +106,22 @@ export function CatalogOrganisationPanel({ projectId, readOnly }: CatalogOrganis
     void attempt(() => illustrateProduct(projectId, product.id, gallery))
   }
 
+  /**
+   * Sube una foto un puesto.
+   *
+   * <p>Sin esto el orden era inalcanzable: marcar y desmarcar solo anade al final, asi que elegir
+   * la portada obligaba a desmarcarlo todo y volver a marcarlo en el orden correcto. Que el orden
+   * sea un dato no sirve de nada si no hay forma de decirlo.
+   */
+  function raiseMedia(product: TextileProduct, assetId: string) {
+    const at = product.media.indexOf(assetId)
+    if (at <= 0) return
+    const gallery = [...product.media]
+    gallery[at - 1] = product.media[at]
+    gallery[at] = product.media[at - 1]
+    void attempt(() => illustrateProduct(projectId, product.id, gallery))
+  }
+
   return <section aria-label="Organización del catálogo"
     className="w-full max-w-3xl max-h-96 overflow-y-auto space-y-4 rounded border border-slate-500 p-3 text-sm text-[var(--dashboard-foreground)]">
     <h2 className="font-semibold">Organización del catálogo</h2>
@@ -198,14 +214,20 @@ export function CatalogOrganisationPanel({ projectId, readOnly }: CatalogOrganis
                 ? <p className="text-xs">Sube una imagen para poder ilustrar esta prenda.</p>
                 : <fieldset className="flex flex-wrap items-center gap-2">
                     <legend className="text-xs">Fotos, en orden; la primera es la portada</legend>
-                    {assets.map(asset => (
-                      <label key={asset.id} className="flex items-center gap-1">
-                        <input type="checkbox" disabled={pending}
-                          checked={product.media.includes(asset.id)}
-                          onChange={() => toggleMedia(product, asset.id)} />
-                        {asset.alternativeText}
-                      </label>
-                    ))}
+                    {assets.map(asset => {
+                      const at = product.media.indexOf(asset.id)
+                      return <span key={asset.id} className="flex items-center gap-1">
+                        <label className="flex items-center gap-1">
+                          <input type="checkbox" disabled={pending} checked={at >= 0}
+                            onChange={() => toggleMedia(product, asset.id)} />
+                          {asset.alternativeText}
+                          {at === 0 && <span className="text-xs">· portada</span>}
+                        </label>
+                        {at > 0 && <button type="button" className={buttonStyle} disabled={pending}
+                          aria-label={`Subir ${asset.alternativeText}`}
+                          onClick={() => raiseMedia(product, asset.id)}>↑</button>}
+                      </span>
+                    })}
                   </fieldset>}
             </div>}
           </li>

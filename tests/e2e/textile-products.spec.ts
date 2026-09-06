@@ -87,6 +87,7 @@ function product(id: string, name: string,
     id, name, description: 'Prenda de demostracion',
     basePrice: soles(options.amount ?? 5990),
     status: options.status ?? 'ACTIVE',
+    categoryId: null, media: [],
     variants: options.variants ?? [],
     createdAt: '2026-09-06T10:00:00', updatedAt: '2026-09-06T10:00:00',
   }

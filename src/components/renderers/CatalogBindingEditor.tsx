@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { listCategories, listCollections,
-  type ProductCategory, type ProductCollection } from '@/api/catalog'
+import { listCategories, listCollections, listProducts,
+  type ProductCategory, type ProductCollection, type TextileProduct } from '@/api/catalog'
 import { acceptRevision, getStoreProject,
   type OperationBatch, type StoreProject } from '@/api/projects'
-import { safeProblem } from '@/api/problems'
+import { explainProblem, safeProblem } from '@/api/problems'
 import { intentionKey, outcomeIsUnknown } from '@/canvas/intention'
 import type { RegistryPublication } from '@/registry/publication'
 
@@ -24,6 +24,26 @@ const targetNames: Record<string, string> = {
   PRODUCT: 'Una prenda',
   EVERYTHING: 'Todo el catálogo',
 }
+
+/**
+ * Por que el servidor niega una eleccion.
+ *
+ * <p>Se explica igual que en los paneles hermanos. Apuntar a algo que ya no esta es lo unico que
+ * este editor puede provocar por su cuenta, y decirlo con la cadena cruda del servidor dejaria a
+ * quien edita sin saber que la lista de la que eligio se quedo vieja.
+ */
+const refusals: Record<string, string> = {
+  BINDING_TARGET_UNKNOWN: 'Eso ya no está en la tienda. Vuelve a abrir y elige de nuevo.',
+}
+
+const authorizations: Record<string, string> = {
+  AUTHENTICATION_REQUIRED: 'Tu sesión caducó. Inicia sesión otra vez.',
+  AUTHORIZATION_DENIED: 'No tienes permiso sobre esta tienda.',
+  RESOURCE_NOT_FOUND: 'Esa página ya no está en el proyecto.',
+}
+
+const explain = (problem: Parameters<typeof explainProblem>[0]) =>
+  explainProblem(problem, refusals, authorizations)
 
 const orderNames: Record<string, string> = {
   CURATED: 'El orden que decidí',
@@ -47,15 +67,20 @@ export function CatalogBindingEditor({ publication, project, pageId, onAccepted,
     CatalogBindingEditorProps) {
   const [categories, setCategories] = useState<ProductCategory[]>([])
   const [collections, setCollections] = useState<ProductCollection[]>([])
+  const [products, setProducts] = useState<TextileProduct[]>([])
   const [pending, setPending] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
   const [drafts, setDrafts] = useState<Record<string, { target: string, reference: string, order: string, limit: string }>>({})
 
   useEffect(() => {
     let live = true
-    Promise.all([listCategories(project.id), listCollections(project.id)])
-      .then(([found, curated]) => { if (live) { setCategories(found); setCollections(curated) } })
-      .catch(error => { if (live) setProblem(safeProblem(error).message) })
+    Promise.all([listCategories(project.id), listCollections(project.id),
+      listProducts(project.id, null, 100)])
+      .then(([found, curated, catalogue]) => {
+        if (!live) return
+        setCategories(found); setCollections(curated); setProducts(catalogue.items)
+      })
+      .catch(error => { if (live) setProblem(explain(safeProblem(error))) })
     return () => { live = false }
   }, [project.id])
 
@@ -70,7 +95,7 @@ export function CatalogBindingEditor({ publication, project, pageId, onAccepted,
       setDrafts({})
     } catch (error) {
       const failure = safeProblem(error)
-      setProblem(failure.message)
+      setProblem(explain(failure))
       if (!outcomeIsUnknown(failure.action) && failure.action === 'REFRESH') {
         await getStoreProject(project.id).then(onAccepted).catch(() => undefined)
       }
@@ -81,6 +106,7 @@ export function CatalogBindingEditor({ publication, project, pageId, onAccepted,
   function options(target: string): { id: string, name: string }[] {
     if (target === 'COLLECTION') return collections.map(item => ({ id: item.id, name: item.name }))
     if (target === 'CATEGORY') return categories.map(item => ({ id: item.id, name: item.name }))
+    if (target === 'PRODUCT') return products.map(item => ({ id: item.id, name: item.name }))
     return []
   }
 
@@ -127,7 +153,7 @@ export function CatalogBindingEditor({ publication, project, pageId, onAccepted,
                 ))}
               </select>
             </label>
-            {draft.target !== 'EVERYTHING' && draft.target !== 'PRODUCT' && <label>Cuál
+            {draft.target !== 'EVERYTHING' && <label>Cuál
               <select className={fieldStyle} value={draft.reference} disabled={pending}
                 onChange={event => setDrafts(current => ({
                   ...current, [key]: { ...draft, reference: event.target.value },

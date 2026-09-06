@@ -26,7 +26,12 @@ const catalogPage = (binding: unknown = EVERYTHING) =>
       { collection: binding }, {}, { actions: [] }),
   ])
 
-/** Los objetivos que el registro admite. La rejilla no sabe ensenar una prenda suelta. */
+/**
+ * Los objetivos que este registro de prueba admite.
+ *
+ * <p>A proposito no son los mismos que publica el registro de verdad: si el SPA los tuviera
+ * escritos en vez de leerlos, esta prueba pasaria igualmente y no probaria nada.
+ */
 const CATALOG_TARGETS = ['COLLECTION', 'CATEGORY', 'EVERYTHING']
 
 const publication = {

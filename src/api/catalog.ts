@@ -39,6 +39,10 @@ function isProduct(value: unknown): value is TextileProduct {
     && typeof product.description === 'string' && isMoney(product.basePrice)
     && (product.status === 'ACTIVE' || product.status === 'ARCHIVED')
     && typeof product.createdAt === 'string' && typeof product.updatedAt === 'string'
+    // Se exigen porque se desreferencian al pintar: la portada es product.media[0], y una prenda
+    // sin el campo reventaria en el componente en vez de decir aqui que la respuesta no vale.
+    && (product.categoryId === null || typeof product.categoryId === 'string')
+    && Array.isArray(product.media) && product.media.every(id => typeof id === 'string')
     && Array.isArray(product.variants) && product.variants.every(isVariant)
 }
 
