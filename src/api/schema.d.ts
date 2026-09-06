@@ -15,6 +15,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{projectId}/assets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listProjectAssets"];
+        put?: never;
+        post: operations["uploadProjectAsset"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{id}/revisions": {
         parameters: {
             query?: never;
@@ -47,6 +63,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{projectId}/assets/{assetId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["describeProjectAsset"];
+        put?: never;
+        post?: never;
+        delete: operations["removeProjectAsset"];
+        options?: never;
+        head?: never;
+        patch: operations["describeProjectAssetText"];
+        trace?: never;
+    };
     "/api/v1/projects/{id}": {
         parameters: {
             query?: never;
@@ -61,6 +93,22 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["renameProject"];
+        trace?: never;
+    };
+    "/api/v1/projects/{projectId}/assets/{assetId}/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["readProjectAsset"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/projects/{id}/revisions/{number}": {
@@ -206,6 +254,30 @@ export interface components {
                 [key: string]: string;
             };
         };
+        AssetDerivativeView: {
+            /** Format: int32 */
+            width: number;
+            /** Format: int32 */
+            height: number;
+            digest: string;
+            /** Format: int64 */
+            bytes: number;
+        };
+        ProjectAssetView: {
+            id: string;
+            contentType: string;
+            /** Format: int32 */
+            width: number;
+            /** Format: int32 */
+            height: number;
+            /** Format: int64 */
+            bytes: number;
+            alternativeText: string;
+            digest: string;
+            derivatives: components["schemas"]["AssetDerivativeView"][];
+            /** Format: date-time */
+            uploadedAt: string;
+        };
         OperationBatchInput: {
             baseRevisionId: string;
             idempotencyKey: string;
@@ -292,6 +364,9 @@ export interface components {
             type: string;
             id: string;
         } | null;
+        AlternativeTextInput: {
+            alternativeText: string;
+        };
         ProjectSummary: {
             /** @example 900001 */
             id: string;
@@ -574,6 +649,256 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["StoreProjectView"];
+                };
+            };
+            /** @description Public problem */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+        };
+    };
+    listProjectAssets: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProjectAssetView"][];
+                };
+            };
+            /** @description Public problem */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+        };
+    };
+    uploadProjectAsset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                    alternativeText: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProjectAssetView"];
                 };
             };
             /** @description Public problem */
@@ -1047,6 +1372,374 @@ export interface operations {
             };
         };
     };
+    describeProjectAsset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: string;
+                assetId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProjectAssetView"];
+                };
+            };
+            /** @description Public problem */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+        };
+    };
+    removeProjectAsset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: string;
+                assetId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Public problem */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+        };
+    };
+    describeProjectAssetText: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: string;
+                assetId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AlternativeTextInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProjectAssetView"];
+                };
+            };
+            /** @description Public problem */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+        };
+    };
     getProject: {
         parameters: {
             query?: never;
@@ -1309,6 +2002,130 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ProjectSummary"];
+                };
+            };
+            /** @description Public problem */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+        };
+    };
+    readProjectAsset: {
+        parameters: {
+            query?: {
+                width?: number;
+            };
+            header?: never;
+            path: {
+                projectId: string;
+                assetId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
                 };
             };
             /** @description Public problem */
