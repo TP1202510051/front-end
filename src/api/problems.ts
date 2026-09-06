@@ -127,3 +127,24 @@ export function safeProblem(error: unknown): ApiProblem {
     message: 'No se pudo conectar. Comprueba tu conexión e inténtalo nuevamente.', action: 'RETRY_LATER',
   })
 }
+
+/**
+ * Que decirle a quien edita cuando el servidor niega algo.
+ *
+ * <p>El desglose viene como "$.sitio CODIGO" y lo unico que importa es el codigo: el sitio dice de
+ * que modulo salio, no que hay que cambiar. Se busca primero ahi porque un rechazo por reglas trae
+ * el motivo exacto; solo si no hay ninguno conocido se cae al codigo de la respuesta, que distingue
+ * la sesion caducada de lo ajeno.
+ *
+ * <p>Los dos mapas los pone quien llama, porque los mismos codigos se explican distinto segun lo que
+ * se estuviera haciendo; lo que se comparte es el orden en que se miran, que es lo que estaba
+ * copiado entre paneles.
+ */
+export function explainProblem(problem: ApiProblem, refusals: Record<string, string>,
+  authorizations: Record<string, string>): string {
+  for (const issue of problem.issues) {
+    const code = issue.slice(issue.lastIndexOf(' ') + 1)
+    if (refusals[code]) return refusals[code]
+  }
+  return authorizations[problem.code] ?? problem.message
+}

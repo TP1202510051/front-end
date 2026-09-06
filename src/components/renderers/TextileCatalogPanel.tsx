@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import {
-  addVariant, archiveProduct, archiveVariant, createProduct, formatMoney, listProducts,
-  parseMoney, updateProduct, updateVariant,
+  addVariant, amountField, archiveProduct, archiveVariant, createProduct, formatMoney,
+  listProducts, parseMoney, updateProduct, updateVariant,
   type SellableVariant, type TextileProduct,
 } from '@/api/catalog'
-import { safeProblem } from '@/api/problems'
+import { explainProblem, safeProblem } from '@/api/problems'
 
 interface TextileCatalogPanelProps {
   projectId: string
@@ -42,20 +42,14 @@ const refusals: Record<string, string> = {
  * <p>Lo ajeno y lo que no esta se contestan igual a proposito, asi que aqui tampoco se distinguen:
  * hacerlo convertiria un identificador en una forma de averiguar que existe.
  */
-const authorizations: Partial<Record<string, string>> = {
+const authorizations: Record<string, string> = {
   AUTHENTICATION_REQUIRED: 'Tu sesión caducó. Inicia sesión otra vez para editar el catálogo.',
   AUTHORIZATION_DENIED: 'No tienes permiso sobre esta tienda.',
   RESOURCE_NOT_FOUND: 'Esa prenda ya no está en la tienda.',
 }
 
-/** El desglose viene como "$.variant CODIGO"; lo que se pinta es lo que el codigo significa. */
-function explain(problem: { issues: string[], code: string, message: string }): string {
-  for (const issue of problem.issues) {
-    const code = issue.slice(issue.lastIndexOf(' ') + 1)
-    if (refusals[code]) return refusals[code]
-  }
-  return authorizations[problem.code] ?? problem.message
-}
+const explain = (problem: Parameters<typeof explainProblem>[0]) =>
+  explainProblem(problem, refusals, authorizations)
 
 interface VariantDraft {
   sku: string
@@ -74,7 +68,7 @@ function draftOf(variant: SellableVariant): VariantDraft {
     color: variant.color,
     // Solo se rellena cuando la variante cobra aparte: un campo con el precio heredado ya escrito
     // convertiria cualquier guardado en un precio propio que nadie pidio.
-    price: variant.pricedApart ? (variant.price.amount / 100).toFixed(2) : '',
+    price: variant.pricedApart ? amountField(variant.price) : '',
     stock: String(variant.stock),
   }
 }
@@ -96,7 +90,7 @@ export function TextileCatalogPanel({ projectId, readOnly }: TextileCatalogPanel
   const [description, setDescription] = useState('')
   const [price, setPrice] = useState('')
 
-  const [edits, setEdits] = useState<Record<string, { name: string, price: string }>>({})
+  const [edits, setEdits] = useState<Record<string, { name: string, description: string, price: string }>>({})
   const [variantDrafts, setVariantDrafts] = useState<Record<string, VariantDraft>>({})
   const [newVariants, setNewVariants] = useState<Record<string, VariantDraft>>({})
 
@@ -109,7 +103,9 @@ export function TextileCatalogPanel({ projectId, readOnly }: TextileCatalogPanel
         setCursor(page.nextCursor)
         setLoaded(true)
       })
-      .catch(error => { if (live) { setProblem(safeProblem(error).message); setLoaded(true) } })
+      // Se explica igual que cualquier otro fallo: un catalogo ajeno o inexistente llegaba aqui
+      // como la cadena cruda del servidor, que no dice que hacer.
+      .catch(error => { if (live) { setProblem(explain(safeProblem(error))); setLoaded(true) } })
     return () => { live = false }
   }, [projectId])
 
@@ -200,7 +196,8 @@ export function TextileCatalogPanel({ projectId, readOnly }: TextileCatalogPanel
     <ul className="space-y-3">
       {products.map(product => {
         const edit = edits[product.id] ?? {
-          name: product.name, price: (product.basePrice.amount / 100).toFixed(2),
+          name: product.name, description: product.description,
+          price: amountField(product.basePrice),
         }
         const fresh = newVariants[product.id] ?? emptyVariant
         return <li key={product.id} className="space-y-2 border-t border-slate-500 pt-2">
@@ -220,6 +217,12 @@ export function TextileCatalogPanel({ projectId, readOnly }: TextileCatalogPanel
                   ...current, [product.id]: { ...edit, name: event.target.value },
                 }))} />
             </label>
+            <label>Descripción de la prenda
+              <input className={fieldStyle} value={edit.description} disabled={pending} maxLength={2000}
+                onChange={event => setEdits(current => ({
+                  ...current, [product.id]: { ...edit, description: event.target.value },
+                }))} />
+            </label>
             <label>Precio base
               <input className={fieldStyle} value={edit.price} disabled={pending} inputMode="decimal"
                 onChange={event => setEdits(current => ({
@@ -230,7 +233,7 @@ export function TextileCatalogPanel({ projectId, readOnly }: TextileCatalogPanel
               const money = parseMoney(edit.price, product.basePrice.currency)
               if (!money) { setProblem(refusals.PRICE_INVALID); return }
               void attempt(() => updateProduct(projectId, product.id, {
-                name: edit.name.trim(), description: product.description, basePrice: money,
+                name: edit.name.trim(), description: edit.description.trim(), basePrice: money,
               }))
             }}>
               Guardar prenda
@@ -256,6 +259,18 @@ export function TextileCatalogPanel({ projectId, readOnly }: TextileCatalogPanel
                     <input className={fieldStyle} value={draft.sku} disabled={pending} maxLength={64}
                       onChange={event => setVariantDrafts(current => ({
                         ...current, [variant.id]: { ...draft, sku: event.target.value },
+                      }))} />
+                  </label>
+                  <label>Talla
+                    <input className={fieldStyle} value={draft.size} disabled={pending} maxLength={32}
+                      onChange={event => setVariantDrafts(current => ({
+                        ...current, [variant.id]: { ...draft, size: event.target.value },
+                      }))} />
+                  </label>
+                  <label>Color
+                    <input className={fieldStyle} value={draft.color} disabled={pending} maxLength={48}
+                      onChange={event => setVariantDrafts(current => ({
+                        ...current, [variant.id]: { ...draft, color: event.target.value },
                       }))} />
                   </label>
                   <label>Stock
@@ -294,13 +309,13 @@ export function TextileCatalogPanel({ projectId, readOnly }: TextileCatalogPanel
                   ...current, [product.id]: { ...fresh, sku: event.target.value },
                 }))} />
             </label>
-            <label>Talla
+            <label>Talla nueva
               <input className={fieldStyle} value={fresh.size} disabled={pending} maxLength={32}
                 onChange={event => setNewVariants(current => ({
                   ...current, [product.id]: { ...fresh, size: event.target.value },
                 }))} />
             </label>
-            <label>Color
+            <label>Color nuevo
               <input className={fieldStyle} value={fresh.color} disabled={pending} maxLength={48}
                 onChange={event => setNewVariants(current => ({
                   ...current, [product.id]: { ...fresh, color: event.target.value },

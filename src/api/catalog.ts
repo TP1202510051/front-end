@@ -42,13 +42,31 @@ function isProduct(value: unknown): value is TextileProduct {
     && Array.isArray(product.variants) && product.variants.every(isVariant)
 }
 
+/**
+ * Una llamada que devuelve un producto, juzgada siempre igual.
+ *
+ * <p>Las siete escrituras del catalogo contestan lo mismo -el producto entero, ya con sus
+ * variantes- y por eso comparten como se juzga la respuesta: lo que no tiene la forma que el
+ * contrato promete no se pinta, y lo que no llego se cuenta como problema de red. Repetir el
+ * cuerpo siete veces daria siete sitios donde olvidarse de comprobarlo.
+ */
+async function answered(call: () => Promise<{ data?: unknown }>): Promise<TextileProduct> {
+  try {
+    const { data } = await call()
+    if (!isProduct(data)) throw publicProblem(null)
+    return data
+  } catch (error) { throw safeProblem(error) }
+}
+
+const WAIT = 15_000
+
 export async function listProducts(
   projectId: string, after?: string | null, limit = 20,
 ): Promise<ProductPage> {
   try {
     const { data } = await platform.GET('/api/v1/projects/{projectId}/products', {
       params: { path: { projectId }, query: { after: after ?? undefined, limit } },
-      signal: AbortSignal.timeout(15_000),
+      signal: AbortSignal.timeout(WAIT),
     })
     const page = data as { items?: unknown, nextCursor?: unknown } | undefined
     if (!page || !Array.isArray(page.items) || !page.items.every(isProduct)) throw publicProblem(null)
@@ -59,26 +77,18 @@ export async function listProducts(
   } catch (error) { throw safeProblem(error) }
 }
 
-export async function createProduct(projectId: string, input: ProductInput): Promise<TextileProduct> {
-  try {
-    const { data } = await platform.POST('/api/v1/projects/{projectId}/products', {
-      params: { path: { projectId } }, body: input, signal: AbortSignal.timeout(15_000),
-    })
-    if (!isProduct(data)) throw publicProblem(null)
-    return data
-  } catch (error) { throw safeProblem(error) }
+export function createProduct(projectId: string, input: ProductInput): Promise<TextileProduct> {
+  return answered(() => platform.POST('/api/v1/projects/{projectId}/products', {
+    params: { path: { projectId } }, body: input, signal: AbortSignal.timeout(WAIT),
+  }))
 }
 
-export async function updateProduct(
+export function updateProduct(
   projectId: string, productId: string, input: ProductInput,
 ): Promise<TextileProduct> {
-  try {
-    const { data } = await platform.PATCH('/api/v1/projects/{projectId}/products/{productId}', {
-      params: { path: { projectId, productId } }, body: input, signal: AbortSignal.timeout(15_000),
-    })
-    if (!isProduct(data)) throw publicProblem(null)
-    return data
-  } catch (error) { throw safeProblem(error) }
+  return answered(() => platform.PATCH('/api/v1/projects/{projectId}/products/{productId}', {
+    params: { path: { projectId, productId } }, body: input, signal: AbortSignal.timeout(WAIT),
+  }))
 }
 
 /**
@@ -87,71 +97,58 @@ export async function updateProduct(
  * <p>No lo borra, y por eso contesta con el producto ya archivado: quien lo retira necesita ver que
  * sigue estando y que ya no se ofrece, porque una venta pasada lo sigue nombrando.
  */
-export async function archiveProduct(projectId: string, productId: string): Promise<TextileProduct> {
-  try {
-    const { data } = await platform.DELETE('/api/v1/projects/{projectId}/products/{productId}', {
-      params: { path: { projectId, productId } }, signal: AbortSignal.timeout(15_000),
-    })
-    if (!isProduct(data)) throw publicProblem(null)
-    return data
-  } catch (error) { throw safeProblem(error) }
+export function archiveProduct(projectId: string, productId: string): Promise<TextileProduct> {
+  return answered(() => platform.DELETE('/api/v1/projects/{projectId}/products/{productId}', {
+    params: { path: { projectId, productId } }, signal: AbortSignal.timeout(WAIT),
+  }))
 }
 
-export async function addVariant(
+export function addVariant(
   projectId: string, productId: string, input: VariantInput,
 ): Promise<TextileProduct> {
-  try {
-    const { data } = await platform.POST('/api/v1/projects/{projectId}/products/{productId}/variants', {
-      params: { path: { projectId, productId } }, body: input, signal: AbortSignal.timeout(15_000),
-    })
-    if (!isProduct(data)) throw publicProblem(null)
-    return data
-  } catch (error) { throw safeProblem(error) }
+  return answered(() => platform.POST('/api/v1/projects/{projectId}/products/{productId}/variants', {
+    params: { path: { projectId, productId } }, body: input, signal: AbortSignal.timeout(WAIT),
+  }))
 }
 
-export async function updateVariant(
+export function updateVariant(
   projectId: string, productId: string, variantId: string, input: VariantInput,
 ): Promise<TextileProduct> {
-  try {
-    const { data } = await platform.PUT(
-      '/api/v1/projects/{projectId}/products/{productId}/variants/{variantId}', {
-        params: { path: { projectId, productId, variantId } }, body: input,
-        signal: AbortSignal.timeout(15_000),
-      })
-    if (!isProduct(data)) throw publicProblem(null)
-    return data
-  } catch (error) { throw safeProblem(error) }
+  return answered(() => platform.PUT(
+    '/api/v1/projects/{projectId}/products/{productId}/variants/{variantId}', {
+      params: { path: { projectId, productId, variantId } }, body: input,
+      signal: AbortSignal.timeout(WAIT),
+    }))
 }
 
-export async function archiveVariant(
+export function archiveVariant(
   projectId: string, productId: string, variantId: string,
 ): Promise<TextileProduct> {
-  try {
-    const { data } = await platform.DELETE(
-      '/api/v1/projects/{projectId}/products/{productId}/variants/{variantId}', {
-        params: { path: { projectId, productId, variantId } }, signal: AbortSignal.timeout(15_000),
-      })
-    if (!isProduct(data)) throw publicProblem(null)
-    return data
-  } catch (error) { throw safeProblem(error) }
+  return answered(() => platform.DELETE(
+    '/api/v1/projects/{projectId}/products/{productId}/variants/{variantId}', {
+      params: { path: { projectId, productId, variantId } }, signal: AbortSignal.timeout(WAIT),
+    }))
 }
 
 /**
- * Un importe en centimos, escrito como lo lee una persona.
+ * El importe tal y como se teclea en un campo.
  *
- * <p>La division entre cien ocurre solo aqui, al pintar, y nunca al guardar: el numero que viaja y
- * el que se almacena siguen siendo enteros.
+ * <p>La division entre cien vive aqui y en ningun otro sitio. Repartida por los componentes,
+ * bastaria que uno la hiciera distinto para que el mismo precio se ensenara de dos maneras.
  */
+export function amountField(money: Money): string {
+  return (money.amount / 100).toFixed(2)
+}
+
+/** El mismo importe dicho para leer, con su moneda delante y la coma que se usa al escribirlo. */
 export function formatMoney(money: Money): string {
-  const units = Math.trunc(money.amount / 100)
-  const cents = Math.abs(money.amount % 100).toString().padStart(2, '0')
-  return `${money.currency} ${units},${cents}`
+  return `${money.currency} ${amountField(money).replace('.', ',')}`
 }
 
 /** Al reves que formatMoney: lo que alguien teclea vuelve a ser un entero, o no es un precio. */
 export function parseMoney(written: string, currency: string): Money | null {
-  const digits = written.trim().replace(',', '.')
-  if (!/^\d+(\.\d{1,2})?$/.test(digits)) return null
-  const [units, cents = ''] = digits.split('.')
+  const decimal = written.trim().replace(',', '.')
+  if (!/^\d+(\.\d{1,2})?$/.test(decimal)) return null
+  const [units, cents = ''] = decimal.split('.')
   return { amount: Number(units) * 100 + Number(cents.padEnd(2, '0')), currency }
 }

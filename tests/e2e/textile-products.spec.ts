@@ -117,7 +117,7 @@ function refusal(code: string) {
     json: {
       code: 'SEMANTIC_VALIDATION_FAILED', message: 'No se pudo guardar',
       correlationId: '11111111-2222-3333-4444-555555555555',
-      issues: [`$.variant ${code}`],
+      issues: [`$.catalog ${code}`],
     },
   }
 }
@@ -202,8 +202,8 @@ test('a variant that inherits the price says so with a null', async ({ page }) =
   })
 
   await panel(page).getByLabel('SKU nuevo').fill('POLO-M-AZU')
-  await panel(page).getByLabel('Talla').fill('M')
-  await panel(page).getByLabel('Color').fill('Azul')
+  await panel(page).getByLabel('Talla nueva').fill('M')
+  await panel(page).getByLabel('Color nuevo').fill('Azul')
   await panel(page).getByLabel('Stock inicial').fill('7')
   await panel(page).getByRole('button', { name: 'Añadir variante' }).click()
 
@@ -224,8 +224,8 @@ test('a repeated sku and a repeated size are explained differently', async ({ pa
   })
 
   await panel(page).getByLabel('SKU nuevo').fill('REPETIDO')
-  await panel(page).getByLabel('Talla').fill('M')
-  await panel(page).getByLabel('Color').fill('Azul')
+  await panel(page).getByLabel('Talla nueva').fill('M')
+  await panel(page).getByLabel('Color nuevo').fill('Azul')
   await panel(page).getByRole('button', { name: 'Añadir variante' }).click()
 
   await expect(panel(page).getByRole('alert'))
@@ -239,8 +239,8 @@ test('a repeated size and colour points at the variant that already exists', asy
   })
 
   await panel(page).getByLabel('SKU nuevo').fill('OTRO')
-  await panel(page).getByLabel('Talla').fill('M')
-  await panel(page).getByLabel('Color').fill('Azul')
+  await panel(page).getByLabel('Talla nueva').fill('M')
+  await panel(page).getByLabel('Color nuevo').fill('Azul')
   await panel(page).getByRole('button', { name: 'Añadir variante' }).click()
 
   await expect(panel(page).getByRole('alert'))
@@ -305,4 +305,61 @@ test('a foreign catalogue reads the same as one that is not there', async ({ pag
 
   await expect(panel(page)).toBeVisible()
   await expect(panel(page).getByText('Polo de algodon')).toHaveCount(0)
+  // Y se explica, en vez de ensenar lo que el servidor dijo tal cual.
+  await expect(panel(page).getByRole('alert')).toHaveText('Esa prenda ya no está en la tienda.')
+})
+
+/**
+ * La talla y el color de una variante se corrigen, no solo se miran.
+ *
+ * <p>Son sus atributos comerciales -lo que la hace ser esa prenda y no otra- y se teclean, asi que
+ * se escriben mal. Sin poder editarlos, arreglar una errata obligaria a retirar la variante y
+ * crearla de nuevo, perdiendo por el camino su historia.
+ */
+test('the size and the colour of a variant can be corrected', async ({ page }) => {
+  const sent: unknown[] = []
+  await open(page, {
+    pages: [{ items: [product('7001', 'Polo de algodon', {
+      variants: [variant('8001', 'POLO-S-BLA', 'S', 'Blnaco')],
+    })], nextCursor: null }],
+    onWrite: (request, replace) => {
+      sent.push(request.body)
+      const fixed = product('7001', 'Polo de algodon', {
+        variants: [variant('8001', 'POLO-S-BLA', 'S', 'Blanco')],
+      })
+      replace({ items: [fixed], nextCursor: null })
+      return { json: fixed }
+    },
+  })
+
+  await panel(page).getByLabel('Color', { exact: true }).fill('Blanco')
+  await panel(page).getByRole('button', { name: 'Guardar variante' }).click()
+
+  await expect.poll(() => sent.length).toBe(1)
+  expect(sent[0]).toEqual({ sku: 'POLO-S-BLA', size: 'S', color: 'Blanco', price: null, stock: 12 })
+  await expect(panel(page).getByText('POLO-S-BLA · S · Blanco · PEN 59,90 (precio de la prenda) · 12 en stock'))
+    .toBeVisible()
+})
+
+/** La descripcion de la prenda se edita; antes se reenviaba igual que llego. */
+test('the product description is editable and not just carried along', async ({ page }) => {
+  const sent: unknown[] = []
+  await open(page, {
+    pages: [{ items: [product('7001', 'Polo de algodon')], nextCursor: null }],
+    onWrite: (request, replace) => {
+      sent.push(request.body)
+      const edited = product('7001', 'Polo de algodon')
+      replace({ items: [edited], nextCursor: null })
+      return { json: edited }
+    },
+  })
+
+  await panel(page).getByLabel('Descripción de la prenda').fill('Algodon pima peinado')
+  await panel(page).getByRole('button', { name: 'Guardar prenda' }).click()
+
+  await expect.poll(() => sent.length).toBe(1)
+  expect(sent[0]).toEqual({
+    name: 'Polo de algodon', description: 'Algodon pima peinado',
+    basePrice: { amount: 5990, currency: 'PEN' },
+  })
 })
