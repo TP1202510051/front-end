@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { listAssets, removeAsset, uploadAsset, describeAsset, type ProjectAsset } from '@/api/assets'
-import { safeProblem } from '@/api/problems'
+import { explainProblem, safeProblem } from '@/api/problems'
 
 interface ProjectAssetsPanelProps {
   projectId: string
@@ -34,19 +34,10 @@ const refusals: Record<string, string> = {
  * convertiria un identificador en una forma de averiguar que existe. Lo que si se distingue es haber
  * perdido la sesion, que se arregla de otra manera.
  */
-const authorizations: Partial<Record<string, string>> = {
+const authorizations: Record<string, string> = {
   AUTHENTICATION_REQUIRED: 'Tu sesión caducó. Inicia sesión otra vez para subir medios.',
   AUTHORIZATION_DENIED: 'No tienes permiso sobre este proyecto.',
   RESOURCE_NOT_FOUND: 'Ese medio ya no está en el proyecto.',
-}
-
-/** El desglose viene como "$.asset CODIGO"; lo que se pinta es lo que el codigo significa. */
-function explain(problem: { issues: string[], code: string, message: string }): string {
-  for (const issue of problem.issues) {
-    const code = issue.slice(issue.lastIndexOf(' ') + 1)
-    if (refusals[code]) return refusals[code]
-  }
-  return authorizations[problem.code] ?? problem.message
 }
 
 /**
@@ -84,7 +75,7 @@ export function ProjectAssetsPanel({ projectId, readOnly }: ProjectAssetsPanelPr
       setAlternativeText('')
       setDescriptions({})
     } catch (error) {
-      setProblem(explain(safeProblem(error)))
+      setProblem(explainProblem(safeProblem(error), refusals, authorizations))
     } finally { setPending(false); setUploaded(null) }
   }
 

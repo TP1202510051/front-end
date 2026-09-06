@@ -11,6 +11,7 @@ import { useEditing } from "@/contexts/EditingContext";
 import { ProjectBlocks } from "@/components/renderers/ProjectBlocks";
 import { ThemeEditor } from "@/components/renderers/ThemeEditor";
 import { ProjectAssetsPanel } from "@/components/renderers/ProjectAssetsPanel";
+import { TextileCatalogPanel } from "@/components/renderers/TextileCatalogPanel";
 import { DocumentCanvas } from "@/components/renderers/DocumentCanvas";
 import { RevisionHistoryPanel } from "@/components/renderers/RevisionHistoryPanel";
 import { PageNavigator } from "@/components/renderers/PageNavigator";
@@ -170,6 +171,8 @@ const DesignInterfaceRender: React.FC = () => {
           <ThemeEditor project={settled} pageId={openedPage} onAccepted={setProject} readOnly={Boolean(inspecting)} />
 
           <ProjectAssetsPanel projectId={projectId ?? ""} readOnly={Boolean(inspecting)} />
+
+          <TextileCatalogPanel projectId={projectId ?? ""} readOnly={Boolean(inspecting)} />
 
           <CanvasWidth width={width} onWidth={setWidth} />
 

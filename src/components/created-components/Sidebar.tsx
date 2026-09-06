@@ -1,5 +1,4 @@
 import { UserNav } from '@/components/auth/UserNav';
-import ProductInterface from '@/pages/products-interface/ProductInterface';
 import { ProjectHeader } from './ProjectHeader';
 import { WindowSidebar } from '@/components/created-components/WindowSidebar';
 // import { ComponentSidebar } from '@/components/created-components/ComponentSidebar';
@@ -34,7 +33,6 @@ export const Sidebar = ({ projectId, projectName, setIsSaving, onSelectWindow }:
         onSelect={handleSelectWindow}
         setIsSaving={setIsSaving}
       />
-      <ProductInterface projectId={projectId} projectName={projectName} setIsSaving={setIsSaving} />
     </div>
   );
 };
