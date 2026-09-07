@@ -9,7 +9,7 @@ const publication = {
       subheading: { type: 'TEXT', required: true, minLength: 1, maxLength: 160 },
     },
     slots: { actions: { allowedTypes: ['action.link'], minimum: 1, maximum: 1 } },
-    bindings: [{ name: 'collection', source: 'catalog.collection', required: true }],
+    bindings: [{ name: 'collection', source: 'catalog.collection', required: true, targets: ['COLLECTION', 'CATEGORY', 'EVERYTHING'] }],
     interactions: [], constraints: ['TOP_LEVEL_ONLY'],
   }, {
     type: 'action.link',
@@ -31,7 +31,7 @@ const publication = {
         components: [{
           id: 'hero-main', type: 'layout.hero',
           properties: { heading: 'Confecciones Andinas', subheading: 'Prendas listas para acompañarte cada día' },
-          bindings: { collection: 'featured' }, interactions: {}, slots: { actions: ['hero-action'] },
+          bindings: { collection: { target: 'EVERYTHING', reference: null, limit: 12, order: 'NEWEST' } }, interactions: {}, slots: { actions: ['hero-action'] },
         }, {
           id: 'hero-action', type: 'action.link', properties: { label: 'Ver colección' },
           bindings: {}, interactions: { activate: 'home' }, slots: {},

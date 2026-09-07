@@ -12,6 +12,8 @@ import { ProjectBlocks } from "@/components/renderers/ProjectBlocks";
 import { ThemeEditor } from "@/components/renderers/ThemeEditor";
 import { ProjectAssetsPanel } from "@/components/renderers/ProjectAssetsPanel";
 import { TextileCatalogPanel } from "@/components/renderers/TextileCatalogPanel";
+import { CatalogOrganisationPanel } from "@/components/renderers/CatalogOrganisationPanel";
+import { CatalogBindingEditor } from "@/components/renderers/CatalogBindingEditor";
 import { DocumentCanvas } from "@/components/renderers/DocumentCanvas";
 import { RevisionHistoryPanel } from "@/components/renderers/RevisionHistoryPanel";
 import { PageNavigator } from "@/components/renderers/PageNavigator";
@@ -173,6 +175,11 @@ const DesignInterfaceRender: React.FC = () => {
           <ProjectAssetsPanel projectId={projectId ?? ""} readOnly={Boolean(inspecting)} />
 
           <TextileCatalogPanel projectId={projectId ?? ""} readOnly={Boolean(inspecting)} />
+
+          <CatalogOrganisationPanel projectId={projectId ?? ""} readOnly={Boolean(inspecting)} />
+
+          <CatalogBindingEditor publication={publication} project={settled} pageId={openedPage}
+            onAccepted={setProject} readOnly={Boolean(inspecting)} />
 
           <CanvasWidth width={width} onWidth={setWidth} />
 

@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test'
 
 function component(id: string, type: string, properties: Record<string, string>,
-  bindings: Record<string, string> = {}, interactions: Record<string, string> = {},
+  bindings: Record<string, unknown> = {}, interactions: Record<string, string> = {},
   slots: Record<string, string[]> = {}) {
   return { id, type, properties, bindings, interactions, slots }
 }
@@ -14,13 +14,13 @@ function page(id: string, kind: string, path: string, rootComponentId: string,
 const homePage = () => page('home', 'HOME', '/', 'hero-main', [
   component('hero-main', 'layout.hero',
     { heading: 'Confecciones Andinas', subheading: 'Prendas listas' },
-    { collection: 'featured' }, {}, { actions: ['hero-action'] }),
+    { collection: { target: 'EVERYTHING', reference: null, limit: 12, order: 'NEWEST' } }, {}, { actions: ['hero-action'] }),
   component('hero-action', 'action.link', { label: 'Ver colección' }, {}, { activate: 'catalogo' }),
 ])
 
 const catalogPage = () => page('catalogo', 'CATALOG', '/catalogo', 'catalog-main', [
   component('catalog-main', 'catalog.grid', { heading: 'Toda la colección' },
-    { collection: 'featured' }, {}, { actions: [] }),
+    { collection: { target: 'EVERYTHING', reference: null, limit: 12, order: 'NEWEST' } }, {}, { actions: [] }),
 ])
 
 const contentPage = () => page('historia', 'CONTENT', '/historia', 'seccion', [
@@ -51,7 +51,7 @@ const publication = {
         heading: { type: 'TEXT', required: true, minLength: 1, maxLength: 80 },
         subheading: { type: 'TEXT', required: true, minLength: 1, maxLength: 160 } },
       slots: { actions: { allowedTypes: ['action.link'], minimum: 1, maximum: 1 } },
-      bindings: [{ name: 'collection', source: 'catalog.collection', required: true }],
+      bindings: [{ name: 'collection', source: 'catalog.collection', required: true, targets: ['COLLECTION', 'CATEGORY', 'EVERYTHING'] }],
       interactions: [], constraints: ['TOP_LEVEL_ONLY'] },
     { type: 'action.link', properties: {
         label: { type: 'TEXT', required: true, minLength: 1, maxLength: 40 } },
@@ -59,7 +59,7 @@ const publication = {
     { type: 'catalog.grid', properties: {
         heading: { type: 'TEXT', required: true, minLength: 1, maxLength: 80 } },
       slots: { actions: { allowedTypes: ['action.link'], minimum: 0, maximum: 2 } },
-      bindings: [{ name: 'collection', source: 'catalog.collection', required: true }],
+      bindings: [{ name: 'collection', source: 'catalog.collection', required: true, targets: ['COLLECTION', 'CATEGORY', 'EVERYTHING'] }],
       interactions: [], constraints: ['TOP_LEVEL_ONLY'] },
     { type: 'content.section', properties: {
         heading: { type: 'TEXT', required: true, minLength: 1, maxLength: 80 },

@@ -43,7 +43,7 @@ export default function CodeInterface({ selectedWindow, reloadKey, project, page
         {projectPublication && (
           <section aria-label={selectedWindow ? `Vista de ${selectedWindow.name}` : 'Vista de la revisión aceptada'}>
             <StoreSurface projectId={project.id} document={revision.document}>
-              <RegistryRenderer publication={projectPublication} pageId={pageId} />
+              <RegistryRenderer publication={projectPublication} pageId={pageId} projectId={project.id} />
             </StoreSurface>
           </section>
         )}

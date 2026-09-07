@@ -325,6 +325,613 @@
         }
       }
     },
+    "/api/v1/projects/{projectId}/products/{productId}/media" : {
+      "get" : {
+        "tags" : [ "catalog-organisation-controller" ],
+        "operationId" : "listProductMedia",
+        "parameters" : [ {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        }, {
+          "name" : "productId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "422" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "429" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "503" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "catalog-organisation-controller" ],
+        "operationId" : "illustrateTextileProduct",
+        "parameters" : [ {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        }, {
+          "name" : "productId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ProductMediaInput"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "422" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "429" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "503" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/products/{productId}/category" : {
+      "put" : {
+        "tags" : [ "catalog-organisation-controller" ],
+        "operationId" : "classifyTextileProduct",
+        "parameters" : [ {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        }, {
+          "name" : "productId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ProductCategoryInput"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "400" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "422" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "429" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "503" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/collections/{collectionId}/members" : {
+      "put" : {
+        "tags" : [ "catalog-organisation-controller" ],
+        "operationId" : "curateProductCollection",
+        "parameters" : [ {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        }, {
+          "name" : "collectionId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CollectionMembersInput"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProductCollectionView"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "422" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "429" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "503" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/projects" : {
       "get" : {
         "tags" : [ "project-controller" ],
@@ -948,6 +1555,576 @@
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/TextileProductView"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "422" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "429" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "503" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/collections" : {
+      "get" : {
+        "tags" : [ "catalog-organisation-controller" ],
+        "operationId" : "listProductCollections",
+        "parameters" : [ {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ProductCollectionView"
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "422" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "429" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "503" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "catalog-organisation-controller" ],
+        "operationId" : "createProductCollection",
+        "parameters" : [ {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CatalogNameInput"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProductCollectionView"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "422" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "429" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "503" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/categories" : {
+      "get" : {
+        "tags" : [ "catalog-organisation-controller" ],
+        "operationId" : "listProductCategories",
+        "parameters" : [ {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ProductCategoryView"
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "422" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "429" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "503" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "catalog-organisation-controller" ],
+        "operationId" : "createProductCategory",
+        "parameters" : [ {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CatalogNameInput"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProductCategoryView"
                 }
               }
             }
@@ -2241,6 +3418,588 @@
         }
       }
     },
+    "/api/v1/projects/{projectId}/collections/{collectionId}" : {
+      "delete" : {
+        "tags" : [ "catalog-organisation-controller" ],
+        "operationId" : "removeProductCollection",
+        "parameters" : [ {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        }, {
+          "name" : "collectionId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "400" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "422" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "429" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "503" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch" : {
+        "tags" : [ "catalog-organisation-controller" ],
+        "operationId" : "renameProductCollection",
+        "parameters" : [ {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        }, {
+          "name" : "collectionId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CatalogNameInput"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProductCollectionView"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "422" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "429" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "503" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/categories/{categoryId}" : {
+      "delete" : {
+        "tags" : [ "catalog-organisation-controller" ],
+        "operationId" : "removeProductCategory",
+        "parameters" : [ {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        }, {
+          "name" : "categoryId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "400" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "422" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "429" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "503" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch" : {
+        "tags" : [ "catalog-organisation-controller" ],
+        "operationId" : "renameProductCategory",
+        "parameters" : [ {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        }, {
+          "name" : "categoryId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CatalogNameInput"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProductCategoryView"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "422" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "429" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "503" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/projects/{projectId}/assets/{assetId}" : {
       "get" : {
         "tags" : [ "project-asset-controller" ],
@@ -3085,6 +4844,179 @@
         }
       }
     },
+    "/api/v1/projects/{projectId}/catalog/resolution" : {
+      "get" : {
+        "tags" : [ "catalog-resolution-controller" ],
+        "operationId" : "resolveCatalogBinding",
+        "parameters" : [ {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        }, {
+          "name" : "scope",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "pattern" : "COLLECTION|CATEGORY|PRODUCT|EVERYTHING",
+            "type" : "string"
+          }
+        }, {
+          "name" : "reference",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "maximum" : 48,
+            "minimum" : 1,
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 12
+          }
+        }, {
+          "name" : "order",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "pattern" : "CURATED|NEWEST|NAME|PRICE_ASCENDING|PRICE_DESCENDING",
+            "type" : "string",
+            "default" : "NEWEST"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CatalogResolutionView"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "422" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "429" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "503" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/projects/{projectId}/assets/{assetId}/content" : {
       "get" : {
         "tags" : [ "project-asset-controller" ],
@@ -3758,7 +5690,7 @@
         }
       },
       "TextileProductView" : {
-        "required" : [ "basePrice", "createdAt", "description", "id", "name", "status", "updatedAt", "variants" ],
+        "required" : [ "basePrice", "createdAt", "description", "id", "media", "name", "status", "updatedAt", "variants" ],
         "type" : "object",
         "properties" : {
           "id" : {
@@ -3776,10 +5708,88 @@
           "status" : {
             "type" : "string"
           },
+          "categoryId" : {
+            "type" : "string",
+            "description" : "Null means the product is not classified yet",
+            "nullable" : true
+          },
+          "media" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
           "variants" : {
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/SellableVariantView"
+            }
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "updatedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
+      "ProductMediaInput" : {
+        "required" : [ "assetIds" ],
+        "type" : "object",
+        "properties" : {
+          "assetIds" : {
+            "maxItems" : 12,
+            "minItems" : 0,
+            "type" : "array",
+            "items" : {
+              "pattern" : "^[a-f0-9]{64}$",
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "ProductCategoryInput" : {
+        "type" : "object",
+        "properties" : {
+          "categoryId" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string",
+            "description" : "Null leaves the product unclassified",
+            "nullable" : true
+          }
+        }
+      },
+      "CollectionMembersInput" : {
+        "required" : [ "productIds" ],
+        "type" : "object",
+        "properties" : {
+          "productIds" : {
+            "maxItems" : 200,
+            "minItems" : 0,
+            "type" : "array",
+            "items" : {
+              "pattern" : "^[1-9][0-9]{0,18}$",
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "ProductCollectionView" : {
+        "required" : [ "createdAt", "id", "name", "productIds", "updatedAt" ],
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "productIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
             }
           },
           "createdAt" : {
@@ -3867,6 +5877,29 @@
           }
         }
       },
+      "CatalogBindingView" : {
+        "required" : [ "limit", "order", "target" ],
+        "type" : "object",
+        "properties" : {
+          "target" : {
+            "type" : "string",
+            "enum" : [ "COLLECTION", "CATEGORY", "PRODUCT", "EVERYTHING" ]
+          },
+          "reference" : {
+            "type" : "string",
+            "description" : "Null means nothing has been chosen yet",
+            "nullable" : true
+          },
+          "limit" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "order" : {
+            "type" : "string",
+            "enum" : [ "CURATED", "NEWEST", "NAME", "PRICE_ASCENDING", "PRICE_DESCENDING" ]
+          }
+        }
+      },
       "ProjectBlockView" : {
         "required" : [ "components", "id", "name", "rootComponentId" ],
         "type" : "object",
@@ -3907,7 +5940,7 @@
           "bindings" : {
             "type" : "object",
             "additionalProperties" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/CatalogBindingView"
             }
           },
           "interactions" : {
@@ -4072,6 +6105,37 @@
           }
         }
       },
+      "CatalogNameInput" : {
+        "required" : [ "name" ],
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "maxLength" : 120,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        }
+      },
+      "ProductCategoryView" : {
+        "required" : [ "createdAt", "id", "name", "updatedAt" ],
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "updatedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
       "AssetDerivativeView" : {
         "required" : [ "bytes", "digest", "height", "width" ],
         "type" : "object",
@@ -4133,6 +6197,31 @@
           }
         }
       },
+      "CatalogBindingInput" : {
+        "required" : [ "order", "target" ],
+        "type" : "object",
+        "properties" : {
+          "target" : {
+            "pattern" : "COLLECTION|CATEGORY|PRODUCT|EVERYTHING",
+            "type" : "string"
+          },
+          "reference" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          },
+          "limit" : {
+            "maximum" : 48,
+            "minimum" : 1,
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "order" : {
+            "pattern" : "CURATED|NEWEST|NAME|PRICE_ASCENDING|PRICE_DESCENDING",
+            "type" : "string"
+          }
+        },
+        "description" : "La eleccion de catalogo, solo en SET_BINDING"
+      },
       "OperationBatchInput" : {
         "required" : [ "baseRevisionId", "idempotencyKey", "operations" ],
         "type" : "object",
@@ -4179,7 +6268,7 @@
           "bindings" : {
             "type" : "object",
             "additionalProperties" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/CatalogBindingInput"
             }
           },
           "interactions" : {
@@ -4205,7 +6294,7 @@
         "properties" : {
           "kind" : {
             "type" : "string",
-            "enum" : [ "SET_PROPERTY", "INSERT_COMPONENT", "REMOVE_COMPONENT", "MOVE_COMPONENT", "ADD_PAGE", "REMOVE_PAGE", "MOVE_PAGE", "CREATE_BLOCK", "INSTANTIATE_BLOCK", "SET_BLOCK_PROPERTY", "DETACH_BLOCK", "SET_THEME_TOKEN", "SET_PROJECT_STYLES", "SET_COMPONENT_STYLE", "SET_BLOCK_STYLE" ]
+            "enum" : [ "SET_PROPERTY", "INSERT_COMPONENT", "REMOVE_COMPONENT", "MOVE_COMPONENT", "ADD_PAGE", "REMOVE_PAGE", "MOVE_PAGE", "CREATE_BLOCK", "INSTANTIATE_BLOCK", "SET_BLOCK_PROPERTY", "DETACH_BLOCK", "SET_THEME_TOKEN", "SET_PROJECT_STYLES", "SET_COMPONENT_STYLE", "SET_BLOCK_STYLE", "SET_BINDING" ]
           },
           "pageId" : {
             "type" : "string",
@@ -4255,6 +6344,9 @@
             "maxLength" : 20000,
             "minLength" : 0,
             "type" : "string"
+          },
+          "binding" : {
+            "$ref" : "#/components/schemas/CatalogBindingInput"
           }
         }
       },
@@ -4458,6 +6550,22 @@
           }
         }
       },
+      "CatalogResolutionView" : {
+        "required" : [ "outcome", "products" ],
+        "type" : "object",
+        "properties" : {
+          "products" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TextileProductView"
+            }
+          },
+          "outcome" : {
+            "type" : "string",
+            "enum" : [ "SHOWING", "UNCHOSEN", "MISSING", "EMPTY" ]
+          }
+        }
+      },
       "RevisionHistoryView" : {
         "required" : [ "items" ],
         "type" : "object",
@@ -4512,7 +6620,7 @@
         }
       },
       "RegistryBindingView" : {
-        "required" : [ "name", "required", "source" ],
+        "required" : [ "name", "required", "source", "targets" ],
         "type" : "object",
         "properties" : {
           "name" : {
@@ -4523,6 +6631,12 @@
           },
           "required" : {
             "type" : "boolean"
+          },
+          "targets" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
           }
         }
       },
@@ -4605,7 +6719,7 @@
           "bindings" : {
             "type" : "object",
             "additionalProperties" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/CatalogBindingView"
             }
           },
           "interactions" : {

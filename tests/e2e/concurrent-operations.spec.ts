@@ -14,7 +14,7 @@ function projectAt(revisionId: string, number: number, heading: string, subheadi
         templateVersion: 'verified-textile-start@1.1.0', pages: [{ id: 'home', path: '/',
           kind: 'HOME', rootComponentId: 'hero-main', components: [
             { id: 'hero-main', type: 'layout.hero', properties: { heading, subheading },
-              bindings: { collection: 'featured' }, interactions: {}, slots: { actions: ['hero-action'] } },
+              bindings: { collection: { target: 'EVERYTHING', reference: null, limit: 12, order: 'NEWEST' } }, interactions: {}, slots: { actions: ['hero-action'] } },
             { id: 'hero-action', type: 'action.link', properties: { label: 'Ver colección' },
               bindings: {}, interactions: { activate: 'home' }, slots: {} },
           ] }],
@@ -43,7 +43,7 @@ const registry = {
       subheading: { type: 'TEXT', required: true, minLength: 1, maxLength: 160 },
     },
     slots: { actions: { allowedTypes: ['action.link'], minimum: 1, maximum: 1 } },
-    bindings: [{ name: 'collection', source: 'catalog.collection', required: true }],
+    bindings: [{ name: 'collection', source: 'catalog.collection', required: true, targets: ['COLLECTION', 'CATEGORY', 'EVERYTHING'] }],
     constraints: ['TOP_LEVEL_ONLY'],
   }, {
     type: 'action.link',

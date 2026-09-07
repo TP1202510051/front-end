@@ -23,14 +23,30 @@ function stringRecord(value: unknown): value is Record<string, string> {
   return record(value) && Object.values(value).every(item => typeof item === 'string')
 }
 
+/**
+ * Una binding ya no es texto: es una eleccion con forma.
+ *
+ * <p>Se comprueba aqui por lo mismo que todo lo demas -lo que no tiene la forma que el contrato
+ * promete no se pinta-, y ademas porque el Canvas la manda de vuelta al servidor: dejar pasar una
+ * forma que no reconoce seria devolverle algo que no puede resolver.
+ */
+function bindingRecord(value: unknown): boolean {
+  return record(value) && Object.values(value).every(item => record(item)
+    && typeof item.target === 'string' && typeof item.limit === 'number'
+    && typeof item.order === 'string'
+    && (item.reference === undefined || item.reference === null || typeof item.reference === 'string'))
+}
+
 function slotsRecord(value: unknown): value is Record<string, string[]> {
   return record(value) && Object.values(value).every(item => Array.isArray(item)
     && item.every(child => typeof child === 'string'))
 }
 
 const DOCUMENT_SCHEMAS = ['project-document@1.0.0', 'project-document@1.1.0',
-  'project-document@1.2.0', 'project-document@1.3.0']
-const BLOCK_SCHEMAS = ['project-document@1.2.0', 'project-document@1.3.0']
+  'project-document@1.2.0', 'project-document@1.3.0', 'project-document@1.4.0']
+const BLOCK_SCHEMAS = ['project-document@1.2.0', 'project-document@1.3.0', 'project-document@1.4.0']
+/** Desde que el Theme existe, el esquema que lo estrena y los siguientes lo traen. */
+const THEME_SCHEMAS = ['project-document@1.3.0', 'project-document@1.4.0']
 
 /**
  * El Theme del documento, cuando el esquema dice que tiene que traerlo.
@@ -42,7 +58,7 @@ const BLOCK_SCHEMAS = ['project-document@1.2.0', 'project-document@1.3.0']
  */
 function themeValid(document: Record<string, unknown>): boolean {
   const theme = document.theme
-  if (theme == null) return document.schemaVersion !== 'project-document@1.3.0'
+  if (theme == null) return !THEME_SCHEMAS.includes(document.schemaVersion as string)
   if (!record(theme) || !stringRecord(theme.tokens) || !Array.isArray(theme.rules)) return false
   return theme.rules.every(rule => record(rule)
     && typeof rule.selector === 'string' && stringRecord(rule.declarations)
@@ -66,7 +82,7 @@ function blockMetadataValid(document: Record<string, unknown>): boolean {
     && typeof block.rootComponentId === 'string' && Array.isArray(block.components)
     && block.components.every(node => record(node) && typeof node.id === 'string'
       && typeof node.type === 'string' && stringRecord(node.properties)
-      && stringRecord(node.bindings) && slotsRecord(node.slots)))
+      && bindingRecord(node.bindings) && slotsRecord(node.slots)))
     && Array.isArray(instances) && instances.every(instance => record(instance)
       && typeof instance.id === 'string' && typeof instance.blockId === 'string'
       && typeof instance.pageId === 'string' && typeof instance.rootComponentId === 'string'
@@ -98,7 +114,7 @@ function isStoreProject(value: unknown): value is StoreProject {
       && typeof page.rootComponentId === 'string' && Array.isArray(page.components)
       && page.components.every((component: unknown) => record(component) && typeof component.id === 'string'
         && typeof component.type === 'string' && stringRecord(component.properties)
-        && stringRecord(component.bindings) && slotsRecord(component.slots)))
+        && bindingRecord(component.bindings) && slotsRecord(component.slots)))
 }
 
 export async function listProjects(after?: string): Promise<ProjectPage> {
