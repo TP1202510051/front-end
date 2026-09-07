@@ -2708,7 +2708,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/AcceptanceInput"
+                "$ref" : "#/components/schemas/AssistantAcceptanceInput"
               }
             }
           },
@@ -6878,7 +6878,7 @@
         }
       },
       "AssistantInstructionInput" : {
-        "required" : [ "baseRevisionId", "idempotencyKey", "instruction", "scope" ],
+        "required" : [ "idempotencyKey", "instruction", "scope" ],
         "type" : "object",
         "properties" : {
           "instruction" : {
@@ -6886,11 +6886,6 @@
             "minLength" : 0,
             "type" : "string",
             "example" : "Pon el color primario en #1a2b3c"
-          },
-          "baseRevisionId" : {
-            "minLength" : 1,
-            "pattern" : "^[1-9][0-9]{0,18}$",
-            "type" : "string"
           },
           "scope" : {
             "minLength" : 1,
@@ -6991,7 +6986,7 @@
           }
         }
       },
-      "AcceptanceInput" : {
+      "AssistantAcceptanceInput" : {
         "required" : [ "idempotencyKey" ],
         "type" : "object",
         "properties" : {

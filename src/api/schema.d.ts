@@ -609,7 +609,6 @@ export interface components {
         AssistantInstructionInput: {
             /** @example Pon el color primario en #1a2b3c */
             instruction: string;
-            baseRevisionId: string;
             /** @enum {string} */
             scope: "PROJECT" | "PAGE";
             /** @description Obligatoria cuando el alcance es PAGE */
@@ -641,7 +640,7 @@ export interface components {
             createdAt: string;
             decidedAt?: string;
         };
-        AcceptanceInput: {
+        AssistantAcceptanceInput: {
             idempotencyKey: string;
         };
         AssetDerivativeView: {
@@ -3159,7 +3158,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["AcceptanceInput"];
+                "application/json": components["schemas"]["AssistantAcceptanceInput"];
             };
         };
         responses: {

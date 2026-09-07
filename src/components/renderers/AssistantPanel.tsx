@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   acceptAssistantProposal, getAssistantProposal, proposeAssistantChange, rejectAssistantProposal,
   type AssistantProposal,
@@ -9,10 +9,10 @@ import { intentionKey, type ProjectDocument } from '@/canvas/intention'
 
 interface AssistantPanelProps {
   project: StoreProject
-  /** La página abierta, para acotar la instrucción a ella cuando quien escribe lo pide. */
+  /** La pagina abierta, para acotar la instruccion a ella cuando quien escribe lo pide. */
   pageId: string | null
   onAccepted: (project: StoreProject) => void
-  /** El documento que hay que enseñar mientras se mira la propuesta, o null para el aceptado. */
+  /** El documento que hay que ensenar mientras se mira la propuesta, o null para el aceptado. */
   onPreview: (document: ProjectDocument | null) => void
   readOnly: boolean
 }
@@ -20,22 +20,22 @@ interface AssistantPanelProps {
 const fieldStyle = 'w-full rounded border border-slate-400 bg-transparent px-2 py-1'
 const buttonStyle = 'rounded border border-slate-400 px-3 py-1 disabled:opacity-50'
 
-/** Cada cuánto se vuelve a preguntar mientras el modelo escribe. */
+/** Cada cuanto se vuelve a preguntar mientras el modelo escribe. */
 const POLL_MS = 1200
 
 /**
  * El asistente: se le escribe, propone, y quien edita decide.
  *
  * <p>Pedir contesta enseguida con un recibo. Lo que tarde el modelo no puede tener bloqueado a quien
- * escribió la instrucción, que sigue editando mientras tanto; por eso esto no espera a la propuesta
- * sino que pregunta por ella hasta que está.
+ * escribio la instruccion, que sigue editando mientras tanto; por eso esto no espera a la propuesta
+ * sino que pregunta por ella hasta que esta.
  *
- * <p>Nada de lo que se ve aquí ha tocado el proyecto. La vista previa se pinta pidiéndole al Canvas
- * que enseñe el documento propuesto -el mismo renderizador que dibuja lo aceptado, para que no haya
- * dos formas de pintar que puedan discrepar-, y la revisión aceptada sigue siendo la que era hasta
+ * <p>Nada de lo que se ve aqui ha tocado el proyecto. La vista previa se pinta pidiendole al Canvas
+ * que ensene el documento propuesto -el mismo renderizador que dibuja lo aceptado, para que no haya
+ * dos formas de pintar que puedan discrepar-, y la revision aceptada sigue siendo la que era hasta
  * que alguien acepta en voz alta.
  *
- * <p>Lo que una propuesta quita se lee aparte de lo que sólo cambia. Una sola lista dejaría un
+ * <p>Lo que una propuesta quita se lee aparte de lo que solo cambia. Una sola lista dejaria un
  * borrado escondido entre cambios de color, y esto es justo lo que hay que leer antes de aceptar.
  */
 export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnly }: AssistantPanelProps) {
@@ -45,7 +45,7 @@ export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnl
   const [pending, setPending] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
   const [showing, setShowing] = useState(false)
-  const watched = useRef<string | null>(null)
+  const [watched, setWatched] = useState<string | null>(null)
 
   const decided = proposal?.state === 'ACCEPTED' || proposal?.state === 'REJECTED'
   const drafted = proposal?.state === 'DRAFTED'
@@ -53,19 +53,21 @@ export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnl
 
   // Mientras la propuesta se escribe, se vuelve a preguntar. Se para en cuanto deja de estar
   // pendiente: seguir preguntando por algo que ya no va a cambiar es ruido contra el servidor.
+  // Cual se vigila es estado y no una referencia: con una referencia, pedir una segunda mientras
+  // la primera seguia pendiente dejaba vivo el intervalo de la primera, que machacaba a la nueva.
   useEffect(() => {
-    if (proposal?.state !== 'PENDING' || watched.current == null) return
-    const proposalId = watched.current
+    if (proposal?.state !== 'PENDING' || watched == null) return
+    let live = true
     const timer = setInterval(() => {
-      void getAssistantProposal(project.id, proposalId)
-        .then(setProposal)
-        .catch(error => { setProblem(safeProblem(error).message); clearInterval(timer) })
+      void getAssistantProposal(project.id, watched)
+        .then(next => { if (live) setProposal(next) })
+        .catch(error => { if (live) setProblem(safeProblem(error).message); clearInterval(timer) })
     }, POLL_MS)
-    return () => clearInterval(timer)
-  }, [proposal?.state, project.id])
+    return () => { live = false; clearInterval(timer) }
+  }, [proposal?.state, watched, project.id])
 
-  // Lo que se enseña en el Canvas se retira al irse, o quedaría pintada una propuesta que ya nadie
-  // está mirando y quien edita creería estar viendo lo aceptado.
+  // Lo que se ensena en el Canvas se retira al irse, o quedaria pintada una propuesta que ya nadie
+  // esta mirando y quien edita creeria estar viendo lo aceptado.
   useEffect(() => () => onPreview(null), [onPreview])
 
   function show(next: boolean) {
@@ -79,12 +81,11 @@ export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnl
     try {
       const receipt = await proposeAssistantChange(project.id, {
         instruction: instruction.trim(),
-        baseRevisionId: project.acceptedRevision.id,
         scope: scopedToPage && pageId ? 'PAGE' : 'PROJECT',
         scopePageId: scopedToPage ? pageId : null,
         idempotencyKey: intentionKey(),
       })
-      watched.current = receipt.proposalId
+      setWatched(receipt.proposalId)
       setProposal(await getAssistantProposal(project.id, receipt.proposalId))
     } catch (error) {
       setProblem(safeProblem(error).message)
@@ -99,7 +100,7 @@ export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnl
         ? await acceptAssistantProposal(project.id, proposal.proposalId, intentionKey())
         : await rejectAssistantProposal(project.id, proposal.proposalId)
       setProposal(decidedProposal)
-      // Sólo aceptar mueve el proyecto. Releerlo tras rechazar pediría lo mismo que ya se tiene.
+      // Solo aceptar mueve el proyecto. Releerlo tras rechazar pediria lo mismo que ya se tiene.
       if (accepting) await getStoreProject(project.id).then(onAccepted).catch(() => undefined)
     } catch (error) {
       setProblem(safeProblem(error).message)

@@ -124,27 +124,39 @@ function assistant(page: Page) {
 
 test('submitting an instruction answers at once and leaves the Canvas usable', async ({ page }) => {
   let sent: Record<string, unknown> | null = null
+  let asked = 0
+  // La peticion no contesta hasta que la prueba lo permite: asi el "sigue usable" se comprueba con
+  // la peticion demostrablemente en vuelo, y no en una ventana de tiempo que podria haberse cerrado.
+  let answer: () => void = () => undefined
+  const inFlight = new Promise<void>(resolve => { answer = resolve })
+
   await openCanvas(page, {
-    proposal: () => drafted({ state: 'PENDING', preview: null, effects: [], modelSummary: null,
-      unavailable: 'Todavía se está redactando.' }),
+    proposal: () => { asked += 1; return drafted({ state: 'PENDING', preview: null, effects: [],
+      modelSummary: null, unavailable: 'Todavía se está redactando.' }) },
     onPropose: async body => {
       sent = body as Record<string, unknown>
-      await new Promise(resolve => setTimeout(resolve, 600))
+      await inFlight
       return { status: 202, json: { operationId: OPERATION, proposalId: PROPOSAL } }
     },
   })
 
   await assistant(page).getByLabel('Instrucción para el asistente').fill('Pon el color primario en #1a2b3c')
   await assistant(page).getByRole('button', { name: 'Pedir propuesta' }).click()
+  await expect.poll(() => sent).not.toBeNull()
 
-  // El Canvas sigue respondiendo mientras la peticion viaja: escribir no lo congela.
-  await page.getByLabel('Titular de la portada').fill('Sigo editando');
+  // Con la peticion en vuelo, el Canvas sigue respondiendo: escribir no lo congela.
+  await page.getByLabel('Titular de la portada').fill('Sigo editando')
   await expect(page.getByLabel('Titular de la portada')).toHaveValue('Sigo editando')
+  answer()
 
   await expect(assistant(page).getByRole('status')).toHaveText('Todavía se está redactando.')
-  expect(sent).toMatchObject({
-    instruction: 'Pon el color primario en #1a2b3c', baseRevisionId: '9001', scope: 'PROJECT',
-  })
+
+  // Y tampoco durante el sondeo, que es la espera larga: se sigue pudiendo escribir mientras
+  // pregunta, y sigue preguntando -no se quedo colgado en la primera respuesta-.
+  await expect.poll(() => asked, { timeout: 6000 }).toBeGreaterThan(1)
+  await page.getByLabel('Titular de la portada').fill('Y sigo editando')
+  await expect(page.getByLabel('Titular de la portada')).toHaveValue('Y sigo editando')
+  expect(sent).toMatchObject({ instruction: 'Pon el color primario en #1a2b3c', scope: 'PROJECT' })
   expect(typeof (sent as unknown as { idempotencyKey: string }).idempotencyKey).toBe('string')
 })
 

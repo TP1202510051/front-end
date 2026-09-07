@@ -6,6 +6,7 @@ import type { components } from './schema'
 export type ProjectSummary = components['schemas']['ProjectSummary']
 export type ProjectPage = components['schemas']['ProjectPage']
 export type StoreProject = components['schemas']['StoreProjectView']
+export type ProjectDocument = components['schemas']['ProjectDocumentView']
 
 function isProject(value: unknown): value is ProjectSummary {
   if (!value || typeof value !== 'object') return false
@@ -102,13 +103,27 @@ function isStoreProject(value: unknown): value is StoreProject {
     || !['VERIFIED_TEMPLATE', 'MANUAL_BATCH', 'ASSISTANT_PROPOSAL', 'IMPORT', 'MIGRATION']
       .includes(revision.origin)
     || !record(revision.document)) return false
-  const document = revision.document
-  // Las formas publicadas del documento. Rechazar una anterior dejaria sin abrir las revisiones
-  // que se aceptaron con ella, que son justo las que el historial ensena.
+  return documentValid(revision.document)
+    && revision.document.registryVersion === revision.registryVersion
+    && revision.document.templateVersion === revision.templateVersion
+}
+
+/**
+ * Un documento de proyecto, comprobado antes de pintarlo.
+ *
+ * <p>Se exporta porque no llega por un solo sitio: viene dentro de una revisión aceptada y también
+ * dentro de una propuesta del asistente. Los dos acaban en el mismo renderizador, así que
+ * comprobarlos con dos validadores distintos dejaría una puerta abierta por el lado que se olvide.
+ *
+ * <p>Las formas publicadas se admiten todas. Rechazar una anterior dejaría sin abrir las revisiones
+ * que se aceptaron con ella, que son justo las que el historial enseña.
+ */
+export function documentValid(value: unknown): value is ProjectDocument {
+  if (!record(value)) return false
+  const document = value
   return DOCUMENT_SCHEMAS.includes(document.schemaVersion as string) && blockMetadataValid(document)
     && themeValid(document)
-    && document.registryVersion === revision.registryVersion
-    && document.templateVersion === revision.templateVersion
+    && typeof document.registryVersion === 'string' && typeof document.templateVersion === 'string'
     && Array.isArray(document.pages) && document.pages.every((page: unknown) => record(page)
       && typeof page.id === 'string' && typeof page.path === 'string'
       && typeof page.rootComponentId === 'string' && Array.isArray(page.components)

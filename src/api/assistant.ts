@@ -1,4 +1,5 @@
 import { platform } from './client'
+import { documentValid } from './projects'
 import { publicProblem, safeProblem } from './problems'
 import type { components } from './schema'
 import { isUuid } from './validators'
@@ -35,12 +36,14 @@ function isProposal(value: unknown, proposalId: string): value is AssistantPropo
     && (item.modelSummary == null || typeof item.modelSummary === 'string')
     && (item.unavailable == null || typeof item.unavailable === 'string')
     && (item.acceptedRevisionId == null || typeof item.acceptedRevisionId === 'string')
-    && (item.preview == null || typeof item.preview === 'object')
+    // La vista previa es lo unico que va derecho al renderizador del Canvas, asi que es lo
+    // ultimo que puede llegar sin comprobar. Se valida con el mismo validador que un
+    // documento aceptado: con dos, se colaria por el lado que alguien olvide.
+    && (item.preview == null || documentValid(item.preview))
 }
 
 export interface AssistantInstruction {
   instruction: string
-  baseRevisionId: string
   scope: 'PROJECT' | 'PAGE'
   scopePageId?: string | null
   idempotencyKey: string
@@ -60,7 +63,6 @@ export async function proposeAssistantChange(projectId: string,
       params: { path: { projectId } },
       body: {
         instruction: instruction.instruction,
-        baseRevisionId: instruction.baseRevisionId,
         scope: instruction.scope,
         scopePageId: instruction.scopePageId ?? undefined,
         idempotencyKey: instruction.idempotencyKey,
@@ -68,10 +70,10 @@ export async function proposeAssistantChange(projectId: string,
       signal: AbortSignal.timeout(15_000),
     })
     const receipt = data as Record<string, unknown> | undefined
-    if (!receipt || !isUuid(receipt.operationId) || typeof receipt.proposalId !== 'string') {
+    if (!receipt || !isUuid(receipt.operationId) || !isUuid(receipt.proposalId)) {
       throw publicProblem(null)
     }
-    return receipt as unknown as AssistantProposalReceipt
+    return { operationId: receipt.operationId, proposalId: receipt.proposalId }
   } catch (error) { throw safeProblem(error) }
 }
 
