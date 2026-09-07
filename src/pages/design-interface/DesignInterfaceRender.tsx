@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useEditing } from "@/contexts/EditingContext";
 import { ProjectBlocks } from "@/components/renderers/ProjectBlocks";
 import { ThemeEditor } from "@/components/renderers/ThemeEditor";
+import { AssistantPanel } from "@/components/renderers/AssistantPanel";
 import { ProjectAssetsPanel } from "@/components/renderers/ProjectAssetsPanel";
 import { TextileCatalogPanel } from "@/components/renderers/TextileCatalogPanel";
 import { CatalogOrganisationPanel } from "@/components/renderers/CatalogOrganisationPanel";
@@ -171,6 +172,9 @@ const DesignInterfaceRender: React.FC = () => {
           <ProjectBlocks publication={publication} project={settled} pageId={openedPage} onAccepted={setProject} readOnly={Boolean(inspecting)} />
 
           <ThemeEditor project={settled} pageId={openedPage} onAccepted={setProject} readOnly={Boolean(inspecting)} />
+
+          <AssistantPanel project={settled} pageId={openedPage} onAccepted={setProject}
+            onPreview={setPreview} readOnly={Boolean(inspecting)} />
 
           <ProjectAssetsPanel projectId={projectId ?? ""} readOnly={Boolean(inspecting)} />
 
