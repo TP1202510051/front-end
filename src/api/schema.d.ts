@@ -143,6 +143,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{projectId}/assistant/proposals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listAssistantProposals"];
+        put?: never;
+        post: operations["proposeAssistantChange"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{projectId}/assistant/proposals/{proposalId}/rejection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["rejectAssistantProposal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{projectId}/assistant/proposals/{proposalId}/acceptance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["acceptAssistantProposal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{projectId}/assets": {
         parameters: {
             query?: never;
@@ -279,6 +327,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["resolveCatalogBinding"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{projectId}/assistant/proposals/{proposalId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAssistantProposal"];
         put?: never;
         post?: never;
         delete?: never;
@@ -541,6 +605,44 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        AssistantInstructionInput: {
+            /** @example Pon el color primario en #1a2b3c */
+            instruction: string;
+            baseRevisionId: string;
+            /** @enum {string} */
+            scope: "PROJECT" | "PAGE";
+            /** @description Obligatoria cuando el alcance es PAGE */
+            scopePageId?: string;
+            idempotencyKey: string;
+        };
+        AssistantProposalReceiptView: {
+            operationId: string;
+            proposalId: string;
+        };
+        AssistantProposalView: {
+            proposalId: string;
+            projectId: string;
+            /** @enum {string} */
+            state: "PENDING" | "DRAFTED" | "ACCEPTED" | "REJECTED" | "FAILED";
+            instruction: string;
+            baseRevisionId: string;
+            /** @enum {string} */
+            scope: "PROJECT" | "PAGE";
+            scopePageId?: string;
+            modelSummary?: string;
+            effects: string[];
+            losses: string[];
+            refused: string[];
+            destructive: boolean;
+            preview?: components["schemas"]["ProjectDocumentView"];
+            unavailable?: string;
+            acceptedRevisionId?: string;
+            createdAt: string;
+            decidedAt?: string;
+        };
+        AcceptanceInput: {
+            idempotencyKey: string;
         };
         AssetDerivativeView: {
             /** Format: int32 */
@@ -2572,6 +2674,502 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ProductCategoryView"];
+                };
+            };
+            /** @description Public problem */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+        };
+    };
+    listAssistantProposals: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AssistantProposalView"][];
+                };
+            };
+            /** @description Public problem */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+        };
+    };
+    proposeAssistantChange: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssistantInstructionInput"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AssistantProposalReceiptView"];
+                };
+            };
+            /** @description Public problem */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+        };
+    };
+    rejectAssistantProposal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: string;
+                proposalId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AssistantProposalView"];
+                };
+            };
+            /** @description Public problem */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+        };
+    };
+    acceptAssistantProposal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: string;
+                proposalId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptanceInput"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AssistantProposalView"];
                 };
             };
             /** @description Public problem */
@@ -4913,6 +5511,128 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["CatalogResolutionView"];
+                };
+            };
+            /** @description Public problem */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+        };
+    };
+    getAssistantProposal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: string;
+                proposalId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AssistantProposalView"];
                 };
             };
             /** @description Public problem */
