@@ -4,11 +4,16 @@ import { publicProblem, safeProblem } from './problems'
 import type { components } from './schema'
 import { isUuid } from './validators'
 
+export type AssistantState = 'PENDING' | 'DRAFTED' | 'ACCEPTED' | 'REJECTED' | 'FAILED' | 'CANCELLED'
+export type AssistantOutcome = 'WORKING' | 'CHANGE_AVAILABLE' | 'CLARIFICATION_REQUIRED' | 'NO_CHANGE'
+  | 'UNSUPPORTED' | 'STALE_CONTEXT' | 'CANCELLED' | 'FAILED' | 'ACCEPTED' | 'REJECTED'
 export type AssistantProposal = components['schemas']['AssistantProposalView']
 export type AssistantProposalReceipt = components['schemas']['AssistantProposalReceiptView']
 
 /** Los puntos del ciclo, escritos aqui para no fiarse de que el servidor mande uno de ellos. */
-const STATES = ['PENDING', 'DRAFTED', 'ACCEPTED', 'REJECTED', 'FAILED']
+const STATES: AssistantState[] = ['PENDING', 'DRAFTED', 'ACCEPTED', 'REJECTED', 'FAILED', 'CANCELLED']
+const OUTCOMES: AssistantOutcome[] = ['WORKING', 'CHANGE_AVAILABLE', 'CLARIFICATION_REQUIRED', 'NO_CHANGE',
+  'UNSUPPORTED', 'STALE_CONTEXT', 'CANCELLED', 'FAILED', 'ACCEPTED', 'REJECTED']
 
 function strings(value: unknown): value is string[] {
   return Array.isArray(value) && value.every(item => typeof item === 'string')
@@ -27,7 +32,8 @@ function isProposal(value: unknown, proposalId: string): value is AssistantPropo
   return typeof item.proposalId === 'string'
     && item.proposalId.toLowerCase() === proposalId.toLowerCase()
     && typeof item.projectId === 'string'
-    && typeof item.state === 'string' && STATES.includes(item.state)
+    && typeof item.state === 'string' && STATES.includes(item.state as AssistantState)
+    && typeof item.outcome === 'string' && OUTCOMES.includes(item.outcome as AssistantOutcome)
     && typeof item.instruction === 'string'
     && typeof item.baseRevisionId === 'string'
     && (item.scope === 'PROJECT' || item.scope === 'PAGE')
@@ -116,6 +122,19 @@ export async function rejectAssistantProposal(projectId: string,
     const { data } = await platform.POST(
       '/api/v1/projects/{projectId}/assistant/proposals/{proposalId}/rejection', {
         params: { path: { projectId, proposalId } }, signal: AbortSignal.timeout(15_000),
+      })
+    if (!isProposal(data, proposalId)) throw publicProblem(null)
+    return data
+  } catch (error) { throw safeProblem(error) }
+}
+
+/** Cancela una redaccion pendiente y devuelve el resultado que gano cualquier carrera. */
+export async function cancelAssistantProposal(projectId: string,
+  proposalId: string): Promise<AssistantProposal> {
+  try {
+    const { data } = await platform.POST(
+      '/api/v1/projects/{projectId}/assistant/proposals/{proposalId}/cancellation', {
+      params: { path: { projectId, proposalId } }, signal: AbortSignal.timeout(15_000),
       })
     if (!isProposal(data, proposalId)) throw publicProblem(null)
     return data

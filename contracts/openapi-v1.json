@@ -2538,6 +2538,33 @@
         }
       }
     },
+    "/api/v1/projects/{projectId}/assistant/proposals/{proposalId}/cancellation" : {
+      "post" : {
+        "tags" : [ "assistant-proposal-controller" ],
+        "operationId" : "cancelAssistantProposal",
+        "parameters" : [ {
+          "name" : "projectId", "in" : "path", "required" : true,
+          "schema" : { "pattern" : "^[1-9][0-9]{0,18}$", "type" : "string" }
+        }, {
+          "name" : "proposalId", "in" : "path", "required" : true,
+          "schema" : { "pattern" : "^[0-9a-fA-F-]{36}$", "type" : "string" }
+        } ],
+        "responses" : {
+          "200" : { "description" : "OK", "content" : { "*/*" : { "schema" : { "$ref" : "#/components/schemas/AssistantProposalView" } } } },
+          "400" : { "description" : "Public problem", "content" : { "application/problem+json" : { "schema" : { "$ref" : "#/components/schemas/PublicProblem" } } } },
+          "401" : { "description" : "Public problem", "content" : { "application/problem+json" : { "schema" : { "$ref" : "#/components/schemas/PublicProblem" } } } },
+          "404" : { "description" : "Public problem", "content" : { "application/problem+json" : { "schema" : { "$ref" : "#/components/schemas/PublicProblem" } } } },
+          "405" : { "description" : "Public problem", "content" : { "application/problem+json" : { "schema" : { "$ref" : "#/components/schemas/PublicProblem" } } } },
+          "406" : { "description" : "Public problem", "content" : { "application/problem+json" : { "schema" : { "$ref" : "#/components/schemas/PublicProblem" } } } },
+          "409" : { "description" : "Public problem", "content" : { "application/problem+json" : { "schema" : { "$ref" : "#/components/schemas/PublicProblem" } } } },
+          "415" : { "description" : "Public problem", "content" : { "application/problem+json" : { "schema" : { "$ref" : "#/components/schemas/PublicProblem" } } } },
+          "422" : { "description" : "Public problem", "content" : { "application/problem+json" : { "schema" : { "$ref" : "#/components/schemas/PublicProblem" } } } },
+          "429" : { "description" : "Public problem", "content" : { "application/problem+json" : { "schema" : { "$ref" : "#/components/schemas/PublicProblem" } } } },
+          "503" : { "description" : "Public problem", "content" : { "application/problem+json" : { "schema" : { "$ref" : "#/components/schemas/PublicProblem" } } } },
+          "500" : { "description" : "Public problem", "content" : { "application/problem+json" : { "schema" : { "$ref" : "#/components/schemas/PublicProblem" } } } }
+        }
+      }
+    },
     "/api/v1/projects/{projectId}/assistant/proposals/{proposalId}/rejection" : {
       "post" : {
         "tags" : [ "assistant-proposal-controller" ],
@@ -6919,7 +6946,7 @@
         }
       },
       "AssistantProposalView" : {
-        "required" : [ "baseRevisionId", "createdAt", "destructive", "effects", "instruction", "losses", "projectId", "proposalId", "refused", "scope", "state" ],
+        "required" : [ "baseRevisionId", "createdAt", "destructive", "effects", "instruction", "losses", "outcome", "projectId", "proposalId", "refused", "scope", "state" ],
         "type" : "object",
         "properties" : {
           "proposalId" : {
@@ -6930,7 +6957,11 @@
           },
           "state" : {
             "type" : "string",
-            "enum" : [ "PENDING", "DRAFTED", "ACCEPTED", "REJECTED", "FAILED" ]
+            "enum" : [ "PENDING", "DRAFTED", "ACCEPTED", "REJECTED", "FAILED", "CANCELLED" ]
+          },
+          "outcome" : {
+            "type" : "string",
+            "enum" : [ "WORKING", "CHANGE_AVAILABLE", "CLARIFICATION_REQUIRED", "NO_CHANGE", "UNSUPPORTED", "STALE_CONTEXT", "CANCELLED", "FAILED", "ACCEPTED", "REJECTED" ]
           },
           "instruction" : {
             "type" : "string"

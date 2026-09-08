@@ -50,11 +50,11 @@ interface SpeechRecognitionErrorEvent extends Event {
 }
 
 interface Window {
-  SpeechRecognition: {
+  SpeechRecognition?: {
     prototype: SpeechRecognition;
     new (): SpeechRecognition;
   };
-  webkitSpeechRecognition: {
+  webkitSpeechRecognition?: {
     prototype: SpeechRecognition;
     new (): SpeechRecognition;
   };

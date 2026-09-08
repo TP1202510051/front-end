@@ -31,7 +31,7 @@ function projectAt(revisionId: string, number: number, heading: string, tokens: 
 /** Una propuesta ya redactada, con la vista previa que dejaria. */
 function drafted(overrides: Record<string, unknown> = {}) {
   return {
-    proposalId: PROPOSAL, projectId: '42', state: 'DRAFTED',
+    proposalId: PROPOSAL, projectId: '42', state: 'DRAFTED', outcome: 'CHANGE_AVAILABLE',
     instruction: 'Pon el color primario en #1a2b3c', baseRevisionId: '9001',
     scope: 'PROJECT', scopePageId: null,
     modelSummary: 'cambiar el color primario a #1a2b3c',
@@ -49,6 +49,7 @@ async function openCanvas(page: Page, routes: {
   onPropose?: (body: unknown) => unknown | Promise<unknown>
   onAcceptance?: (body: unknown) => unknown | Promise<unknown>
   onRejection?: () => unknown
+  onCancellation?: () => unknown
   project?: () => unknown
 }) {
   await page.route('**/api/v1/component-registries/**', route => route.fulfill({ json: {
@@ -94,14 +95,21 @@ async function openCanvas(page: Page, routes: {
     // Canvas no se congela- y pasarle una promesa a fulfill no cumple nada.
     if (pathname.endsWith('/acceptance')) {
       const outcome = await (routes.onAcceptance ?? (() => ({ status: 201, json: drafted({
-        state: 'ACCEPTED', acceptedRevisionId: '9002', preview: null,
+        state: 'ACCEPTED', outcome: 'ACCEPTED', acceptedRevisionId: '9002', preview: null,
         unavailable: 'Ya está aceptada: lo que hizo está en el proyecto.',
       }) })))(request.postDataJSON())
       return route.fulfill(outcome as Parameters<typeof route.fulfill>[0])
     }
     if (pathname.endsWith('/rejection')) {
       const outcome = await (routes.onRejection ?? (() => ({ json: drafted({
-        state: 'REJECTED', preview: null, unavailable: 'Se descartó.',
+        state: 'REJECTED', outcome: 'REJECTED', preview: null, unavailable: 'Se descartó.',
+      }) })))()
+      return route.fulfill(outcome as Parameters<typeof route.fulfill>[0])
+    }
+    if (pathname.endsWith('/cancellation')) {
+      const outcome = await (routes.onCancellation ?? (() => ({ json: drafted({
+        state: 'CANCELLED', outcome: 'CANCELLED', preview: null,
+        unavailable: 'Se canceló antes de terminar.',
       }) })))()
       return route.fulfill(outcome as Parameters<typeof route.fulfill>[0])
     }
@@ -131,7 +139,7 @@ test('submitting an instruction answers at once and leaves the Canvas usable', a
   const inFlight = new Promise<void>(resolve => { answer = resolve })
 
   await openCanvas(page, {
-    proposal: () => { asked += 1; return drafted({ state: 'PENDING', preview: null, effects: [],
+    proposal: () => { asked += 1; return drafted({ state: 'PENDING', outcome: 'WORKING', preview: null, effects: [],
       modelSummary: null, unavailable: 'Todavía se está redactando.' }) },
     onPropose: async body => {
       sent = body as Record<string, unknown>
@@ -159,6 +167,136 @@ test('submitting an instruction answers at once and leaves the Canvas usable', a
   expect(sent).toMatchObject({ instruction: 'Pon el color primario en #1a2b3c', scope: 'PROJECT' })
   expect(typeof (sent as unknown as { idempotencyKey: string }).idempotencyKey).toBe('string')
 })
+
+test('speech transcription stays editable and never submits until explicit confirmation', async ({ page }) => {
+  let sent: Record<string, unknown> | null = null
+  await page.addInitScript(() => {
+    class FakeSpeechRecognition {
+      lang = ''; continuous = false; interimResults = false; maxAlternatives = 1
+      onstart: ((event: Event) => void) | null = null
+      onend: ((event: Event) => void) | null = null
+      onerror: ((event: Event) => void) | null = null
+      onresult: ((event: Event) => void) | null = null
+      start() { (window as unknown as { recognition: FakeSpeechRecognition }).recognition = this; this.onstart?.(new Event('start')) }
+      stop() { this.onend?.(new Event('end')) }
+      abort() { this.onend?.(new Event('end')) }
+    }
+    ;(window as unknown as { SpeechRecognition: typeof FakeSpeechRecognition }).SpeechRecognition = FakeSpeechRecognition
+  })
+  await openCanvas(page, {
+    proposal: () => drafted(),
+    onPropose: body => { sent = body as Record<string, unknown>; return {
+      status: 202, json: { operationId: OPERATION, proposalId: PROPOSAL },
+    } },
+  })
+
+  await assistant(page).getByRole('button', { name: 'Dictar instrucción' }).click()
+  await page.evaluate(() => {
+    const recognition = (window as unknown as { recognition: {
+      onresult: ((event: unknown) => void) | null, onend: ((event: Event) => void) | null,
+    } }).recognition
+    recognition.onresult?.({ resultIndex: 0, results: {
+      0: { 0: { transcript: 'Pon el color primario en azul', confidence: 1 }, length: 1, isFinal: true },
+      length: 1,
+    } })
+    recognition.onend?.(new Event('end'))
+  })
+
+  const input = assistant(page).getByLabel('Instrucción para el asistente')
+  await expect(input).toHaveValue('Pon el color primario en azul')
+  expect(sent).toBeNull()
+  await input.fill('Pon el color primario en #1a2b3c')
+  expect(sent).toBeNull()
+  await assistant(page).getByRole('button', { name: 'Pedir propuesta' }).click()
+  await expect.poll(() => sent).toMatchObject({ instruction: 'Pon el color primario en #1a2b3c' })
+})
+
+test('without browser speech recognition the complete text workflow remains available', async ({ page }) => {
+  let sent: Record<string, unknown> | null = null
+  await page.addInitScript(() => {
+    delete (window as unknown as { SpeechRecognition?: unknown }).SpeechRecognition
+    delete (window as unknown as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition
+  })
+  await openCanvas(page, {
+    proposal: () => drafted(),
+    onPropose: body => { sent = body as Record<string, unknown>; return {
+      status: 202, json: { operationId: OPERATION, proposalId: PROPOSAL },
+    } },
+  })
+
+  await expect(assistant(page).getByText('El dictado no está disponible; puedes escribir la instrucción completa.'))
+    .toBeVisible()
+  await assistant(page).getByLabel('Instrucción para el asistente').fill('Pon el color primario en #abcdef')
+  await assistant(page).getByRole('button', { name: 'Pedir propuesta' }).click()
+  await expect.poll(() => sent).toMatchObject({ instruction: 'Pon el color primario en #abcdef' })
+})
+
+test('a speech recognition failure preserves the instruction already typed', async ({ page }) => {
+  await page.addInitScript(() => {
+    class FailingSpeechRecognition {
+      lang = ''; continuous = false; interimResults = false; maxAlternatives = 1
+      onstart: ((event: Event) => void) | null = null
+      onend: ((event: Event) => void) | null = null
+      onerror: ((event: Event) => void) | null = null
+      onresult: ((event: Event) => void) | null = null
+      start() { this.onstart?.(new Event('start')); this.onerror?.(new Event('error')); this.onend?.(new Event('end')) }
+      stop() { this.onend?.(new Event('end')) }
+      abort() { this.onend?.(new Event('end')) }
+    }
+    ;(window as unknown as { SpeechRecognition: typeof FailingSpeechRecognition }).SpeechRecognition = FailingSpeechRecognition
+  })
+  await openCanvas(page, { proposal: () => drafted() })
+  const input = assistant(page).getByLabel('Instrucción para el asistente')
+  await input.fill('Texto que debe conservarse')
+
+  await assistant(page).getByRole('button', { name: 'Dictar instrucción' }).click()
+
+  await expect(input).toHaveValue('Texto que debe conservarse')
+  await expect(assistant(page).getByText('No se pudo completar el dictado. La instrucción escrita sigue disponible.'))
+    .toBeVisible()
+})
+
+test('a pending assistant request can be cancelled without changing the accepted revision', async ({ page }) => {
+  let cancelled = false
+  await openCanvas(page, {
+    proposal: () => drafted({ state: 'PENDING', outcome: 'WORKING', preview: null, effects: [],
+      modelSummary: null, unavailable: 'Todavía se está redactando.' }),
+    onCancellation: () => {
+      cancelled = true
+      return { json: drafted({ state: 'CANCELLED', outcome: 'CANCELLED', preview: null,
+        effects: [], modelSummary: null, unavailable: 'Se canceló antes de terminar.' }) }
+    },
+  })
+
+  await assistant(page).getByLabel('Instrucción para el asistente').fill('Pon el color primario en #1a2b3c')
+  await assistant(page).getByRole('button', { name: 'Pedir propuesta' }).click()
+  await assistant(page).getByRole('button', { name: 'Cancelar solicitud' }).click()
+
+  await expect(assistant(page).getByRole('status')).toContainText('Solicitud cancelada')
+  expect(cancelled).toBe(true)
+  await expect(page.getByRole('region', { name: 'Canvas del proyecto' }).getByRole('status'))
+    .toHaveText('Revisión aceptada 1')
+})
+
+for (const stable of [
+  ['CLARIFICATION_REQUIRED', 'Necesito una aclaración antes de proponer cambios.'],
+  ['NO_CHANGE', 'La instrucción no produciría cambios.'],
+  ['UNSUPPORTED', 'No puedo aplicar esa instrucción de forma segura.'],
+  ['STALE_CONTEXT', 'El proyecto cambió desde que se redactó. Pide una propuesta nueva.'],
+] as const) {
+  test(`assistant outcome ${stable[0]} is shown without an applicable change`, async ({ page }) => {
+    await openCanvas(page, { proposal: () => drafted({ outcome: stable[0], preview: null,
+      effects: [], losses: [], destructive: false, unavailable: 'Detalle seguro.' }) })
+
+    await assistant(page).getByLabel('Instrucción para el asistente').fill('Una instrucción')
+    await assistant(page).getByRole('button', { name: 'Pedir propuesta' }).click()
+
+    await expect(assistant(page).getByText(stable[1])).toBeVisible()
+    await expect(assistant(page).getByRole('button', { name: 'Aceptar propuesta' })).toHaveCount(0)
+    await expect(page.getByRole('region', { name: 'Canvas del proyecto' }).getByRole('status'))
+      .toHaveText('Revisión aceptada 1')
+  })
+}
 
 test('the proposal shows what it would do and what it would leave, without accepting it', async ({ page }) => {
   await openCanvas(page, { proposal: () => drafted() })
@@ -204,7 +342,8 @@ test('accepting goes through the paired lifecycle and the project keeps the chan
       accepted = body as Record<string, unknown>
       served = projectAt('9002', 2, 'Mi tienda', { 'color-primario': '#1a2b3c' }) as typeof served
       return { status: 201, json: drafted({ state: 'ACCEPTED', acceptedRevisionId: '9002',
-        preview: null, unavailable: 'Ya está aceptada: lo que hizo está en el proyecto.' }) }
+        outcome: 'ACCEPTED', preview: null,
+        unavailable: 'Ya está aceptada: lo que hizo está en el proyecto.' }) }
     },
   })
 
@@ -229,7 +368,8 @@ test('rejecting leaves the accepted revision exactly as it was', async ({ page }
     proposal: () => drafted(),
     onRejection: () => {
       rejected = true
-      return { json: drafted({ state: 'REJECTED', preview: null, unavailable: 'Se descartó.' }) }
+      return { json: drafted({ state: 'REJECTED', outcome: 'REJECTED', preview: null,
+        unavailable: 'Se descartó.' }) }
     },
   })
 
@@ -246,3 +386,37 @@ test('rejecting leaves the accepted revision exactly as it was', async ({ page }
     .toHaveText('Revisión aceptada 1')
   await expect(page.getByRole('region', { name: 'Tema del proyecto' })).toContainText('Todavía no hay tokens.')
 })
+
+/**
+ * Cada resultado estable se enseña tal cual y ninguno ofrece aceptar.
+ *
+ * <p>Es lo que separa "no se pudo" de "no se hizo": el SPA no interpreta la frase del modelo, pinta
+ * el resultado que el backend fija. Y ninguno de estos deja un boton que escriba una revision, que
+ * es la mitad que de verdad importa.
+ */
+for (const outcome of [
+  { name: 'CLARIFICATION_REQUIRED', shown: 'Necesito una aclaración antes de proponer cambios.' },
+  { name: 'NO_CHANGE', shown: 'La instrucción no produciría cambios.' },
+  { name: 'UNSUPPORTED', shown: 'No puedo aplicar esa instrucción de forma segura.' },
+  { name: 'STALE_CONTEXT', shown: 'El proyecto cambió desde que se redactó. Pide una propuesta nueva.' },
+]) {
+  test(`a ${outcome.name} proposal shows its outcome and offers nothing to accept`, async ({ page }) => {
+    await openCanvas(page, {
+      proposal: () => drafted({
+        outcome: outcome.name, effects: [], losses: [], destructive: false,
+        operations: [], preview: null,
+        modelSummary: 'lo que el modelo dijo, que no es lo que se pinta',
+      }),
+    })
+
+    await assistant(page).getByLabel('Instrucción para el asistente').fill('Ponlo más chévere')
+    await assistant(page).getByRole('button', { name: 'Pedir propuesta' }).click()
+
+    await expect(assistant(page).getByText(outcome.shown)).toBeVisible()
+    await expect(assistant(page).getByRole('button', { name: 'Aceptar propuesta' })).toHaveCount(0)
+    await expect(assistant(page).getByRole('button', { name: 'Ver la propuesta en el Canvas' })).toHaveCount(0)
+    // Y el proyecto sigue donde estaba: ninguno de estos caminos escribe nada.
+    await expect(page.getByRole('region', { name: 'Canvas del proyecto' }).getByRole('status'))
+      .toHaveText('Revisión aceptada 1')
+  })
+}
