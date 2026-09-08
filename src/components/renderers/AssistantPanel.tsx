@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
-  acceptAssistantProposal, getAssistantProposal, proposeAssistantChange, rejectAssistantProposal,
+  acceptAssistantProposal, cancelAssistantProposal, getAssistantProposal, proposeAssistantChange,
+  rejectAssistantProposal,
   type AssistantProposal,
 } from '@/api/assistant'
 import { getStoreProject, type StoreProject } from '@/api/projects'
@@ -22,6 +23,13 @@ const buttonStyle = 'rounded border border-slate-400 px-3 py-1 disabled:opacity-
 
 /** Cada cuanto se vuelve a preguntar mientras el modelo escribe. */
 const POLL_MS = 1200
+
+const OUTCOME_MESSAGE = {
+  CLARIFICATION_REQUIRED: 'Necesito una aclaración antes de proponer cambios.',
+  NO_CHANGE: 'La instrucción no produciría cambios.',
+  UNSUPPORTED: 'No puedo aplicar esa instrucción de forma segura.',
+  STALE_CONTEXT: 'El proyecto cambió desde que se redactó. Pide una propuesta nueva.',
+} as const
 
 /**
  * El asistente: se le escribe, propone, y quien edita decide.
@@ -46,9 +54,15 @@ export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnl
   const [problem, setProblem] = useState<string | null>(null)
   const [showing, setShowing] = useState(false)
   const [watched, setWatched] = useState<string | null>(null)
+  const [listening, setListening] = useState(false)
+  const [speechMessage, setSpeechMessage] = useState<string | null>(null)
+  const recognition = useRef<SpeechRecognition | null>(null)
+  const [speechSupported] = useState(() => Boolean(window.SpeechRecognition ?? window.webkitSpeechRecognition))
 
   const decided = proposal?.state === 'ACCEPTED' || proposal?.state === 'REJECTED'
+    || proposal?.state === 'CANCELLED'
   const drafted = proposal?.state === 'DRAFTED'
+  const applicable = drafted && proposal.outcome === 'CHANGE_AVAILABLE'
   const disabled = pending || readOnly
 
   // Mientras la propuesta se escribe, se vuelve a preguntar. Se para en cuanto deja de estar
@@ -70,6 +84,8 @@ export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnl
   // esta mirando y quien edita creeria estar viendo lo aceptado.
   useEffect(() => () => onPreview(null), [onPreview])
 
+  useEffect(() => () => recognition.current?.abort(), [])
+
   function show(next: boolean) {
     setShowing(next)
     onPreview(next && proposal?.preview ? (proposal.preview as ProjectDocument) : null)
@@ -90,6 +106,44 @@ export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnl
     } catch (error) {
       setProblem(safeProblem(error).message)
     } finally { setPending(false) }
+  }
+
+  function dictate() {
+    const SpeechRecognition = window.SpeechRecognition ?? window.webkitSpeechRecognition
+    if (!SpeechRecognition) return
+    setSpeechMessage(null)
+    const next = new SpeechRecognition()
+    recognition.current = next
+    next.lang = 'es-PE'
+    next.continuous = false
+    next.interimResults = false
+    next.maxAlternatives = 1
+    next.onstart = () => setListening(true)
+    next.onresult = event => {
+      let transcript = ''
+      for (let index = event.resultIndex; index < event.results.length; index += 1) {
+        if (event.results[index].isFinal) transcript += event.results[index][0].transcript
+      }
+      if (transcript.trim()) {
+        setInstruction(transcript.trim())
+        setSpeechMessage('Transcripción lista. Revísala y pulsa “Pedir propuesta” para enviarla.')
+      }
+    }
+    next.onerror = () => {
+      setListening(false)
+      setSpeechMessage('No se pudo completar el dictado. La instrucción escrita sigue disponible.')
+    }
+    next.onend = () => setListening(false)
+    try { next.start() }
+    catch { setListening(false); setSpeechMessage('No se pudo iniciar el dictado. Puedes seguir escribiendo.') }
+  }
+
+  async function cancel() {
+    if (!proposal) return
+    setPending(true); setProblem(null); show(false)
+    try { setProposal(await cancelAssistantProposal(project.id, proposal.proposalId)) }
+    catch (error) { setProblem(safeProblem(error).message) }
+    finally { setPending(false) }
   }
 
   async function decide(accepting: boolean) {
@@ -116,6 +170,12 @@ export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnl
         <textarea className={fieldStyle} rows={2} value={instruction} disabled={disabled}
           maxLength={2000} onChange={event => setInstruction(event.target.value)} />
       </label>
+      {speechSupported ? <div className="flex flex-wrap items-center gap-2">
+        <button type="button" className={buttonStyle} disabled={disabled || listening}
+          onClick={dictate}>{listening ? 'Escuchando…' : 'Dictar instrucción'}</button>
+        <span>El dictado sólo rellena el texto; revísalo antes de enviarlo.</span>
+      </div> : <p>El dictado no está disponible; puedes escribir la instrucción completa.</p>}
+      {speechMessage && <p role="status">{speechMessage}</p>}
       {pageId && <label className="flex items-center gap-2">
         <input type="checkbox" checked={scopedToPage} disabled={disabled}
           onChange={event => setScopedToPage(event.target.checked)} />
@@ -128,7 +188,11 @@ export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnl
 
     {readOnly && <p>Estás viendo una revisión anterior. Vuelve a la última para pedirle algo.</p>}
 
-    {proposal?.state === 'PENDING' && <p role="status">{proposal.unavailable}</p>}
+    {proposal?.state === 'PENDING' && <div className="flex flex-wrap items-center gap-2">
+      <p role="status">{proposal.unavailable}</p>
+      {!readOnly && <button type="button" className={buttonStyle} disabled={pending}
+        onClick={() => void cancel()}>Cancelar solicitud</button>}
+    </div>}
     {proposal?.state === 'FAILED' && <p role="alert">No se pudo redactar. Vuelve a pedirlo.</p>}
 
     {proposal?.modelSummary && !decided && <p className="italic">«{proposal.modelSummary}»</p>}
@@ -155,9 +219,11 @@ export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnl
       </ul>
     </>}
 
-    {drafted && proposal.unavailable && <p role="status">{proposal.unavailable}</p>}
+    {drafted && proposal.outcome in OUTCOME_MESSAGE && <p role="status">
+      {OUTCOME_MESSAGE[proposal.outcome as keyof typeof OUTCOME_MESSAGE]}
+    </p>}
 
-    {drafted && proposal.preview && <div className="flex flex-wrap items-center gap-2">
+    {applicable && proposal.preview && <div className="flex flex-wrap items-center gap-2">
       <button type="button" className={buttonStyle} disabled={pending}
         onClick={() => show(!showing)}>
         {showing ? 'Volver a lo aceptado' : 'Ver la propuesta en el Canvas'}
@@ -165,7 +231,7 @@ export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnl
       {showing && <span role="status">Estás viendo la propuesta, no lo aceptado.</span>}
     </div>}
 
-    {drafted && !readOnly && <div className="flex flex-wrap gap-2">
+    {applicable && !readOnly && <div className="flex flex-wrap gap-2">
       <button type="button" className={buttonStyle} disabled={pending || !proposal.preview}
         onClick={() => void decide(true)}>Aceptar propuesta</button>
       <button type="button" className={buttonStyle} disabled={pending}
@@ -177,6 +243,9 @@ export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnl
     </p>}
     {proposal?.state === 'REJECTED' && <p role="status">
       Descartada. El proyecto quedó exactamente como estaba.
+    </p>}
+    {proposal?.state === 'CANCELLED' && <p role="status">
+      Solicitud cancelada. No se aplicó ningún cambio.
     </p>}
 
     {problem && <p role="alert">{problem}</p>}
