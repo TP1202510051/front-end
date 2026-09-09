@@ -3,6 +3,7 @@ import { getRevisionReadiness, type MissingRequirement, type RevisionReadiness,
   type ValidationLevel } from '@/api/readiness'
 import { safeProblem } from '@/api/problems'
 import { ExportGate } from './ExportGate'
+import { destinations, NO_DESTINATION } from './readiness-areas'
 
 interface ReadinessPanelProps {
   projectId: string
@@ -33,15 +34,6 @@ const explanations: Record<MissingRequirement['code'], string> = {
     'Una sección muestra algo del catálogo que ya no existe. Elige otra cosa o restaura lo que se borró.',
   BINDING_UNCHOSEN:
     'Una sección todavía no tiene elegido qué mostrar del catálogo.',
-}
-
-/** A donde lleva cada area, y con que rotulo. Sin sitio a donde ir no hay nada que enlazar. */
-const destinations: Record<MissingRequirement['area'], { label: string; anchor: string } | null> = {
-  PROJECT: null,
-  PAGES: { label: 'Ir a las páginas', anchor: '#readiness-paginas' },
-  THEME: { label: 'Ir al tema', anchor: '#readiness-tema' },
-  ASSETS: { label: 'Ir a los medios', anchor: '#readiness-medios' },
-  CATALOG: { label: 'Ir al catálogo', anchor: '#readiness-catalogo' },
 }
 
 const levelStyle = 'rounded border border-slate-400 p-2 space-y-1'
@@ -115,7 +107,13 @@ function Level({ name, hint, level, onSelectPage }: LevelProps) {
  * Un requisito que falta, con el sitio donde se arregla.
  *
  * <p>Cuando el requisito nombra una pagina, el enlace ademas la abre: llevar a la lista de paginas
- * sin abrir la que tiene el problema dejaria a medias justo el paso que hace falta.
+ * sin abrir la que tiene el problema dejaria a medias justo el paso que hace falta. Y cuando nombra
+ * un componente se dice cual, porque una pagina con doce secciones no ensena por si sola en cual
+ * esta el hueco.
+ *
+ * <p>Un requisito sin destino dice que no se arregla desde aqui, en vez de quedarse mudo. Enlazarlo
+ * a cualquier sitio para que todos tengan enlace llevaria a una pantalla donde no hay nada que
+ * tocar, y quedarse callado dejaria pensando que falta el enlace.
  */
 function Requirement({ requirement, onSelectPage }: {
   requirement: MissingRequirement
@@ -124,10 +122,14 @@ function Requirement({ requirement, onSelectPage }: {
   const destination = destinations[requirement.area]
   return <li className="flex flex-wrap items-baseline gap-2 pl-3">
     <span>{explanations[requirement.code]}</span>
-    {requirement.pageId && <span className="text-xs opacity-80">Página «{requirement.pageId}»</span>}
-    {destination && <a href={destination.anchor} className="underline"
-      onClick={() => { if (requirement.pageId) onSelectPage(requirement.pageId) }}>
-      {destination.label}
-    </a>}
+    {requirement.pageId && <span className="text-xs opacity-80">
+      Página «{requirement.pageId}»{requirement.componentId && <> · componente «{requirement.componentId}»</>}
+    </span>}
+    {destination
+      ? <a href={`#${destination.anchor}`} className="underline"
+          onClick={() => { if (requirement.pageId) onSelectPage(requirement.pageId) }}>
+          {destination.label}
+        </a>
+      : <span className="text-xs opacity-80">{NO_DESTINATION}</span>}
   </li>
 }

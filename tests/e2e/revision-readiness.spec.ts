@@ -178,6 +178,36 @@ test('following a requirement that names a page opens that page', async ({ page 
   await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('catalogo')
 })
 
+/**
+ * Un requisito que no se arregla desde aqui lo dice, en vez de fingir un destino.
+ *
+ * <p>Una forma de documento que esta version no conoce no tiene panel que abrir. Enlazarla a
+ * cualquier sitio para que todos los requisitos tengan enlace llevaria a una pantalla donde no hay
+ * nada que tocar; quedarse callada dejaria pensando que el enlace falta.
+ */
+test('a requirement with nowhere to go says so instead of inventing a link', async ({ page }) => {
+  await open(page, { readiness: readiness({
+    editable: [{ code: 'DOCUMENT_SCHEMA_UNSUPPORTED', area: 'PROJECT' }],
+    previewable: [{ code: 'DOCUMENT_SCHEMA_UNSUPPORTED', area: 'PROJECT' }],
+    exportable: [{ code: 'DOCUMENT_SCHEMA_UNSUPPORTED', area: 'PROJECT' }],
+  }) })
+
+  const editable = panel(page).getByLabel('Editable')
+  await expect(editable).toContainText('versión posterior de Abstractify')
+  await expect(editable).toContainText('Esto no se resuelve desde aquí.')
+  await expect(editable.getByRole('link')).toHaveCount(0)
+})
+
+/** Un componente nombrado se ensena: una pagina con doce secciones no dice por si sola en cual. */
+test('a requirement that names a component says which one', async ({ page }) => {
+  await open(page, { readiness: readiness({
+    exportable: [{ code: 'ASSET_MISSING', area: 'ASSETS', pageId: 'home', componentId: 'hero-main' }],
+  }) })
+
+  await expect(panel(page).getByLabel('Exportable'))
+    .toContainText('Página «home» · componente «hero-main»')
+})
+
 /** Nada de dentro llega a la pantalla: ni rutas de validacion ni codigos crudos. */
 test('a requirement never shows the code or the path the server used to find it', async ({ page }) => {
   await open(page, { readiness: readiness({
@@ -208,6 +238,35 @@ test('the gate opens once the backend declares that exact revision exportable', 
 
   await expect(gate(page).getByRole('button', { name: 'Generar tienda' })).toHaveCount(0)
   await expect(gate(page)).toContainText('ya es exportable')
+})
+
+/**
+ * Inspeccionando una revision anterior, nunca se ensena el veredicto de la cabecera.
+ *
+ * <p>Mientras la revision inspeccionada se abre, lo unico que hay cargado es la cabecera. Pintar ya
+ * el panel enseñaria el veredicto de otra revision bajo el numero equivocado, que es exactamente la
+ * confusion que este panel existe para evitar.
+ */
+test('inspecting an earlier revision never reports the head by mistake', async ({ page }) => {
+  const asked: string[] = []
+  await page.route('**/api/v1/component-registries/**', route => route.fulfill({ json: publication }))
+  await page.route('**/windows/project/42', route => route.fulfill({ json: [] }))
+  await page.route('**/categories/project/42', route => route.fulfill({ json: [] }))
+  await page.route('**/api/v1/projects**', route => route.fulfill({ json: project }))
+  await page.route('**/api/v1/projects/42/revisions/2', route => route.fulfill({ json: {
+    ...project,
+    acceptedRevision: { ...project.acceptedRevision, id: '9000', number: 2 },
+  } }))
+  await page.route('**/api/v1/projects/42/revisions/*/readiness', route => {
+    asked.push(route.request().url())
+    return route.fulfill({ json: { ...readiness({}), revisionId: '9000', revisionNumber: 2 } })
+  })
+
+  await page.goto('/design-interface/42/Confecciones%20del%20Sol?revision=2')
+
+  await expect(panel(page)).toBeVisible()
+  await expect(panel(page).getByRole('heading')).toHaveText('Estado de la revisión 2')
+  expect(asked.every(url => url.includes('/revisions/2/readiness'))).toBe(true)
 })
 
 /** Se pregunta por la revision que se esta mirando, no por el proyecto. */
