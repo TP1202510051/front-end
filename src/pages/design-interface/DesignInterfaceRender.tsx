@@ -17,6 +17,7 @@ import { CatalogOrganisationPanel } from "@/components/renderers/CatalogOrganisa
 import { CatalogBindingEditor } from "@/components/renderers/CatalogBindingEditor";
 import { DocumentCanvas } from "@/components/renderers/DocumentCanvas";
 import { RevisionHistoryPanel } from "@/components/renderers/RevisionHistoryPanel";
+import { ReadinessPanel } from "@/components/renderers/ReadinessPanel";
 import { PageNavigator } from "@/components/renderers/PageNavigator";
 import { CanvasWidth, WIDTHS } from "@/components/renderers/CanvasWidth";
 import { useRegistryPublication } from "@/registry/useRegistryPublication";
@@ -158,32 +159,49 @@ const DesignInterfaceRender: React.FC = () => {
               </p>
             : <DocumentCanvas project={project} onAccepted={setProject} onPreview={setPreview} />}
 
-          <PageNavigator project={shown} definitions={publication?.pages ?? []}
-            selected={openedPage}
-            readOnly={Boolean(inspecting)}
-            onSelect={pageId => setSearchParams(current => {
-              const next = new URLSearchParams(current)
-              if (pageId === null) next.delete('page'); else next.set('page', pageId)
-              return next
-            })}
-            onOperations={operations => void applyOperations(operations)}
-            problem={pageProblem} />
+          <div id="readiness-paginas" className="w-full flex flex-col items-center gap-3">
+            <PageNavigator project={shown} definitions={publication?.pages ?? []}
+              selected={openedPage}
+              readOnly={Boolean(inspecting)}
+              onSelect={pageId => setSearchParams(current => {
+                const next = new URLSearchParams(current)
+                if (pageId === null) next.delete('page'); else next.set('page', pageId)
+                return next
+              })}
+              onOperations={operations => void applyOperations(operations)}
+              problem={pageProblem} />
+          </div>
 
           <ProjectBlocks publication={publication} project={settled} pageId={openedPage} onAccepted={setProject} readOnly={Boolean(inspecting)} />
 
-          <ThemeEditor project={settled} pageId={openedPage} onAccepted={setProject} readOnly={Boolean(inspecting)} />
+          <div id="readiness-tema" className="w-full flex flex-col items-center">
+            <ThemeEditor project={settled} pageId={openedPage} onAccepted={setProject} readOnly={Boolean(inspecting)} />
+          </div>
 
           <AssistantPanel project={settled} pageId={openedPage} onAccepted={setProject}
             onPreview={setPreview} readOnly={Boolean(inspecting)} />
 
-          <ProjectAssetsPanel projectId={projectId ?? ""} readOnly={Boolean(inspecting)} />
+          <div id="readiness-medios" className="w-full flex flex-col items-center">
+            <ProjectAssetsPanel projectId={projectId ?? ""} readOnly={Boolean(inspecting)} />
+          </div>
 
           <TextileCatalogPanel projectId={projectId ?? ""} readOnly={Boolean(inspecting)} />
 
           <CatalogOrganisationPanel projectId={projectId ?? ""} readOnly={Boolean(inspecting)} />
 
-          <CatalogBindingEditor publication={publication} project={settled} pageId={openedPage}
-            onAccepted={setProject} readOnly={Boolean(inspecting)} />
+          <div id="readiness-catalogo" className="w-full flex flex-col items-center">
+            <CatalogBindingEditor publication={publication} project={settled} pageId={openedPage}
+              onAccepted={setProject} readOnly={Boolean(inspecting)} />
+          </div>
+
+          <ReadinessPanel projectId={projectId ?? ""}
+            revisionNumber={settled.acceptedRevision.number}
+            reloadKey={settled.acceptedRevision.id}
+            onSelectPage={pageId => setSearchParams(current => {
+              const next = new URLSearchParams(current)
+              next.set('page', pageId)
+              return next
+            })} />
 
           <CanvasWidth width={width} onWidth={setWidth} />
 
