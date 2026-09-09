@@ -17,6 +17,8 @@ import { CatalogOrganisationPanel } from "@/components/renderers/CatalogOrganisa
 import { CatalogBindingEditor } from "@/components/renderers/CatalogBindingEditor";
 import { DocumentCanvas } from "@/components/renderers/DocumentCanvas";
 import { RevisionHistoryPanel } from "@/components/renderers/RevisionHistoryPanel";
+import { ReadinessPanel } from "@/components/renderers/ReadinessPanel";
+import { destinations } from "@/components/renderers/readiness-areas";
 import { PageNavigator } from "@/components/renderers/PageNavigator";
 import { CanvasWidth, WIDTHS } from "@/components/renderers/CanvasWidth";
 import { useRegistryPublication } from "@/registry/useRegistryPublication";
@@ -113,6 +115,15 @@ const DesignInterfaceRender: React.FC = () => {
    * <p>No ofrece resolver un conflicto como hace el Canvas: aqui se dice lo que paso y se recarga.
    * Reconciliar una reordenacion pidiendo que elija la duena es una capacidad aparte.
    */
+  /** Abre una pagina del proyecto. La direccion manda, para que un enlace lleve a donde dice. */
+  function openPage(pageId: string | null) {
+    setSearchParams(current => {
+      const next = new URLSearchParams(current)
+      if (pageId === null) next.delete('page'); else next.set('page', pageId)
+      return next
+    })
+  }
+
   async function applyOperations(operations: Record<string, unknown>[]) {
     if (!project || inspecting) return;
     setPageProblem(null);
@@ -158,32 +169,44 @@ const DesignInterfaceRender: React.FC = () => {
               </p>
             : <DocumentCanvas project={project} onAccepted={setProject} onPreview={setPreview} />}
 
-          <PageNavigator project={shown} definitions={publication?.pages ?? []}
-            selected={openedPage}
-            readOnly={Boolean(inspecting)}
-            onSelect={pageId => setSearchParams(current => {
-              const next = new URLSearchParams(current)
-              if (pageId === null) next.delete('page'); else next.set('page', pageId)
-              return next
-            })}
-            onOperations={operations => void applyOperations(operations)}
-            problem={pageProblem} />
+          <div id={destinations.PAGES!.anchor} className="w-full flex flex-col items-center gap-3">
+            <PageNavigator project={shown} definitions={publication?.pages ?? []}
+              selected={openedPage}
+              readOnly={Boolean(inspecting)}
+              onSelect={openPage}
+              onOperations={operations => void applyOperations(operations)}
+              problem={pageProblem} />
+          </div>
 
           <ProjectBlocks publication={publication} project={settled} pageId={openedPage} onAccepted={setProject} readOnly={Boolean(inspecting)} />
 
-          <ThemeEditor project={settled} pageId={openedPage} onAccepted={setProject} readOnly={Boolean(inspecting)} />
+          <div id={destinations.THEME!.anchor} className="w-full flex flex-col items-center">
+            <ThemeEditor project={settled} pageId={openedPage} onAccepted={setProject} readOnly={Boolean(inspecting)} />
+          </div>
 
           <AssistantPanel project={settled} pageId={openedPage} onAccepted={setProject}
             onPreview={setPreview} readOnly={Boolean(inspecting)} />
 
-          <ProjectAssetsPanel projectId={projectId ?? ""} readOnly={Boolean(inspecting)} />
+          <div id={destinations.ASSETS!.anchor} className="w-full flex flex-col items-center">
+            <ProjectAssetsPanel projectId={projectId ?? ""} readOnly={Boolean(inspecting)} />
+          </div>
 
           <TextileCatalogPanel projectId={projectId ?? ""} readOnly={Boolean(inspecting)} />
 
           <CatalogOrganisationPanel projectId={projectId ?? ""} readOnly={Boolean(inspecting)} />
 
-          <CatalogBindingEditor publication={publication} project={settled} pageId={openedPage}
-            onAccepted={setProject} readOnly={Boolean(inspecting)} />
+          <div id={destinations.CATALOG!.anchor} className="w-full flex flex-col items-center">
+            <CatalogBindingEditor publication={publication} project={settled} pageId={openedPage}
+              onAccepted={setProject} readOnly={Boolean(inspecting)} />
+          </div>
+
+          {/* Mientras se abre una revision inspeccionada, `settled` sigue siendo la cabecera: pintar
+              ya el panel ensenaria el veredicto de otra revision bajo el numero equivocado, y de eso
+              es justo de lo que este panel existe para no dejar dudas. */}
+          {(!inspecting || inspected) && <ReadinessPanel projectId={projectId ?? ""}
+            revisionNumber={settled.acceptedRevision.number}
+            reloadKey={settled.acceptedRevision.id}
+            onSelectPage={openPage} />}
 
           <CanvasWidth width={width} onWidth={setWidth} />
 

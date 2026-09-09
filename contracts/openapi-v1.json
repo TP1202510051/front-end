@@ -2538,37 +2538,155 @@
         }
       }
     },
-    "/api/v1/projects/{projectId}/assistant/proposals/{proposalId}/cancellation" : {
-      "post" : {
-        "tags" : [ "assistant-proposal-controller" ],
-        "operationId" : "cancelAssistantProposal",
-        "parameters" : [ {
-          "name" : "projectId", "in" : "path", "required" : true,
-          "schema" : { "pattern" : "^[1-9][0-9]{0,18}$", "type" : "string" }
-        }, {
-          "name" : "proposalId", "in" : "path", "required" : true,
-          "schema" : { "pattern" : "^[0-9a-fA-F-]{36}$", "type" : "string" }
-        } ],
-        "responses" : {
-          "200" : { "description" : "OK", "content" : { "*/*" : { "schema" : { "$ref" : "#/components/schemas/AssistantProposalView" } } } },
-          "400" : { "description" : "Public problem", "content" : { "application/problem+json" : { "schema" : { "$ref" : "#/components/schemas/PublicProblem" } } } },
-          "401" : { "description" : "Public problem", "content" : { "application/problem+json" : { "schema" : { "$ref" : "#/components/schemas/PublicProblem" } } } },
-          "404" : { "description" : "Public problem", "content" : { "application/problem+json" : { "schema" : { "$ref" : "#/components/schemas/PublicProblem" } } } },
-          "405" : { "description" : "Public problem", "content" : { "application/problem+json" : { "schema" : { "$ref" : "#/components/schemas/PublicProblem" } } } },
-          "406" : { "description" : "Public problem", "content" : { "application/problem+json" : { "schema" : { "$ref" : "#/components/schemas/PublicProblem" } } } },
-          "409" : { "description" : "Public problem", "content" : { "application/problem+json" : { "schema" : { "$ref" : "#/components/schemas/PublicProblem" } } } },
-          "415" : { "description" : "Public problem", "content" : { "application/problem+json" : { "schema" : { "$ref" : "#/components/schemas/PublicProblem" } } } },
-          "422" : { "description" : "Public problem", "content" : { "application/problem+json" : { "schema" : { "$ref" : "#/components/schemas/PublicProblem" } } } },
-          "429" : { "description" : "Public problem", "content" : { "application/problem+json" : { "schema" : { "$ref" : "#/components/schemas/PublicProblem" } } } },
-          "503" : { "description" : "Public problem", "content" : { "application/problem+json" : { "schema" : { "$ref" : "#/components/schemas/PublicProblem" } } } },
-          "500" : { "description" : "Public problem", "content" : { "application/problem+json" : { "schema" : { "$ref" : "#/components/schemas/PublicProblem" } } } }
-        }
-      }
-    },
     "/api/v1/projects/{projectId}/assistant/proposals/{proposalId}/rejection" : {
       "post" : {
         "tags" : [ "assistant-proposal-controller" ],
         "operationId" : "rejectAssistantProposal",
+        "parameters" : [ {
+          "name" : "projectId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        }, {
+          "name" : "proposalId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "pattern" : "^[0-9a-fA-F-]{36}$",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AssistantProposalView"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "422" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "429" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "503" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/assistant/proposals/{proposalId}/cancellation" : {
+      "post" : {
+        "tags" : [ "assistant-proposal-controller" ],
+        "operationId" : "cancelAssistantProposal",
         "parameters" : [ {
           "name" : "projectId",
           "in" : "path",
@@ -6084,6 +6202,151 @@
         }
       }
     },
+    "/api/v1/projects/{id}/revisions/{number}/readiness" : {
+      "get" : {
+        "tags" : [ "revision-readiness-controller" ],
+        "operationId" : "getRevisionReadiness",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        }, {
+          "name" : "number",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "pattern" : "^[1-9][0-9]{0,18}$",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RevisionReadinessView"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "422" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "429" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "503" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Public problem",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/operations/{id}" : {
       "get" : {
         "tags" : [ "async-operation-controller" ],
@@ -7508,6 +7771,77 @@
           "acceptedAt" : {
             "type" : "string",
             "format" : "date-time"
+          }
+        }
+      },
+      "MissingRequirementView" : {
+        "required" : [ "area", "code" ],
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string",
+            "enum" : [ "DOCUMENT_SCHEMA_UNSUPPORTED", "PUBLICATION_UNAVAILABLE", "COMPOSITION_INVALID", "ASSET_MISSING", "BINDING_TARGET_MISSING", "BINDING_UNCHOSEN" ]
+          },
+          "area" : {
+            "type" : "string",
+            "enum" : [ "PROJECT", "PAGES", "THEME", "ASSETS", "CATALOG" ]
+          },
+          "pageId" : {
+            "type" : "string",
+            "nullable" : true
+          },
+          "componentId" : {
+            "type" : "string",
+            "nullable" : true
+          }
+        }
+      },
+      "RevisionReadinessView" : {
+        "required" : [ "editable", "exportable", "hash", "previewable", "registryVersion", "revisionId", "revisionNumber", "schemaVersion", "templateVersion" ],
+        "type" : "object",
+        "properties" : {
+          "revisionId" : {
+            "type" : "string"
+          },
+          "revisionNumber" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "hash" : {
+            "type" : "string"
+          },
+          "schemaVersion" : {
+            "type" : "string"
+          },
+          "registryVersion" : {
+            "type" : "string"
+          },
+          "templateVersion" : {
+            "type" : "string"
+          },
+          "editable" : {
+            "$ref" : "#/components/schemas/ValidationLevelView"
+          },
+          "previewable" : {
+            "$ref" : "#/components/schemas/ValidationLevelView"
+          },
+          "exportable" : {
+            "$ref" : "#/components/schemas/ValidationLevelView"
+          }
+        }
+      },
+      "ValidationLevelView" : {
+        "required" : [ "missing", "reached" ],
+        "type" : "object",
+        "properties" : {
+          "reached" : {
+            "type" : "boolean"
+          },
+          "missing" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/MissingRequirementView"
+            }
           }
         }
       },

@@ -159,22 +159,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/projects/{projectId}/assistant/proposals/{proposalId}/cancellation": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["cancelAssistantProposal"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/projects/{projectId}/assistant/proposals/{proposalId}/rejection": {
         parameters: {
             query?: never;
@@ -185,6 +169,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["rejectAssistantProposal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{projectId}/assistant/proposals/{proposalId}/cancellation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["cancelAssistantProposal"];
         delete?: never;
         options?: never;
         head?: never;
@@ -391,6 +391,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["getRevision"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{id}/revisions/{number}/readiness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getRevisionReadiness"];
         put?: never;
         post?: never;
         delete?: never;
@@ -822,6 +838,30 @@ export interface components {
             hash: string;
             /** Format: date-time */
             acceptedAt: string;
+        };
+        MissingRequirementView: {
+            /** @enum {string} */
+            code: "DOCUMENT_SCHEMA_UNSUPPORTED" | "PUBLICATION_UNAVAILABLE" | "COMPOSITION_INVALID" | "ASSET_MISSING" | "BINDING_TARGET_MISSING" | "BINDING_UNCHOSEN";
+            /** @enum {string} */
+            area: "PROJECT" | "PAGES" | "THEME" | "ASSETS" | "CATALOG";
+            pageId?: string | null;
+            componentId?: string | null;
+        };
+        RevisionReadinessView: {
+            revisionId: string;
+            /** Format: int64 */
+            revisionNumber: number;
+            hash: string;
+            schemaVersion: string;
+            registryVersion: string;
+            templateVersion: string;
+            editable: components["schemas"]["ValidationLevelView"];
+            previewable: components["schemas"]["ValidationLevelView"];
+            exportable: components["schemas"]["ValidationLevelView"];
+        };
+        ValidationLevelView: {
+            reached: boolean;
+            missing: components["schemas"]["MissingRequirementView"][];
         };
         RegistryBindingView: {
             name: string;
@@ -3042,7 +3082,7 @@ export interface operations {
             };
         };
     };
-    cancelAssistantProposal: {
+    rejectAssistantProposal: {
         parameters: {
             query?: never;
             header?: never;
@@ -3164,7 +3204,7 @@ export interface operations {
             };
         };
     };
-    rejectAssistantProposal: {
+    cancelAssistantProposal: {
         parameters: {
             query?: never;
             header?: never;
@@ -6018,6 +6058,128 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["StoreProjectView"];
+                };
+            };
+            /** @description Public problem */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+            /** @description Public problem */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicProblem"];
+                };
+            };
+        };
+    };
+    getRevisionReadiness: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RevisionReadinessView"];
                 };
             };
             /** @description Public problem */
