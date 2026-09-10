@@ -558,6 +558,16 @@ export interface components {
             /** @enum {string} */
             order: "CURATED" | "NEWEST" | "NAME" | "PRICE_ASCENDING" | "PRICE_DESCENDING";
         };
+        KeyframeSetView: {
+            name: string;
+            frames: components["schemas"]["KeyframeView"][];
+        };
+        KeyframeView: {
+            offsets: string[];
+            declarations: {
+                [key: string]: string;
+            };
+        };
         ProjectBlockView: {
             id: string;
             name: string;
@@ -605,6 +615,7 @@ export interface components {
                 [key: string]: string;
             };
             rules: components["schemas"]["StyleRuleView"][];
+            keyframes: components["schemas"]["KeyframeSetView"][];
         };
         StoreProjectView: {
             id: string;

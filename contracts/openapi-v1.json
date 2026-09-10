@@ -6931,6 +6931,39 @@
           }
         }
       },
+      "KeyframeSetView" : {
+        "required" : [ "frames", "name" ],
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "frames" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/KeyframeView"
+            }
+          }
+        }
+      },
+      "KeyframeView" : {
+        "required" : [ "declarations", "offsets" ],
+        "type" : "object",
+        "properties" : {
+          "offsets" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "declarations" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
       "ProjectBlockView" : {
         "required" : [ "components", "id", "name", "rootComponentId" ],
         "type" : "object",
@@ -7059,7 +7092,7 @@
         }
       },
       "ProjectThemeView" : {
-        "required" : [ "rules", "tokens" ],
+        "required" : [ "keyframes", "rules", "tokens" ],
         "type" : "object",
         "properties" : {
           "tokens" : {
@@ -7072,6 +7105,12 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/StyleRuleView"
+            }
+          },
+          "keyframes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/KeyframeSetView"
             }
           }
         }

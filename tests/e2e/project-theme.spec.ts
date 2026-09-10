@@ -195,8 +195,11 @@ test('refused rules are explained precisely and never leak into the surrounding 
   await expect(refused.getByText(/javascript/)).toHaveCount(0)
   await expect(editor(page).getByRole('alert')).toBeVisible()
 
-  // Nada se pinto: no hay hoja, y el documento sigue siendo el aceptado.
-  await expect(surface(page).locator('style')).toHaveCount(0)
+  // Nada de lo escrito se pinto: la unica hoja de la superficie es la regla fija de menos
+  // movimiento, que nadie autoro, y el documento sigue siendo el aceptado.
+  await expect(surface(page).locator('style')).toHaveCount(1)
+  await expect.poll(() => sheetOf(page)).toMatch(/^@media \(prefers-reduced-motion: reduce\)/)
+  await expect.poll(() => sheetOf(page)).not.toMatch(/html|color: red/)
   await expect(page.locator('body > style')).toHaveCount(0)
 })
 

@@ -21,8 +21,14 @@ const issueNames: Record<string, string> = {
   VALUE_NOT_ALLOWED: 'Ese valor no se admite.',
   THEME_TOKEN_UNKNOWN: 'Cita un token que el proyecto no declara.',
   THEME_TOKEN_IN_USE: 'El CSS todavía lo usa: quítalo de las reglas antes.',
-  AT_RULE_NOT_ALLOWED: 'Solo se admite @media por ancho.',
+  AT_RULE_NOT_ALLOWED: 'Solo se admiten @media por ancho y @keyframes.',
   MEDIA_CONDITION_NOT_ALLOWED: 'De @media solo se admite min-width o max-width.',
+  KEYFRAMES_UNKNOWN: 'Cita un movimiento que el proyecto no declara. Declara un @keyframes con ese nombre.',
+  KEYFRAMES_IN_USE: 'Un componente todavía lo usa: quita su animación antes de retirar el movimiento.',
+  KEYFRAMES_NAME_INVALID: 'El nombre del movimiento no vale: minúsculas, dígitos y guiones, y no una palabra de animation.',
+  KEYFRAMES_DUPLICATED: 'Ya hay un movimiento con ese nombre en esta hoja.',
+  KEYFRAMES_MALFORMED: 'A ese @keyframes le falta cerrar algo, o no tiene ningún paso.',
+  KEYFRAME_OFFSET_NOT_ALLOWED: 'Un paso de @keyframes es from, to o un porcentaje.',
   RULE_MALFORMED: 'A esa regla le falta cerrar algo.',
   DECLARATION_MALFORMED: 'A esa declaración le falta el valor.',
   STYLESHEET_TOO_LARGE: 'El CSS es demasiado largo.',
@@ -49,7 +55,10 @@ export function ThemeEditor({ project, pageId, onAccepted, readOnly }: ThemeEdit
   // El contrato lo declara obligatorio, pero una revision anterior al Theme no lo trae y se abre
   // igual -eso es lo que la tolerancia de esquemas promete-. El tipo dice una cosa y el historial
   // otra, y quien pinta tiene que sobrevivir a la segunda.
-  const theme = project.acceptedRevision.document.theme ?? { tokens: {}, rules: [] }
+  const theme = project.acceptedRevision.document.theme ?? { tokens: {}, rules: [], keyframes: [] }
+  // Los movimientos que el documento declara, para citarlos eligiendo y no de memoria. El nombre
+  // llega acotado; se ensena tal cual porque es lo que hay que escribir para citarlo.
+  const keyframes = theme.keyframes ?? []
   const [css, setCss] = useState<string | null>(null)
   const [tokenName, setTokenName] = useState('')
   const [tokenValue, setTokenValue] = useState('')
@@ -114,6 +123,15 @@ export function ThemeEditor({ project, pageId, onAccepted, readOnly }: ThemeEdit
       {Object.keys(theme.tokens).length === 0 && <li>Todavía no hay tokens.</li>}
     </ul>
 
+    <ul aria-label="Movimientos declarados" className="flex flex-wrap gap-2">
+      {keyframes.map(set => (
+        <li key={set.name} className="rounded border border-slate-400 px-2 py-0.5 font-mono text-xs">
+          {set.name} · {set.frames.length} {set.frames.length === 1 ? 'paso' : 'pasos'}
+        </li>
+      ))}
+      {keyframes.length === 0 && <li>Todavía no hay movimientos. Declara uno con @keyframes en el CSS.</li>}
+    </ul>
+
     {!readOnly && <form className="flex flex-wrap items-end gap-2" onSubmit={event => {
       event.preventDefault()
       void apply({ kind: 'SET_THEME_TOKEN', property: tokenName.trim(), value: tokenValue.trim() })
@@ -165,8 +183,13 @@ export function ThemeEditor({ project, pageId, onAccepted, readOnly }: ThemeEdit
       </label>
       <label>Valor
         <input className={fieldStyle} value={styleValue} disabled={disabled}
+          list={styleProperty.trim().toLowerCase().startsWith('animation') ? 'movimientos-declarados' : undefined}
           onChange={event => setStyleValue(event.target.value)} />
       </label>
+      {/* Citar un movimiento es elegir entre los que existen, no escribir un nombre de memoria. */}
+      <datalist id="movimientos-declarados">
+        {keyframes.map(set => <option key={set.name} value={set.name} />)}
+      </datalist>
       <button type="submit" className={buttonStyle} disabled={disabled || !styleProperty.trim()}>
         {linked ? 'Guardar estilo compartido' : 'Guardar estilo del componente'}
       </button>
@@ -198,12 +221,24 @@ export function ThemeEditor({ project, pageId, onAccepted, readOnly }: ThemeEdit
  * <p>No es el texto que se escribio: es lo que significa, que es lo unico que se guardo. Verlo asi
  * es parte de lo que la capacidad promete -lo aceptado es lo canonico- y evita que alguien siga
  * editando un texto que el proyecto ya no tiene.
+ *
+ * <p>Se puede guardar tal cual: el servidor reconoce su propia salida y no vuelve a acotar ni los
+ * selectores ni los nombres de los movimientos.
  */
 function sheetText(theme: StoreProject['acceptedRevision']['document']['theme']): string {
-  return theme.rules.map(rule => {
+  const keyframes = (theme.keyframes ?? []).map(set => {
+    const frames = set.frames.map(frame => {
+      const body = Object.entries(frame.declarations)
+        .map(([property, value]) => `    ${property}: ${value};`).join('\n')
+      return `  ${frame.offsets.join(', ')} {\n${body}\n  }`
+    }).join('\n')
+    return `@keyframes ${set.name} {\n${frames}\n}`
+  })
+  const rules = theme.rules.map(rule => {
     const body = Object.entries(rule.declarations)
       .map(([property, value]) => `  ${property}: ${value};`).join('\n')
     const text = `${rule.selector} {\n${body}\n}`
     return rule.media ? `@media ${rule.media} {\n${text}\n}` : text
-  }).join('\n\n')
+  })
+  return [...keyframes, ...rules].join('\n\n')
 }
