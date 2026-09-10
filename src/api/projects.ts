@@ -44,10 +44,13 @@ function slotsRecord(value: unknown): value is Record<string, string[]> {
 }
 
 const DOCUMENT_SCHEMAS = ['project-document@1.0.0', 'project-document@1.1.0',
-  'project-document@1.2.0', 'project-document@1.3.0', 'project-document@1.4.0']
-const BLOCK_SCHEMAS = ['project-document@1.2.0', 'project-document@1.3.0', 'project-document@1.4.0']
+  'project-document@1.2.0', 'project-document@1.3.0', 'project-document@1.4.0', 'project-document@1.5.0']
+const BLOCK_SCHEMAS = ['project-document@1.2.0', 'project-document@1.3.0', 'project-document@1.4.0',
+  'project-document@1.5.0']
 /** Desde que el Theme existe, el esquema que lo estrena y los siguientes lo traen. */
-const THEME_SCHEMAS = ['project-document@1.3.0', 'project-document@1.4.0']
+const THEME_SCHEMAS = ['project-document@1.3.0', 'project-document@1.4.0', 'project-document@1.5.0']
+/** Y desde que el Theme se mueve, el que estrena los keyframes los declara obligatorios. */
+const KEYFRAME_SCHEMAS = ['project-document@1.5.0']
 
 /**
  * El Theme del documento, cuando el esquema dice que tiene que traerlo.
@@ -64,6 +67,28 @@ function themeValid(document: Record<string, unknown>): boolean {
   return theme.rules.every(rule => record(rule)
     && typeof rule.selector === 'string' && stringRecord(rule.declarations)
     && (rule.media === undefined || rule.media === null || typeof rule.media === 'string'))
+    && keyframesValid(theme, document.schemaVersion as string)
+}
+
+/**
+ * Los keyframes del Theme, cuando el esquema dice que tiene que traerlos.
+ *
+ * <p>Misma regla que con los bloques y el propio Theme: el esquema que los estrena los declara
+ * obligatorios, y uno anterior nace sin ellos y se lee sin ninguno. El nombre llega ya acotado desde
+ * el servidor y aqui solo se comprueba la forma: volver a acotarlo seria un segundo criterio, y
+ * escribirlo en la hoja sin comprobar que es un nombre seria dejar pasar lo que un selector nunca
+ * pasaria.
+ */
+function keyframesValid(theme: Record<string, unknown>, schemaVersion: string): boolean {
+  const keyframes = theme.keyframes
+  if (keyframes == null) return !KEYFRAME_SCHEMAS.includes(schemaVersion)
+  return Array.isArray(keyframes) && keyframes.every(set => record(set)
+    && typeof set.name === 'string' && /^abstractify-store-[a-z][a-z0-9-]{0,58}[a-z0-9]$/.test(set.name)
+    && Array.isArray(set.frames) && set.frames.length > 0
+    && set.frames.every(frame => record(frame)
+      && Array.isArray(frame.offsets) && frame.offsets.length > 0
+      && frame.offsets.every(offset => typeof offset === 'string' && /^(100|[1-9]?[0-9])(\.[0-9]{1,2})?%$/.test(offset))
+      && stringRecord(frame.declarations)))
 }
 
 /**
