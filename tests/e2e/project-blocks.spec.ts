@@ -55,7 +55,7 @@ const publication = {
       interactions: [], constraints: ['TOP_LEVEL_ONLY'] },
     { type: 'action.link', properties: {
         label: { type: 'TEXT', required: true, minLength: 1, maxLength: 40 } },
-      slots: {}, bindings: [], interactions: [{ name: 'activate', required: true }], constraints: [] },
+      slots: {}, bindings: [], interactions: [{ name: 'activate', required: false }], constraints: [] },
     { type: 'catalog.grid', properties: {
         heading: { type: 'TEXT', required: true, minLength: 1, maxLength: 80 } },
       slots: { actions: { allowedTypes: ['action.link'], minimum: 0, maximum: 2 } },
@@ -64,8 +64,9 @@ const publication = {
     { type: 'content.section', properties: {
         heading: { type: 'TEXT', required: true, minLength: 1, maxLength: 80 },
         body: { type: 'TEXT', required: true, minLength: 1, maxLength: 600 } },
-      slots: { actions: { allowedTypes: ['action.link'], minimum: 0, maximum: 1 } },
-      bindings: [], interactions: [], constraints: ['TOP_LEVEL_ONLY'] },
+      slots: { actions: { allowedTypes: ['action.link'], minimum: 0, maximum: 3 } },
+      bindings: [{ name: 'collection', source: 'catalog.collection', required: false,
+        targets: ['COLLECTION', 'CATEGORY', 'EVERYTHING'] }], interactions: [], constraints: ['TOP_LEVEL_ONLY'] },
   ],
   pages: [
     { kind: 'HOME', required: true, path: '/', rootTypes: ['layout.hero'] },
@@ -79,8 +80,8 @@ const publication = {
 }
 
 async function open(page: Page, project: () => unknown,
-  onAccept?: (body: Record<string, unknown>) => unknown) {
-  await page.route('**/api/v1/component-registries/**', route => route.fulfill({ json: publication }))
+  onAccept?: (body: Record<string, unknown>) => unknown, registry: unknown = publication) {
+  await page.route('**/api/v1/component-registries/**', route => route.fulfill({ json: registry }))
   await page.route('**/windows/project/42', route => route.fulfill({ json: [] }))
   await page.route('**/categories/project/42', route => route.fulfill({ json: [] }))
   await page.route('**/api/v1/projects**', async route => {
@@ -139,6 +140,132 @@ function linkedProject(detached = false, heading = 'Quiénes somos', number = 3)
   } } }
 }
 
+function composedLinkedProject() {
+  const project = linkedProject()
+  const document = project.acceptedRevision.document
+  const detachedPage = contentPage()
+  detachedPage.id = 'archivo'; detachedPage.path = '/archivo'
+  detachedPage.components[0] = { ...structuredClone(detachedPage.components[0]), id: 'loose:seccion' }
+  detachedPage.rootComponentId = 'loose:seccion'
+  document.pages.push(detachedPage)
+  document.blockInstances.push({ id: 'loose', blockId: 'about', pageId: 'archivo',
+    rootComponentId: 'loose:seccion', componentIds: { seccion: 'loose:seccion' }, detached: true })
+  const definition = document.blocks[0]
+  const first = component('first', 'action.link', { label: 'Primero' }, {}, { activate: 'catalogo' })
+  const second = component('second', 'action.link', { label: 'Segundo' }, {}, { activate: 'catalogo' })
+  definition.components[0].slots.actions = ['first', 'second']
+  definition.components.push(first, second)
+  const original = document.pages.find(item => item.id === 'historia')!
+  original.components[0].slots.actions = ['first', 'second']; original.components.push(first, second)
+  const copy = document.pages.find(item => item.id === 'equipo')!
+  const copyFirst = { ...structuredClone(first), id: 'copy:first' }
+  const copySecond = { ...structuredClone(second), id: 'copy:second' }
+  copy.components[0].slots.actions = ['copy:first', 'copy:second']; copy.components.push(copyFirst, copySecond)
+  Object.assign(document.blockInstances[0].componentIds, { first: 'first', second: 'second' })
+  Object.assign(document.blockInstances[1].componentIds,
+    { first: 'copy:first', second: 'copy:second' })
+  return project
+}
+
+function boundLinkedProject() {
+  const project = linkedProject()
+  const binding = { target: 'EVERYTHING', reference: null, limit: 12, order: 'NEWEST' }
+  project.acceptedRevision.document.blocks[0].components[0].bindings = { collection: binding }
+  project.acceptedRevision.document.pages[2].components[0].bindings = { collection: binding }
+  project.acceptedRevision.document.pages[3].components[0].bindings = { collection: binding }
+  return project
+}
+
+test('shared composition discloses its reach before structural and interaction operations', async ({ page }) => {
+  const requests: Record<string, unknown>[] = []
+  await open(page, () => composedLinkedProject(), body => {
+    requests.push(body)
+    return { status: 201, json: composedLinkedProject() }
+  })
+  await pages(page).getByRole('button', { name: 'Abrir /equipo' }).click()
+  const editor = page.getByRole('region', { name: 'Editar composición compartida copy' })
+  await expect(editor.getByText('Este cambio alcanzará 2 instancias vinculadas.')).toBeVisible()
+
+  await editor.getByText('Segundo', { exact: true }).locator('..')
+    .getByRole('button', { name: 'Mover antes' }).click()
+  await expect.poll(() => requests.length).toBe(1)
+  expect((requests[0].operations as Record<string, unknown>[])[0]).toMatchObject({
+    kind: 'MOVE_BLOCK_COMPONENT', pageId: 'equipo', instanceId: 'copy',
+    componentId: 'copy:second', parentComponentId: 'copy:seccion', slot: 'actions', index: 0,
+  })
+
+  await editor.getByText('Primero', { exact: true }).locator('..')
+    .getByRole('button', { name: 'Quitar de todas las instancias' }).click()
+  await expect.poll(() => requests.length).toBe(2)
+  expect((requests[1].operations as Record<string, unknown>[])[0]).toMatchObject({
+    kind: 'REMOVE_BLOCK_COMPONENT', instanceId: 'copy', componentId: 'copy:first',
+  })
+
+  await editor.getByLabel('Destino compartido de activate').last().selectOption('historia')
+  await editor.getByRole('button', { name: 'Guardar interacción compartida' }).last().click()
+  await expect.poll(() => requests.length).toBe(3)
+  expect((requests[2].operations as Record<string, unknown>[])[0]).toMatchObject({
+    kind: 'SET_BLOCK_INTERACTION', instanceId: 'copy', componentId: 'copy:second',
+    property: 'activate', value: 'historia',
+  })
+
+  await editor.getByLabel('Destino compartido de activate').last().selectOption('')
+  await editor.getByRole('button', { name: 'Guardar interacción compartida' }).last().click()
+  await expect.poll(() => requests.length).toBe(4)
+  expect((requests[3].operations as Record<string, unknown>[])[0]).toMatchObject({
+    kind: 'SET_BLOCK_INTERACTION', instanceId: 'copy', componentId: 'copy:second',
+    property: 'activate', value: '',
+  })
+})
+
+test('shared insertion stays closed for a registry version other than the document version', async ({ page }) => {
+  const project = linkedProject()
+  await open(page, () => project, undefined, { ...publication, registryVersion: 'textile-store@other' })
+  await pages(page).getByRole('button', { name: 'Abrir /equipo' }).click()
+  const editor = page.getByRole('region', { name: 'Editar composición compartida copy' })
+  await expect(editor.getByText('No hay componentes compatibles que añadir en esta composición.')).toBeVisible()
+  await expect(editor.getByRole('button', { name: 'Insertar en todas las instancias' })).toHaveCount(0)
+})
+
+test('inserting a verified child is explicitly shared before it is sent', async ({ page }) => {
+  let sent: Record<string, unknown> | null = null
+  await open(page, () => linkedProject(), body => {
+    sent = body
+    return { status: 201, json: linkedProject() }
+  })
+  await pages(page).getByRole('button', { name: 'Abrir /equipo' }).click()
+  const editor = page.getByRole('region', { name: 'Editar composición compartida copy' })
+  await expect(editor.getByText('Este cambio alcanzará 2 instancias vinculadas.')).toBeVisible()
+  await editor.getByLabel('label', { exact: true }).fill('Ver ofertas')
+  await editor.getByLabel('Destino de activate').selectOption('catalogo')
+  await editor.getByRole('button', { name: 'Insertar en todas las instancias' }).click()
+  await expect.poll(() => sent).not.toBeNull()
+  expect((sent as unknown as { operations: Record<string, unknown>[] }).operations[0]).toMatchObject({
+    kind: 'INSERT_BLOCK_COMPONENT', pageId: 'equipo', instanceId: 'copy',
+    parentComponentId: 'copy:seccion', slot: 'actions', index: 0,
+    component: { type: 'action.link', properties: { label: 'Ver ofertas' },
+      interactions: { activate: 'catalogo' }, slots: {} },
+  })
+})
+
+test('catalog bindings on linked nodes use the shared operation and disclose its reach', async ({ page }) => {
+  let sent: Record<string, unknown> | null = null
+  await open(page, () => boundLinkedProject(), body => {
+    sent = body
+    return { status: 201, json: boundLinkedProject() }
+  })
+  await pages(page).getByRole('button', { name: 'Abrir /equipo' }).click()
+  const bindings = page.getByRole('region', { name: 'Qué muestra cada sección' })
+  await expect(bindings.getByText('Este cambio alcanzará 2 instancias vinculadas.')).toBeVisible()
+  await bindings.getByLabel('Cuántas').fill('6')
+  await bindings.getByRole('button', { name: 'Guardar qué muestra' }).click()
+  await expect.poll(() => sent).not.toBeNull()
+  expect((sent as unknown as { operations: Record<string, unknown>[] }).operations[0]).toMatchObject({
+    kind: 'SET_BLOCK_BINDING', pageId: 'equipo', instanceId: 'copy',
+    componentId: 'copy:seccion', property: 'collection', binding: { limit: 6 },
+  })
+})
+
 test('shared editing shows affected pages and detachment requires an explicit decision', async ({ page }) => {
   let project = linkedProject()
   const requests: Record<string, unknown>[] = []
@@ -172,6 +299,22 @@ test('shared editing shows affected pages and detachment requires an explicit de
   await expect(blocks.getByText('Desvinculada: Nuestra historia')).toBeVisible()
   await page.reload()
   await expect(blocks.getByText('Desvinculada: Nuestra historia')).toBeVisible()
+})
+
+test('a refused linked edit points to the available shared edit and detachment', async ({ page }) => {
+  await open(page, () => linkedProject(), () => ({ status: 422, json: {
+    code: 'SEMANTIC_VALIDATION_FAILED', title: 'Rejected', status: 422,
+    detail: 'Rejected', instance: '/api/v1/projects/42/revisions',
+    correlationId: '11111111-1111-4111-8111-111111111111',
+    issues: ['$.operations SET_BLOCK_PROPERTY', '$.operations DETACH_BLOCK'],
+  } }))
+  await pages(page).getByRole('button', { name: 'Abrir /equipo' }).click()
+  const blocks = page.getByRole('region', { name: 'Bloques del proyecto' })
+  await blocks.getByLabel('Titular compartido').fill('Otro titular')
+  await blocks.getByRole('button', { name: 'Guardar titular compartido' }).click()
+  await expect(blocks.getByRole('alert')).toHaveText(
+    'Usa la edición compartida para cambiar todas las instancias, o desvincula esta instancia para editarla por separado.')
+  await expect(blocks.getByRole('button', { name: 'Desvincular instancia' })).toBeVisible()
 })
 test('placing a block uses an explicit compatible destination on the opened page', async ({ page }) => {
   let sent: Record<string, unknown> | null = null
