@@ -701,7 +701,7 @@ export interface components {
             /** Format: date-time */
             uploadedAt: string;
         };
-        /** @description La eleccion de catalogo, solo en SET_BINDING */
+        /** @description La eleccion de catalogo, en SET_BINDING o SET_BLOCK_BINDING */
         CatalogBindingInput: {
             target: string;
             reference?: string;
@@ -732,7 +732,7 @@ export interface components {
         };
         ProjectOperationInput: {
             /** @enum {string} */
-            kind: "SET_PROPERTY" | "INSERT_COMPONENT" | "REMOVE_COMPONENT" | "MOVE_COMPONENT" | "ADD_PAGE" | "REMOVE_PAGE" | "MOVE_PAGE" | "CREATE_BLOCK" | "INSTANTIATE_BLOCK" | "SET_BLOCK_PROPERTY" | "DETACH_BLOCK" | "SET_THEME_TOKEN" | "SET_PROJECT_STYLES" | "SET_COMPONENT_STYLE" | "SET_BLOCK_STYLE" | "SET_BINDING";
+            kind: "SET_PROPERTY" | "INSERT_COMPONENT" | "REMOVE_COMPONENT" | "MOVE_COMPONENT" | "ADD_PAGE" | "REMOVE_PAGE" | "MOVE_PAGE" | "CREATE_BLOCK" | "INSTANTIATE_BLOCK" | "SET_BLOCK_PROPERTY" | "DETACH_BLOCK" | "INSERT_BLOCK_COMPONENT" | "REMOVE_BLOCK_COMPONENT" | "MOVE_BLOCK_COMPONENT" | "SET_BLOCK_BINDING" | "SET_BLOCK_INTERACTION" | "SET_THEME_TOKEN" | "SET_PROJECT_STYLES" | "SET_COMPONENT_STYLE" | "SET_BLOCK_STYLE" | "SET_BINDING";
             /** @description La pagina que toca; ausente cuando la operacion es del proyecto entero */
             pageId?: string;
             componentId?: string;

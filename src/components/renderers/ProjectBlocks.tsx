@@ -6,6 +6,7 @@ import { blockDestinations, linkedInstanceOf, propertyOperation, sharedPaths,
 import type { RegistryPublication } from '@/registry/publication'
 import { safeProblem } from '@/api/problems'
 import { DetachBlockDialog } from '@/components/renderers/DetachBlockDialog'
+import { SharedBlockEditor } from '@/components/renderers/SharedBlockEditor'
 
 interface ProjectBlocksProps {
   project: StoreProject
@@ -64,7 +65,12 @@ export function ProjectBlocks({ project, pageId, onAccepted, readOnly, publicati
       onAccepted(accepted)
     } catch (error) {
       const failure = safeProblem(error)
-      setProblem(failure.message)
+      const sharedRequired = failure.issues.some(issue => issue.includes(' SET_BLOCK_')
+        || issue.includes(' INSERT_BLOCK_COMPONENT') || issue.includes(' REMOVE_BLOCK_COMPONENT')
+        || issue.includes(' MOVE_BLOCK_COMPONENT'))
+      setProblem(sharedRequired
+        ? 'Usa la edición compartida para cambiar todas las instancias, o desvincula esta instancia para editarla por separado.'
+        : failure.message)
       if (outcomeIsUnknown(failure.action)) setUncertain(batch)
       else {
         setUncertain(null); setDetaching(null)
@@ -147,6 +153,8 @@ export function ProjectBlocks({ project, pageId, onAccepted, readOnly, publicati
                 <button className={buttonStyle} disabled={disabled} type="submit">Guardar {title.toLowerCase()} {scope}</button>
               </form>
             }))}
+          {!instance.detached && <SharedBlockEditor document={document} page={page} instance={instance}
+            publication={publication} disabled={disabled} apply={operation => { void apply(operation) }} />}
           {!instance.detached && <button type="button" className={buttonStyle} disabled={disabled}
             onClick={() => setDetaching(instance)}>Desvincular instancia</button>}
         </>}

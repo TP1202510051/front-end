@@ -5,6 +5,7 @@ import { acceptRevision, getStoreProject,
   type OperationBatch, type StoreProject } from '@/api/projects'
 import { explainProblem, safeProblem } from '@/api/problems'
 import { intentionKey, outcomeIsUnknown } from '@/canvas/intention'
+import { linkedInstanceOf } from '@/canvas/blocks'
 import type { RegistryPublication } from '@/registry/publication'
 
 interface CatalogBindingEditorProps {
@@ -135,6 +136,9 @@ export function CatalogBindingEditor({ publication, project, pageId, onAccepted,
           order: binding.order, limit: String(binding.limit),
         }
         const choices = options(draft.target)
+        const linked = linkedInstanceOf(document_, page.id, component.id)
+        const linkedCount = linked ? (document_.blockInstances ?? [])
+          .filter(instance => !instance.detached && instance.blockId === linked.blockId).length : 0
         return <li key={key} className="space-y-2 border-t border-slate-500 pt-2">
           <p className="font-medium">{component.type}</p>
           <p className="text-xs">
@@ -142,6 +146,8 @@ export function CatalogBindingEditor({ publication, project, pageId, onAccepted,
             {binding.reference ? ` · ${binding.reference}` : ''}
             {!binding.reference && binding.target !== 'EVERYTHING' ? ' · sin elegir' : ''}
           </p>
+          {linked && <p>Este cambio alcanzará {linkedCount} {linkedCount === 1
+            ? 'instancia vinculada' : 'instancias vinculadas'}.</p>}
           {!readOnly && <div className="flex flex-wrap items-end gap-2">
             <label>Muestra
               <select className={fieldStyle} value={draft.target} disabled={pending}
@@ -191,7 +197,8 @@ export function CatalogBindingEditor({ publication, project, pageId, onAccepted,
                 baseRevisionId: project.acceptedRevision.id,
                 idempotencyKey: intentionKey(),
                 operations: [{
-                  kind: 'SET_BINDING', pageId: page.id, componentId: component.id, property: name,
+                  kind: linked ? 'SET_BLOCK_BINDING' : 'SET_BINDING', pageId: page.id,
+                  instanceId: linked?.id, componentId: component.id, property: name,
                   binding: {
                     // Sin elegir se manda omitiendo la referencia, que es como el contrato lo dice.
                     target: draft.target, reference: draft.reference || undefined,
