@@ -6626,6 +6626,458 @@
           }
         }
       }
+    },
+    "/api/v1/projects/{projectId}/revisions/{revisionNumber}/exports": {
+      "post": {
+        "tags": [
+          "store-export-controller"
+        ],
+        "operationId": "requestStoreExport",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^[1-9][0-9]{0,18}$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "revisionNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^[1-9][0-9]{0,18}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreExportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreExportReceiptView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/store-exports/{exportId}/download-reference": {
+      "post": {
+        "tags": [
+          "store-export-controller"
+        ],
+        "operationId": "issueStoreExportDownload",
+        "parameters": [
+          {
+            "name": "exportId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^[0-9a-fA-F-]{36}$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreExportDownloadView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/store-exports/{exportId}/archive": {
+      "get": {
+        "tags": [
+          "store-export-controller"
+        ],
+        "operationId": "downloadStoreExport",
+        "parameters": [
+          {
+            "name": "exportId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^[0-9a-fA-F-]{36}$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9_-]{43}$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/zip": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Public problem",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblem"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components" : {
@@ -8137,6 +8589,51 @@
           },
           "composition" : {
             "$ref" : "#/components/schemas/RegistryCompositionView"
+          }
+        }
+      },
+      "StoreExportRequest": {
+        "required": [
+          "idempotencyKey"
+        ],
+        "type": "object",
+        "properties": {
+          "idempotencyKey": {
+            "maxLength": 128,
+            "minLength": 0,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+            "type": "string"
+          }
+        }
+      },
+      "StoreExportReceiptView": {
+        "required": [
+          "exportId",
+          "operationId"
+        ],
+        "type": "object",
+        "properties": {
+          "operationId": {
+            "type": "string"
+          },
+          "exportId": {
+            "type": "string"
+          }
+        }
+      },
+      "StoreExportDownloadView": {
+        "required": [
+          "expiresAt",
+          "url"
+        ],
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },

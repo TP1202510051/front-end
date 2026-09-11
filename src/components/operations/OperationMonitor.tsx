@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { getOperation, type AsyncOperation } from '@/api/operations'
 import { safeProblem } from '@/api/problems'
+import { downloadStoreExport, issueStoreExportDownload } from '@/api/store-exports'
 import { useAuth } from '@/contexts/AuthContext'
 import { clearKnownOperations, operationReceiptEvent, persistKnownOperations, readKnownOperations,
   type OperationReceiptNotice } from '@/realtime/known-operations'
@@ -18,7 +19,8 @@ const stateLabels: Record<AsyncOperation['state'], string> = {
 
 const stageLabels: Record<string, string> = {
   QUEUED: 'Preparando', RUNNING: 'Procesando', RETRY_WAIT: 'Esperando reintento',
-  PREPARE: 'Preparando', BUILD: 'Procesando', STORE: 'Guardando',
+  PREPARE: 'Preparando', BUILD: 'Construyendo', TEST: 'Probando', SMOKE: 'Comprobando el arranque',
+  PACKAGE: 'Empaquetando', STORE: 'Guardando', VERIFY: 'Verificando integridad',
   SUCCEEDED: 'Finalizada', FAILED: 'No completada', CANCELLED: 'Cancelada',
 }
 
@@ -27,6 +29,25 @@ export function OperationMonitor() {
   const [operations, setOperations] = useState<Record<string, AsyncOperation>>({})
   const versions = useRef(new Map<string, number>())
   const known = useRef(new Set<string>())
+  const [downloadProblem, setDownloadProblem] = useState<Record<string, string>>({})
+  const [downloading, setDownloading] = useState<string | null>(null)
+
+  const download = async (exportId: string) => {
+    setDownloading(exportId)
+    setDownloadProblem(current => ({ ...current, [exportId]: '' }))
+    try {
+      const reference = await issueStoreExportDownload(exportId)
+      const archive = await downloadStoreExport(exportId, reference)
+      const href = URL.createObjectURL(archive.blob)
+      const anchor = document.createElement('a')
+      anchor.href = href
+      anchor.download = archive.filename
+      anchor.click()
+      URL.revokeObjectURL(href)
+    } catch (error) {
+      setDownloadProblem(current => ({ ...current, [exportId]: safeProblem(error).message }))
+    } finally { setDownloading(null) }
+  }
 
   useEffect(() => {
     const actorId = firebaseUser?.uid
@@ -123,6 +144,15 @@ export function OperationMonitor() {
                 <span>{operation.progress}%</span>
               </div>
             )}
+            {operation.state === 'SUCCEEDED' && operation.resultReference?.type === 'store-export' && <>
+              <button type="button" className="mt-2 rounded border border-white/30 px-3 py-1 text-sm"
+                disabled={downloading === operation.resultReference.id}
+                onClick={() => { void download(operation.resultReference!.id) }}>
+                {downloading === operation.resultReference.id ? 'Preparando descarga…' : 'Descargar ZIP verificado'}
+              </button>
+              {downloadProblem[operation.resultReference.id] &&
+                <p role="alert" className="mt-2 text-sm">{downloadProblem[operation.resultReference.id]}</p>}
+            </>}
           </article>
         ))}
       </div>

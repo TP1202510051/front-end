@@ -18,7 +18,10 @@ platform.use({
       const body: unknown = await response.clone().json().catch(() => null)
       throw publicProblem(body, response.status)
     }
-    if (response.status !== 204) {
+    // El unico cuerpo del contrato que no es JSON es el ZIP de la exportacion. Cualquier otro
+    // 2xx que no se pueda leer sigue siendo un problema: nadie va a poder pintarlo.
+    const archive = response.headers.get('content-type')?.toLowerCase().startsWith('application/zip') === true
+    if (response.status !== 204 && !archive) {
       try { await response.clone().json() }
       catch { throw publicProblem(null) }
     }

@@ -3,6 +3,7 @@ import { getRevisionReadiness, type MissingRequirement, type RevisionReadiness,
   type ValidationLevel } from '@/api/readiness'
 import { safeProblem } from '@/api/problems'
 import { ExportGate } from './ExportGate'
+import { StoreExportControl } from './StoreExportControl'
 import { destinations, NO_DESTINATION } from './readiness-areas'
 
 interface ReadinessPanelProps {
@@ -69,7 +70,9 @@ export function ReadinessPanel({ projectId, revisionNumber, reloadKey, onSelectP
 
     {problem && <p role="alert">{problem}</p>}
 
-    <ExportGate exportable={readiness?.exportable ?? null} />
+    <ExportGate exportable={readiness?.exportable ?? null}>
+      <StoreExportControl projectId={projectId} revisionNumber={revisionNumber} />
+    </ExportGate>
 
     {readiness && <ul className="space-y-2">
       <Level name="Editable" hint="Se puede abrir y seguir cambiando."
