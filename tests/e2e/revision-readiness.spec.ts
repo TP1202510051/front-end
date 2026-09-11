@@ -227,17 +227,30 @@ test('the control to generate stays closed while the revision is not exportable'
   await expect(gate(page)).toContainText('todavía no se puede entregar')
 })
 
-/**
- * Con la revision exportable la puerta se abre, y hoy no hay nada detras.
- *
- * <p>Se comprueba igualmente porque la puerta es la que decide, y una puerta que solo se prueba
- * cerrada podria estar clavada sin que nadie lo notara hasta que llegue la generacion.
- */
-test('the gate opens once the backend declares that exact revision exportable', async ({ page }) => {
+test('an exportable exact revision starts one durable export and registers its receipt', async ({ page }) => {
+  const operationId = '936a89df-0d03-4ea5-a446-821a9e3ec194'
+  let requested: { url: string; body: unknown; authorization?: string } | null = null
   await open(page, { readiness: readiness({}) })
+  await page.route('**/api/v1/projects/42/revisions/4/exports', async route => {
+    requested = { url: route.request().url(), body: route.request().postDataJSON(),
+      authorization: route.request().headers().authorization }
+    await route.fulfill({ status: 202, json: {
+      operationId, exportId: '936a89df-0d03-4ea5-a446-821a9e3ec294',
+    } })
+  })
+  await page.route(`**/api/v1/operations/${operationId}`, route => route.fulfill({ json: {
+    operationId, workType: 'STORE_EXPORT', state: 'QUEUED', stage: 'QUEUED', progress: null,
+    version: 1, createdAt: '2026-09-10T20:00:00Z', startedAt: null,
+    updatedAt: '2026-09-10T20:00:00Z', finishedAt: null, resultReference: null,
+    failureCode: null, availableActions: ['CANCEL', 'REFRESH_STATUS'],
+  } }))
+  await gate(page).getByRole('button', { name: 'Generar tienda desde revisión 4' }).click()
 
-  await expect(gate(page).getByRole('button', { name: 'Generar tienda' })).toHaveCount(0)
-  await expect(gate(page)).toContainText('ya es exportable')
+  await expect(page.getByRole('region', { name: 'Progreso de operaciones' })).toContainText('Exportación de tienda')
+  expect(requested).not.toBeNull()
+  expect(requested!.url).toContain('/api/v1/projects/42/revisions/4/exports')
+  expect(requested!.authorization).toBe('Bearer deterministic-e2e-token')
+  expect(requested!.body).toMatchObject({ idempotencyKey: expect.stringMatching(/^[0-9a-f-]{36}$/) })
 })
 
 /**

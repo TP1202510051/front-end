@@ -174,3 +174,65 @@ test('authorization expiry clears progress and a foreign signal discloses nothin
   await expect(page.locator('body')).not.toContainText(foreignId)
   await expect(page.locator('body')).not.toContainText('FOREIGN_PRIVATE_PROJECT')
 })
+
+test('only a succeeded integrity-checked export exposes an authorized short-lived ZIP download', async ({ page }) => {
+  const exportId = '936a89df-0d03-4ea5-a446-821a9e3ec222'
+  const exportOperation = { ...queued, workType: 'STORE_EXPORT', state: 'SUCCEEDED', stage: 'SUCCEEDED',
+    progress: 100, version: 8, finishedAt: '2026-09-10T20:01:00Z', updatedAt: '2026-09-10T20:01:00Z',
+    resultReference: { type: 'store-export', id: exportId }, availableActions: ['START_NEW_OPERATION', 'REFRESH_STATUS'] }
+  await page.route('**/api/v1/projects*', route => route.fulfill({ json: { items: [], nextCursor: null } }))
+  await page.route(`**/api/v1/operations/${operationId}`, route => route.fulfill({ json: exportOperation }))
+  await page.route(`**/api/v1/store-exports/${exportId}/download-reference`, route => {
+    expect(route.request().headers().authorization).toBe('Bearer deterministic-e2e-token')
+    return route.fulfill({ json: { url: `/api/v1/store-exports/${exportId}/archive?token=${'a'.repeat(43)}`,
+      expiresAt: '2026-09-10T20:06:00Z' } })
+  })
+  await page.route(`**/api/v1/store-exports/${exportId}/archive?*`, route => {
+    expect(route.request().headers().authorization).toBe('Bearer deterministic-e2e-token')
+    return route.fulfill({ contentType: 'application/zip', body: Buffer.from('verified-zip'),
+      headers: { 'content-disposition': 'attachment; filename="generated-store-r4.zip"' } })
+  })
+  await page.goto('/dashboard')
+  await registerOperationReceipt(page)
+
+  const monitor = page.getByRole('region', { name: 'Progreso de operaciones' })
+  await expect(monitor.getByRole('button', { name: 'Descargar ZIP verificado' })).toBeVisible()
+  const download = page.waitForEvent('download')
+  await monitor.getByRole('button', { name: 'Descargar ZIP verificado' }).click()
+  expect((await download).suggestedFilename()).toBe('generated-store-r4.zip')
+})
+
+/**
+ * Una referencia denegada o caducada se cierra sola.
+ *
+ * <p>El servidor contesta lo mismo para lo ajeno, lo que no existe y lo que caduco, y la SPA lo
+ * pinta con su frase segura. Ni el token ni el identificador de la exportacion vuelven a la pantalla:
+ * lo que caduco no sirve para nada y lo que se denego no es de quien mira.
+ */
+test('a denied or expired download reference fails closed without leaking the reference', async ({ page }) => {
+  const exportId = '936a89df-0d03-4ea5-a446-821a9e3ec333'
+  const token = 'b'.repeat(43)
+  const exportOperation = { ...queued, workType: 'STORE_EXPORT', state: 'SUCCEEDED', stage: 'SUCCEEDED',
+    progress: 100, version: 8, finishedAt: '2026-09-10T20:01:00Z', updatedAt: '2026-09-10T20:01:00Z',
+    resultReference: { type: 'store-export', id: exportId }, availableActions: ['START_NEW_OPERATION', 'REFRESH_STATUS'] }
+  await page.route('**/api/v1/projects*', route => route.fulfill({ json: { items: [], nextCursor: null } }))
+  await page.route(`**/api/v1/operations/${operationId}`, route => route.fulfill({ json: exportOperation }))
+  await page.route(`**/api/v1/store-exports/${exportId}/download-reference`, route => route.fulfill({
+    json: { url: `/api/v1/store-exports/${exportId}/archive?token=${token}`, expiresAt: '2026-09-10T20:06:00Z' },
+  }))
+  await page.route(`**/api/v1/store-exports/${exportId}/archive?*`, route => route.fulfill({
+    status: 404, contentType: 'application/problem+json',
+    json: { code: 'RESOURCE_NOT_FOUND', title: 'Not found', status: 404, detail: 'token ' + token + ' expired',
+      correlationId: '11111111-1111-4111-8111-111111111111', recoveryAction: 'RETURN_TO_PROJECTS' },
+  }))
+  await page.goto('/dashboard')
+  await registerOperationReceipt(page)
+
+  const monitor = page.getByRole('region', { name: 'Progreso de operaciones' })
+  await monitor.getByRole('button', { name: 'Descargar ZIP verificado' }).click()
+
+  await expect(monitor.getByRole('alert')).toHaveText('El recurso no está disponible.')
+  await expect(page.locator('body')).not.toContainText(token)
+  await expect(page.locator('body')).not.toContainText('expired')
+  await expect(monitor.getByRole('button', { name: 'Descargar ZIP verificado' })).toBeEnabled()
+})
