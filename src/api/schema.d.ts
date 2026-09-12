@@ -701,9 +701,11 @@ export interface components {
             /** @example Pon el color primario en #1a2b3c */
             instruction: string;
             /** @enum {string} */
-            scope: "PROJECT" | "PAGE";
-            /** @description Obligatoria cuando el alcance es PAGE */
+            scope: "PROJECT" | "PAGE" | "COMPONENT";
+            /** @description Obligatoria cuando el alcance es PAGE o COMPONENT */
             scopePageId?: string;
+            /** @description Obligatoria cuando el alcance es COMPONENT: el componente de esa página, con la identidad que muestra el Canvas */
+            scopeComponentId?: string;
             idempotencyKey: string;
         };
         AssistantProposalReceiptView: {
@@ -720,8 +722,9 @@ export interface components {
             instruction: string;
             baseRevisionId: string;
             /** @enum {string} */
-            scope: "PROJECT" | "PAGE";
+            scope: "PROJECT" | "PAGE" | "COMPONENT";
             scopePageId?: string;
+            scopeComponentId?: string;
             modelSummary?: string;
             effects: string[];
             losses: string[];

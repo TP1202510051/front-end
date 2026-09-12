@@ -33,7 +33,7 @@ function drafted(overrides: Record<string, unknown> = {}) {
   return {
     proposalId: PROPOSAL, projectId: '42', state: 'DRAFTED', outcome: 'CHANGE_AVAILABLE',
     instruction: 'Pon el color primario en #1a2b3c', baseRevisionId: '9001',
-    scope: 'PROJECT', scopePageId: null,
+    scope: 'PROJECT', scopePageId: null, scopeComponentId: null,
     modelSummary: 'cambiar el color primario a #1a2b3c',
     effects: ['Pone «color-primario» en #1a2b3c'], losses: [], refused: [],
     destructive: false,
@@ -420,3 +420,89 @@ for (const outcome of [
       .toHaveText('Revisión aceptada 1')
   })
 }
+
+/**
+ * El alcance se elige entre lo que hay -proyecto, pagina abierta, un componente de ella- y el
+ * componente se elige por su nombre, no tecleando una identidad. Lo elegido se ve antes de pedir,
+ * y viaja tal cual: pagina y componente van con la instruccion.
+ */
+test('an instruction can be aimed at one component of the open page and the aim is visible before sending', async ({ page }) => {
+  let sent: Record<string, unknown> | null = null
+  await openCanvas(page, {
+    proposal: () => drafted({ scope: 'COMPONENT', scopePageId: 'home', scopeComponentId: 'hero-action',
+      instruction: 'Cambia la etiqueta a «Ver todo»',
+      effects: ['Cambia «label» del componente «hero-action» en «home»'], preview: null }),
+    onPropose: body => { sent = body as Record<string, unknown>; return {
+      status: 202, json: { operationId: OPERATION, proposalId: PROPOSAL },
+    } },
+  })
+  await page.getByRole('region', { name: 'Páginas del proyecto' }).getByRole('button', { name: 'Abrir /', exact: true }).click()
+
+  const aim = assistant(page).getByLabel('Alcance de la instrucción')
+  await expect(aim).toHaveText('Apuntando a: todo el proyecto')
+  await assistant(page).getByLabel('Sólo esta página').check()
+  await expect(aim).toHaveText('Apuntando a: sólo la página «home»')
+  await assistant(page).getByLabel('Sólo un componente de esta página').check()
+  await assistant(page).getByLabel('Componente elegido').selectOption({ label: 'Ver colección (hero-action)' })
+  await expect(aim).toHaveText('Apuntando a: el componente «hero-action» de la página «home» y lo que cuelga de él')
+
+  await assistant(page).getByLabel('Instrucción para el asistente').fill('Cambia la etiqueta a «Ver todo»')
+  await assistant(page).getByRole('button', { name: 'Pedir propuesta' }).click()
+
+  await expect.poll(() => sent).toMatchObject({ scope: 'COMPONENT', scopePageId: 'home', scopeComponentId: 'hero-action' })
+  // Y la propuesta leida dice a que apuntaba, con las mismas palabras.
+  await expect(assistant(page).getByLabel('Alcance de la propuesta'))
+    .toHaveText('Apuntada a: el componente «hero-action» de la página «home» y lo que cuelga de él')
+})
+
+test('the aim stays visible while dictating', async ({ page }) => {
+  await page.addInitScript(() => {
+    class IdleSpeechRecognition {
+      lang = ''; continuous = false; interimResults = false; maxAlternatives = 1
+      onstart: ((event: Event) => void) | null = null
+      onend: ((event: Event) => void) | null = null
+      onerror: ((event: Event) => void) | null = null
+      onresult: ((event: Event) => void) | null = null
+      start() { this.onstart?.(new Event('start')) }
+      stop() { this.onend?.(new Event('end')) }
+      abort() { this.onend?.(new Event('end')) }
+    }
+    ;(window as unknown as { SpeechRecognition: typeof IdleSpeechRecognition }).SpeechRecognition = IdleSpeechRecognition
+  })
+  await openCanvas(page, { proposal: () => drafted() })
+  await page.getByRole('region', { name: 'Páginas del proyecto' }).getByRole('button', { name: 'Abrir /', exact: true }).click()
+  await assistant(page).getByLabel('Sólo un componente de esta página').check()
+
+  await assistant(page).getByRole('button', { name: 'Dictar instrucción' }).click()
+
+  await expect(assistant(page).getByRole('button', { name: 'Escuchando…' })).toBeVisible()
+  await expect(assistant(page).getByLabel('Alcance de la instrucción'))
+    .toHaveText('Apuntando a: el componente «hero-main» de la página «home» y lo que cuelga de él')
+})
+
+/**
+ * Una negativa por alcance dice que quedo fuera y donde, con el codigo traducido a palabras. Lo
+ * que llega del servidor ya viene sin la forma interna de la operacion; aqui se comprueba que el
+ * panel tampoco la anade y que el codigo no se ensena en crudo.
+ */
+test('a refusal caused by scope says what fell outside and where', async ({ page }) => {
+  await openCanvas(page, { proposal: () => drafted({
+    scope: 'COMPONENT', scopePageId: 'home', scopeComponentId: 'hero-action',
+    effects: ['Cambia «label» del componente «hero-action» en «home»'],
+    refused: [
+      'OUTSIDE_SCOPE: Cambia «heading» del componente «hero-main» en «home» queda fuera del componente «hero-action» de la página «home»',
+      'BELONGS_TO_NO_PAGE: Pone «color-primario» en #123456 no vive en ninguna página; sólo una instrucción sobre el proyecto entero lo alcanza',
+    ],
+  }) })
+
+  await assistant(page).getByLabel('Instrucción para el asistente').fill('Cambia varias cosas')
+  await assistant(page).getByRole('button', { name: 'Pedir propuesta' }).click()
+
+  const refused = assistant(page).getByRole('list', { name: 'Lo que no se admitió' })
+  await expect(refused.getByRole('listitem')).toHaveCount(2)
+  await expect(refused).toContainText('Fuera del alcance: Cambia «heading» del componente «hero-main» en «home» queda fuera del componente «hero-action» de la página «home»')
+  await expect(refused).toContainText('No está en ninguna página: Pone «color-primario» en #123456')
+  await expect(refused).not.toContainText('OUTSIDE_SCOPE')
+  await expect(refused).not.toContainText('BELONGS_TO_NO_PAGE')
+  await expect(refused).not.toContainText('SetProperty')
+})

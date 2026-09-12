@@ -9,11 +9,24 @@ export type AssistantOutcome = 'WORKING' | 'CHANGE_AVAILABLE' | 'CLARIFICATION_R
   | 'UNSUPPORTED' | 'STALE_CONTEXT' | 'CANCELLED' | 'FAILED' | 'ACCEPTED' | 'REJECTED'
 export type AssistantProposal = components['schemas']['AssistantProposalView']
 export type AssistantProposalReceipt = components['schemas']['AssistantProposalReceiptView']
+export type AssistantScopeKind = 'PROJECT' | 'PAGE' | 'COMPONENT'
+
+/**
+ * A que apunta una instruccion: el proyecto entero, una pagina, o un componente de una pagina con
+ * lo que cuelga de el. Un componente lleva su pagina porque las identidades de componente son de la
+ * pagina y no del proyecto: el mismo nombre en dos paginas es dos componentes.
+ */
+export interface AssistantScope {
+  kind: AssistantScopeKind
+  pageId: string | null
+  componentId: string | null
+}
 
 /** Los puntos del ciclo, escritos aqui para no fiarse de que el servidor mande uno de ellos. */
 const STATES: AssistantState[] = ['PENDING', 'DRAFTED', 'ACCEPTED', 'REJECTED', 'FAILED', 'CANCELLED']
 const OUTCOMES: AssistantOutcome[] = ['WORKING', 'CHANGE_AVAILABLE', 'CLARIFICATION_REQUIRED', 'NO_CHANGE',
   'UNSUPPORTED', 'STALE_CONTEXT', 'CANCELLED', 'FAILED', 'ACCEPTED', 'REJECTED']
+const SCOPES: AssistantScopeKind[] = ['PROJECT', 'PAGE', 'COMPONENT']
 
 function strings(value: unknown): value is string[] {
   return Array.isArray(value) && value.every(item => typeof item === 'string')
@@ -36,7 +49,9 @@ function isProposal(value: unknown, proposalId: string): value is AssistantPropo
     && typeof item.outcome === 'string' && OUTCOMES.includes(item.outcome as AssistantOutcome)
     && typeof item.instruction === 'string'
     && typeof item.baseRevisionId === 'string'
-    && (item.scope === 'PROJECT' || item.scope === 'PAGE')
+    && typeof item.scope === 'string' && SCOPES.includes(item.scope as AssistantScopeKind)
+    && (item.scopePageId == null || typeof item.scopePageId === 'string')
+    && (item.scopeComponentId == null || typeof item.scopeComponentId === 'string')
     && typeof item.destructive === 'boolean'
     && strings(item.effects) && strings(item.losses) && strings(item.refused)
     && (item.modelSummary == null || typeof item.modelSummary === 'string')
@@ -50,9 +65,47 @@ function isProposal(value: unknown, proposalId: string): value is AssistantPropo
 
 export interface AssistantInstruction {
   instruction: string
-  scope: 'PROJECT' | 'PAGE'
+  scope: AssistantScopeKind
   scopePageId?: string | null
+  scopeComponentId?: string | null
   idempotencyKey: string
+}
+
+/** A que apuntaba una propuesta, tal como quedo grabado con ella. */
+export function scopeOf(proposal: AssistantProposal): AssistantScope {
+  return { kind: proposal.scope, pageId: proposal.scopePageId ?? null,
+    componentId: proposal.scopeComponentId ?? null }
+}
+
+/** El alcance, dicho como lo leeria quien lo eligio. */
+export function scopeShown(scope: AssistantScope): string {
+  if (scope.kind === 'COMPONENT' && scope.pageId && scope.componentId) {
+    return `el componente «${scope.componentId}» de la página «${scope.pageId}» y lo que cuelga de él`
+  }
+  if (scope.kind === 'PAGE' && scope.pageId) return `sólo la página «${scope.pageId}»`
+  return 'todo el proyecto'
+}
+
+/**
+ * Por que no se admitio algo, en palabras.
+ *
+ * <p>El servidor manda un codigo, dos puntos y una frase que ya dice que quedo fuera y donde. El
+ * codigo se traduce y no se ensena tal cual: es el nombre de una clase de negativa, no algo que
+ * quien lee tenga que descifrar. Un texto sin codigo -o con uno que este panel no conoce- se ensena
+ * como llego, que es mejor que callarlo.
+ */
+const REFUSAL_CODES: Record<string, string> = {
+  OUTSIDE_SCOPE: 'Fuera del alcance',
+  BELONGS_TO_NO_PAGE: 'No está en ninguna página',
+  SHARED_BEYOND_SCOPE: 'Compartido más allá del alcance',
+  OVER_LIMIT: 'Por encima del límite',
+}
+
+export function refusalShown(refusal: string): string {
+  const match = /^([A-Z][A-Z_]*): (.+)$/s.exec(refusal)
+  if (!match) return refusal
+  const [, code, text] = match
+  return code in REFUSAL_CODES ? `${REFUSAL_CODES[code]}: ${text}` : refusal
 }
 
 /**
@@ -71,6 +124,7 @@ export async function proposeAssistantChange(projectId: string,
         instruction: instruction.instruction,
         scope: instruction.scope,
         scopePageId: instruction.scopePageId ?? undefined,
+        scopeComponentId: instruction.scopeComponentId ?? undefined,
         idempotencyKey: instruction.idempotencyKey,
       },
       signal: AbortSignal.timeout(15_000),

@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   acceptAssistantProposal, cancelAssistantProposal, getAssistantProposal, proposeAssistantChange,
-  rejectAssistantProposal,
-  type AssistantProposal,
+  rejectAssistantProposal, refusalShown, scopeOf, scopeShown,
+  type AssistantProposal, type AssistantScope, type AssistantScopeKind,
 } from '@/api/assistant'
 import { getStoreProject, type StoreProject } from '@/api/projects'
 import { safeProblem } from '@/api/problems'
@@ -10,7 +10,7 @@ import { intentionKey, type ProjectDocument } from '@/canvas/intention'
 
 interface AssistantPanelProps {
   project: StoreProject
-  /** La pagina abierta, para acotar la instruccion a ella cuando quien escribe lo pide. */
+  /** La pagina abierta, para acotar la instruccion a ella o a uno de sus componentes. */
   pageId: string | null
   onAccepted: (project: StoreProject) => void
   /** El documento que hay que ensenar mientras se mira la propuesta, o null para el aceptado. */
@@ -23,6 +23,21 @@ const buttonStyle = 'rounded border border-slate-400 px-3 py-1 disabled:opacity-
 
 /** Cada cuanto se vuelve a preguntar mientras el modelo escribe. */
 const POLL_MS = 1200
+
+/**
+ * El componente, como lo nombra el Canvas: por lo que dice y, entre parentesis, por su identidad,
+ * que es la misma con la que una negativa lo nombra. Sin la identidad, dos secciones con el mismo
+ * titulo serian indistinguibles y una negativa no se podria casar con lo que se eligio.
+ */
+function componentName(node: ProjectDocument['pages'][number]['components'][number]) {
+  return `${node.properties.heading ?? node.properties.label ?? node.type} (${node.id})`
+}
+
+const SCOPE_CHOICES: readonly (readonly [AssistantScopeKind, string])[] = [
+  ['PROJECT', 'Todo el proyecto'],
+  ['PAGE', 'Sólo esta página'],
+  ['COMPONENT', 'Sólo un componente de esta página'],
+]
 
 const OUTCOME_MESSAGE = {
   CLARIFICATION_REQUIRED: 'Necesito una aclaración antes de proponer cambios.',
@@ -45,10 +60,16 @@ const OUTCOME_MESSAGE = {
  *
  * <p>Lo que una propuesta quita se lee aparte de lo que solo cambia. Una sola lista dejaria un
  * borrado escondido entre cambios de color, y esto es justo lo que hay que leer antes de aceptar.
+ *
+ * <p>A que apunta la instruccion -el proyecto, la pagina abierta, o un componente de ella- se elige
+ * aqui y se ve antes de pedir, mientras se escribe y mientras se dicta. El componente se elige de
+ * los de la pagina, nombrados como el Canvas los nombra, y no tecleando una identidad: lo que se
+ * teclea mal apunta a otra cosa, y lo que se elige apunta a lo que se esta mirando.
  */
 export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnly }: AssistantPanelProps) {
   const [instruction, setInstruction] = useState('')
-  const [scopedToPage, setScopedToPage] = useState(false)
+  const [scopeKind, setScopeKind] = useState<AssistantScopeKind>('PROJECT')
+  const [componentId, setComponentId] = useState('')
   const [proposal, setProposal] = useState<AssistantProposal | null>(null)
   const [pending, setPending] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
@@ -86,6 +107,24 @@ export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnl
 
   useEffect(() => () => recognition.current?.abort(), [])
 
+  // Lo que se puede apuntar depende de la pagina abierta. Sin pagina solo queda el proyecto, y un
+  // componente solo se puede elegir entre los que la pagina tiene: si se pidio un componente y la
+  // pagina no tiene ninguno, lo que se apunta es la pagina, y la casilla marcada lo dice tambien.
+  // Al cambiar de pagina se olvida el componente elegido: el mismo nombre en otra pagina seria
+  // otro componente, y mandarlo apuntaria a algo que nadie eligio.
+  const page = pageId
+    ? project.acceptedRevision.document.pages.find(candidate => candidate.id === pageId) ?? null
+    : null
+  const components = page?.components ?? []
+  const chosenComponent = components.find(node => node.id === componentId) ?? components[0] ?? null
+  useEffect(() => setComponentId(''), [pageId])
+  const shownKind: AssistantScopeKind = !page ? 'PROJECT'
+    : scopeKind === 'COMPONENT' && !chosenComponent ? 'PAGE' : scopeKind
+  const scope: AssistantScope = shownKind === 'COMPONENT' && page && chosenComponent
+    ? { kind: 'COMPONENT', pageId: page.id, componentId: chosenComponent.id }
+    : shownKind === 'PAGE' && page ? { kind: 'PAGE', pageId: page.id, componentId: null }
+    : { kind: 'PROJECT', pageId: null, componentId: null }
+
   function show(next: boolean) {
     setShowing(next)
     onPreview(next && proposal?.preview ? (proposal.preview as ProjectDocument) : null)
@@ -97,8 +136,9 @@ export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnl
     try {
       const receipt = await proposeAssistantChange(project.id, {
         instruction: instruction.trim(),
-        scope: scopedToPage && pageId ? 'PAGE' : 'PROJECT',
-        scopePageId: scopedToPage ? pageId : null,
+        scope: scope.kind,
+        scopePageId: scope.pageId,
+        scopeComponentId: scope.componentId,
         idempotencyKey: intentionKey(),
       })
       setWatched(receipt.proposalId)
@@ -176,11 +216,24 @@ export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnl
         <span>El dictado sólo rellena el texto; revísalo antes de enviarlo.</span>
       </div> : <p>El dictado no está disponible; puedes escribir la instrucción completa.</p>}
       {speechMessage && <p role="status">{speechMessage}</p>}
-      {pageId && <label className="flex items-center gap-2">
-        <input type="checkbox" checked={scopedToPage} disabled={disabled}
-          onChange={event => setScopedToPage(event.target.checked)} />
-        Sólo sobre esta página
-      </label>}
+      {page && <fieldset className="space-y-1">
+        <legend className="font-semibold">Alcance</legend>
+        {SCOPE_CHOICES.map(([kind, label]) => <label key={kind} className="flex items-center gap-2">
+          <input type="radio" name="assistant-scope" value={kind} checked={shownKind === kind}
+            disabled={disabled || (kind === 'COMPONENT' && components.length === 0)}
+            onChange={() => setScopeKind(kind)} />
+          {label}
+        </label>)}
+        {shownKind === 'COMPONENT' && chosenComponent && <label className="block">Componente elegido
+          <select className={fieldStyle} value={chosenComponent.id} disabled={disabled}
+            onChange={event => setComponentId(event.target.value)}>
+            {components.map(node => <option key={node.id} value={node.id}>{componentName(node)}</option>)}
+          </select>
+        </label>}
+      </fieldset>}
+      {/* Se dice antes de pedir, escribiendo o dictando, para que nunca salga apuntada a otra cosa
+          que la que se esta mirando. */}
+      <p aria-label="Alcance de la instrucción">Apuntando a: {scopeShown(scope)}</p>
       <button type="submit" className={buttonStyle} disabled={disabled || !instruction.trim()}>
         Pedir propuesta
       </button>
@@ -195,6 +248,7 @@ export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnl
     </div>}
     {proposal?.state === 'FAILED' && <p role="alert">No se pudo redactar. Vuelve a pedirlo.</p>}
 
+    {proposal && <p aria-label="Alcance de la propuesta">Apuntada a: {scopeShown(scopeOf(proposal))}</p>}
     {proposal?.modelSummary && !decided && <p className="italic">«{proposal.modelSummary}»</p>}
 
     {drafted && proposal.effects.length > 0 && <>
@@ -215,7 +269,7 @@ export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnl
     {drafted && proposal.refused.length > 0 && <>
       <h3 className="font-semibold">Lo que no se admitió</h3>
       <ul aria-label="Lo que no se admitió" className="list-disc space-y-1 pl-5">
-        {proposal.refused.map(refusal => <li key={refusal}>{refusal}</li>)}
+        {proposal.refused.map(refusal => <li key={refusal}>{refusalShown(refusal)}</li>)}
       </ul>
     </>}
 
