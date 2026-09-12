@@ -525,7 +525,8 @@ test('the aim stays visible while dictating', async ({ page }) => {
 
   await assistant(page).getByRole('button', { name: 'Dictar instrucción' }).click()
 
-  await expect(assistant(page).getByRole('button', { name: 'Escuchando…' })).toBeVisible()
+  await expect(assistant(page).getByRole('button', { name: 'Pausar dictado' })).toBeVisible()
+  await expect(assistant(page).getByLabel('Transcripción provisional')).toHaveText('Escuchando…')
   await expect(assistant(page).getByLabel('Alcance de la instrucción'))
     .toHaveText('Apuntando a: el componente «hero-main» de la página «home» y lo que cuelga de él')
 })
@@ -765,4 +766,132 @@ test('a failed proposal can be asked for again as a new request', async ({ page 
   await earlier.getByRole('button', { name: 'Volver a pedir' }).click()
   await expect.poll(() => sent.length).toBe(2)
   expect(sent[1].idempotencyKey).not.toBe(sent[0].idempotencyKey)
+})
+
+/**
+ * Un reconocedor que la prueba maneja a mano: sesiones, resultados finales y provisionales, y el
+ * cierre por silencio o por fallo que el navegador haria por su cuenta.
+ */
+const fakeRecognition = () => {
+  class FakeSpeechRecognition {
+    static sessions = 0
+    lang = ''; continuous = false; interimResults = false; maxAlternatives = 1
+    onstart: ((event: Event) => void) | null = null
+    onend: ((event: Event) => void) | null = null
+    onerror: ((event: { error: string }) => void) | null = null
+    onresult: ((event: Event) => void) | null = null
+    start() {
+      ;(window as unknown as { recognition: FakeSpeechRecognition }).recognition = this
+      FakeSpeechRecognition.sessions += 1
+      this.onstart?.(new Event('start'))
+    }
+    stop() { this.onend?.(new Event('end')) }
+    abort() { this.onerror?.({ error: 'aborted' }); this.onend?.(new Event('end')) }
+    /** Lo que Chrome hace tras un silencio largo: cierra la sesion sin que nadie lo pida. */
+    endOnSilence() { this.onerror?.({ error: 'no-speech' }); this.onend?.(new Event('end')) }
+    fail() { this.onerror?.({ error: 'network' }); this.onend?.(new Event('end')) }
+  }
+  ;(window as unknown as { SpeechRecognition: typeof FakeSpeechRecognition }).SpeechRecognition = FakeSpeechRecognition
+}
+
+const sessions = (page: Page) => page.evaluate(() =>
+  (window as unknown as { SpeechRecognition: { sessions: number } }).SpeechRecognition.sessions)
+
+async function hear(page: Page, transcript: string, isFinal: boolean) {
+  await page.evaluate(({ text, final }) => {
+    const recognition = (window as unknown as { recognition: { onresult: ((event: unknown) => void) | null } }).recognition
+    recognition.onresult?.({ resultIndex: 0, results: {
+      0: { 0: { transcript: text, confidence: 1 }, length: 1, isFinal: final }, length: 1,
+    } })
+  }, { text: transcript, final: isFinal })
+}
+
+/**
+ * Dictar en varias pasadas: pausar deja el texto como esta y editable; continuar anade detras.
+ * Lo provisional se ve pero no entra en el texto, y nada se manda hasta pulsar.
+ */
+test('dictation pauses, resumes and appends to the editable transcription without sending', async ({ page }) => {
+  let sent: Record<string, unknown> | null = null
+  await page.addInitScript(fakeRecognition)
+  await openCanvas(page, {
+    proposal: () => drafted(),
+    onPropose: body => { sent = body as Record<string, unknown>; return {
+      status: 202, json: { operationId: OPERATION, proposalId: PROPOSAL },
+    } },
+  })
+  const input = assistant(page).getByLabel('Instrucción para el asistente')
+
+  await assistant(page).getByRole('button', { name: 'Dictar instrucción' }).click()
+  await expect(assistant(page).getByRole('button', { name: 'Pausar dictado' })).toBeVisible()
+  expect(await page.evaluate(() => (window as unknown as { recognition: { lang: string, continuous: boolean } }).recognition))
+    .toMatchObject({ lang: 'es-PE', continuous: true })
+
+  // Lo provisional se ensena aparte y no toca el texto.
+  await hear(page, 'pon el color', false)
+  await expect(assistant(page).getByLabel('Transcripción provisional')).toHaveText('Escuchando: pon el color')
+  await expect(input).toHaveValue('')
+
+  await hear(page, 'Pon el color primario', true)
+  await expect(input).toHaveValue('Pon el color primario')
+
+  await assistant(page).getByRole('button', { name: 'Pausar dictado' }).click()
+  await expect(assistant(page).getByRole('button', { name: 'Continuar dictado' })).toBeVisible()
+  await expect(assistant(page).getByLabel('Transcripción provisional')).toHaveCount(0)
+  await input.fill('Pon el color primario en azul')
+
+  await assistant(page).getByRole('button', { name: 'Continuar dictado' }).click()
+  expect(await sessions(page)).toBe(2)
+  await hear(page, 'y quita la página catalogo', true)
+  await expect(input).toHaveValue('Pon el color primario en azul y quita la página catalogo')
+  expect(sent).toBeNull()
+
+  await assistant(page).getByRole('button', { name: 'Pedir propuesta' }).click()
+  await expect.poll(() => sent).toMatchObject({ instruction: 'Pon el color primario en azul y quita la página catalogo' })
+  // Enviar corta la escucha sin llamarlo fallo, y el boton vuelve a decir "dictar".
+  await expect(assistant(page).getByRole('button', { name: 'Pausar dictado' })).toHaveCount(0)
+  await expect(assistant(page).getByRole('button', { name: 'Dictar instrucción' })).toBeVisible()
+  await expect(assistant(page).getByText('No se pudo completar el dictado')).toHaveCount(0)
+})
+
+/** El navegador cierra la sesion tras un silencio: se dice como pausa, con la salida a la vista. */
+test('a session the browser ends on its own reads as a pause, not as a failure', async ({ page }) => {
+  await page.addInitScript(fakeRecognition)
+  await openCanvas(page, { proposal: () => drafted() })
+  const input = assistant(page).getByLabel('Instrucción para el asistente')
+
+  await assistant(page).getByRole('button', { name: 'Dictar instrucción' }).click()
+  await hear(page, 'Pon el color primario en azul', true)
+  await page.evaluate(() => (window as unknown as { recognition: { endOnSilence: () => void } }).recognition.endOnSilence())
+
+  await expect(input).toHaveValue('Pon el color primario en azul')
+  await expect(assistant(page).getByRole('button', { name: 'Continuar dictado' })).toBeVisible()
+  await expect(assistant(page).getByRole('status')).toContainText('sigue dictando')
+  await expect(assistant(page).getByText('No se pudo completar el dictado')).toHaveCount(0)
+
+  // Un fallo de verdad si se dice, y el texto se conserva igual.
+  await assistant(page).getByRole('button', { name: 'Continuar dictado' }).click()
+  await page.evaluate(() => (window as unknown as { recognition: { fail: () => void } }).recognition.fail())
+  await expect(assistant(page).getByRole('status')).toContainText('No se pudo completar el dictado')
+  await expect(input).toHaveValue('Pon el color primario en azul')
+})
+
+/** Lo dictado nunca pasa del tope del dominio: lo que no cabe se dice y se deja fuera. */
+test('dictation never grows the instruction past the limit', async ({ page }) => {
+  await page.addInitScript(fakeRecognition)
+  await openCanvas(page, { proposal: () => drafted() })
+  const input = assistant(page).getByLabel('Instrucción para el asistente')
+  await input.fill('a'.repeat(1990))
+
+  await assistant(page).getByRole('button', { name: 'Dictar instrucción' }).click()
+  await hear(page, 'palabras que ya no caben', true)
+
+  await expect(input).toHaveValue('a'.repeat(1990))
+  await expect(assistant(page).getByRole('alert')).toContainText('no cabe')
+})
+
+test('the panel says the dictation is in Spanish and only fills the text', async ({ page }) => {
+  await page.addInitScript(fakeRecognition)
+  await openCanvas(page, { proposal: () => drafted() })
+  await expect(assistant(page).getByText('El dictado es en español y sólo rellena el texto; revísalo antes de enviarlo.'))
+    .toBeVisible()
 })
