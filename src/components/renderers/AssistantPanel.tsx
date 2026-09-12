@@ -8,6 +8,7 @@ import { getStoreProject, listRevisions, type StoreProject } from '@/api/project
 import { safeProblem } from '@/api/problems'
 import { intentionKey, type ProjectDocument } from '@/canvas/intention'
 import { useAuth } from '@/contexts/AuthContext'
+import { useDictation } from '@/hooks/useDictation'
 import { registerOperationReceipt } from '@/realtime/known-operations'
 import { followOperationFeed, isOperationChannelLive } from '@/realtime/operation-feed'
 
@@ -31,6 +32,13 @@ const buttonStyle = 'rounded border border-slate-400 px-3 py-1 disabled:opacity-
 
 /** Cada cuanto se vuelve a preguntar mientras el modelo escribe. */
 const POLL_MS = 1200
+
+/**
+ * Cuanto texto admite una instruccion: el mismo tope que el dominio. El del cuadro de texto solo
+ * frena el teclado; lo que se anade dictando pasa por aqui, o llegaria al servidor para que lo
+ * negara despues de haberlo dicho todo.
+ */
+const MAX_INSTRUCTION = 2000
 
 /**
  * El componente, como lo nombra el Canvas: por lo que dice y, entre parentesis, por su identidad,
@@ -119,10 +127,14 @@ export function AssistantPanel({ project, headRevisionId, pageId, onAccepted, on
   const [history, setHistory] = useState<AssistantProposal[]>([])
   const [historyProblem, setHistoryProblem] = useState<string | null>(null)
   const [revisionNumbers, setRevisionNumbers] = useState<Map<string, number>>(new Map())
-  const [listening, setListening] = useState(false)
-  const [speechMessage, setSpeechMessage] = useState<string | null>(null)
-  const recognition = useRef<SpeechRecognition | null>(null)
-  const [speechSupported] = useState(() => Boolean(window.SpeechRecognition ?? window.webkitSpeechRecognition))
+  const [overflow, setOverflow] = useState(false)
+  // Cada pasada anade detras de lo que hay, con un espacio, hasta el tope: lo que no cabe se dice
+  // y se deja fuera, en vez de escribirse a medias o enterarse al enviar.
+  const dictation = useDictation(heard => setInstruction(current => {
+    const joined = current.trim() ? `${current.trimEnd()} ${heard}` : heard
+    setOverflow(joined.length > MAX_INSTRUCTION)
+    return joined.length > MAX_INSTRUCTION ? current : joined
+  }))
 
   const decided = proposal?.state === 'ACCEPTED' || proposal?.state === 'REJECTED'
     || proposal?.state === 'CANCELLED'
@@ -219,8 +231,6 @@ export function AssistantPanel({ project, headRevisionId, pageId, onAccepted, on
   // esta mirando y quien edita creeria estar viendo lo aceptado.
   useEffect(() => () => onPreview(null), [onPreview])
 
-  useEffect(() => () => recognition.current?.abort(), [])
-
   // Lo que se puede apuntar depende de la pagina abierta. Sin pagina solo queda el proyecto, y un
   // componente solo se puede elegir entre los que la pagina tiene: si se pidio un componente y la
   // pagina no tiene ninguno, lo que se apunta es la pagina, y la casilla marcada lo dice tambien.
@@ -246,6 +256,11 @@ export function AssistantPanel({ project, headRevisionId, pageId, onAccepted, on
 
   async function ask(event: React.FormEvent) {
     event.preventDefault()
+    // Lo que se manda es lo que se ve: un resultado que llegara despues de pulsar no puede colarse
+    // en la instruccion ya enviada ni quedar esperando a la siguiente.
+    dictation.abort()
+    dictation.reset()
+    setOverflow(false)
     await propose(instruction.trim(), scope)
   }
 
@@ -278,36 +293,6 @@ export function AssistantPanel({ project, headRevisionId, pageId, onAccepted, on
     } catch (error) {
       setProblem(safeProblem(error).message)
     } finally { setPending(false) }
-  }
-
-  function dictate() {
-    const SpeechRecognition = window.SpeechRecognition ?? window.webkitSpeechRecognition
-    if (!SpeechRecognition) return
-    setSpeechMessage(null)
-    const next = new SpeechRecognition()
-    recognition.current = next
-    next.lang = 'es-PE'
-    next.continuous = false
-    next.interimResults = false
-    next.maxAlternatives = 1
-    next.onstart = () => setListening(true)
-    next.onresult = event => {
-      let transcript = ''
-      for (let index = event.resultIndex; index < event.results.length; index += 1) {
-        if (event.results[index].isFinal) transcript += event.results[index][0].transcript
-      }
-      if (transcript.trim()) {
-        setInstruction(transcript.trim())
-        setSpeechMessage('Transcripción lista. Revísala y pulsa “Pedir propuesta” para enviarla.')
-      }
-    }
-    next.onerror = () => {
-      setListening(false)
-      setSpeechMessage('No se pudo completar el dictado. La instrucción escrita sigue disponible.')
-    }
-    next.onend = () => setListening(false)
-    try { next.start() }
-    catch { setListening(false); setSpeechMessage('No se pudo iniciar el dictado. Puedes seguir escribiendo.') }
   }
 
   /**
@@ -352,14 +337,25 @@ export function AssistantPanel({ project, headRevisionId, pageId, onAccepted, on
     {!readOnly && <form className="space-y-2" onSubmit={event => void ask(event)}>
       <label className="block">Instrucción para el asistente
         <textarea className={fieldStyle} rows={2} value={instruction} disabled={disabled}
-          maxLength={2000} onChange={event => setInstruction(event.target.value)} />
+          maxLength={MAX_INSTRUCTION} onChange={event => {
+            setInstruction(event.target.value)
+            setOverflow(false)
+            if (!event.target.value.trim()) dictation.reset()
+          }} />
       </label>
-      {speechSupported ? <div className="flex flex-wrap items-center gap-2">
-        <button type="button" className={buttonStyle} disabled={disabled || listening}
-          onClick={dictate}>{listening ? 'Escuchando…' : 'Dictar instrucción'}</button>
-        <span>El dictado sólo rellena el texto; revísalo antes de enviarlo.</span>
+      {dictation.supported ? <div className="flex flex-wrap items-center gap-2">
+        {dictation.listening
+          ? <button type="button" className={buttonStyle} onClick={dictation.pause}>Pausar dictado</button>
+          : <button type="button" className={buttonStyle} disabled={disabled} onClick={dictation.start}>
+              {dictation.dictated ? 'Continuar dictado' : 'Dictar instrucción'}
+            </button>}
+        <span>El dictado es en español y sólo rellena el texto; revísalo antes de enviarlo.</span>
       </div> : <p>El dictado no está disponible; puedes escribir la instrucción completa.</p>}
-      {speechMessage && <p role="status">{speechMessage}</p>}
+      {dictation.listening && <p aria-label="Transcripción provisional">
+        {dictation.interim ? `Escuchando: ${dictation.interim}` : 'Escuchando…'}
+      </p>}
+      {dictation.message && <p role="status">{dictation.message}</p>}
+      {overflow && <p role="alert">Lo último dictado no cabe: una instrucción admite hasta {MAX_INSTRUCTION} caracteres.</p>}
       {page && <fieldset className="space-y-1">
         <legend className="font-semibold">Alcance</legend>
         {SCOPE_CHOICES.map(([kind, label]) => <label key={kind} className="flex items-center gap-2">
