@@ -11,6 +11,8 @@ export interface OperationSignal {
 export interface OperationChannelHandlers {
   onConnected: () => void
   onSignal: (signal: OperationSignal) => void
+  /** La conexion se fue; el cliente reintenta solo y volvera a avisar por onConnected. */
+  onDisconnected: () => void
   onAuthorizationExpired: () => void
 }
 
@@ -48,6 +50,7 @@ export function subscribeToOperationChannel(handlers: OperationChannelHandlers):
     })
     handlers.onConnected()
   }
+  client.onWebSocketClose = () => handlers.onDisconnected()
   client.onStompError = () => handlers.onAuthorizationExpired()
   client.activate()
   return () => { void client.deactivate() }

@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { clearKnownOperations, operationReceiptEvent, persistKnownOperations, readKnownOperations,
   type OperationReceiptNotice } from '@/realtime/known-operations'
 import { subscribeToOperationChannel, type OperationSignal } from '@/realtime/operation-channel'
+import { announceOperationChannel, announceOperationStatus } from '@/realtime/operation-feed'
 
 const workLabels: Record<AsyncOperation['workType'], string> = {
   ASSISTANT_PROPOSAL: 'Propuesta del Assistant',
@@ -18,7 +19,7 @@ const stateLabels: Record<AsyncOperation['state'], string> = {
 }
 
 const stageLabels: Record<string, string> = {
-  QUEUED: 'Preparando', RUNNING: 'Procesando', RETRY_WAIT: 'Esperando reintento',
+  QUEUED: 'Preparando', RUNNING: 'Procesando', RETRY_WAIT: 'Esperando reintento', DRAFTING: 'Redactando',
   PREPARE: 'Preparando', BUILD: 'Construyendo', TEST: 'Probando', SMOKE: 'Comprobando el arranque',
   PACKAGE: 'Empaquetando', STORE: 'Guardando', VERIFY: 'Verificando integridad',
   SUCCEEDED: 'Finalizada', FAILED: 'No completada', CANCELLED: 'Cancelada',
@@ -81,6 +82,9 @@ export function OperationMonitor() {
         if (durable.version <= currentVersion) return
         versions.current.set(operationId, durable.version)
         setOperations(current => ({ ...current, [operationId]: durable }))
+        // Lo que se cuenta al resto de la pantalla es lo que REST devolvio, ya comprobado y mas
+        // nuevo que lo que se tenia: una senal por si sola no cuenta nada.
+        announceOperationStatus(durable)
       } catch (error) {
         if (!active) return
         if (safeProblem(error).code === 'RESOURCE_NOT_FOUND') forget(operationId)
@@ -93,11 +97,18 @@ export function OperationMonitor() {
       persistKnown()
       void refresh(signal.operationId)
     }
+    // Una identidad caducada cierra la suscripcion en vez de degradarla: no se deja al cliente
+    // reintentando cada cinco segundos con una credencial que ya no vale. Quien seguia una
+    // operacion vuelve a preguntar por REST, que le contestara con la misma negativa; y con una
+    // identidad nueva este efecto vuelve a correr y abre el canal otra vez.
+    let unsubscribe: () => void = () => undefined
     const clearExpired = () => {
       known.current.clear()
       versions.current.clear()
       clearKnownOperations(actorId)
       setOperations({})
+      unsubscribe()
+      announceOperationChannel(false)
     }
     const acceptReceipt = (event: Event) => {
       const receipt = (event as CustomEvent<OperationReceiptNotice>).detail
@@ -107,15 +118,20 @@ export function OperationMonitor() {
       void refresh(receipt.operationId)
     }
     window.addEventListener(operationReceiptEvent, acceptReceipt)
-    const unsubscribe = subscribeToOperationChannel({
-      onConnected: () => { for (const operationId of known.current) void refresh(operationId) },
+    unsubscribe = subscribeToOperationChannel({
+      onConnected: () => {
+        announceOperationChannel(true)
+        for (const operationId of known.current) void refresh(operationId)
+      },
       onSignal: acceptSignal,
+      onDisconnected: () => announceOperationChannel(false),
       onAuthorizationExpired: clearExpired,
     })
     return () => {
       active = false
       window.removeEventListener(operationReceiptEvent, acceptReceipt)
       unsubscribe()
+      announceOperationChannel(false)
     }
   }, [firebaseUser?.uid, idToken])
 

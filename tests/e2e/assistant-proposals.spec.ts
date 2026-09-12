@@ -44,6 +44,32 @@ function drafted(overrides: Record<string, unknown> = {}) {
   }
 }
 
+/** La operacion que redacta, tal como la devuelve REST: identidad, etapa y version, sin propuesta. */
+function operationAt(version: number, state: 'QUEUED' | 'RUNNING' | 'SUCCEEDED', stage: string, progress: number | null) {
+  return {
+    operationId: OPERATION, workType: 'ASSISTANT_PROPOSAL', state, stage, progress, version,
+    createdAt: '2026-09-06T10:01:00Z', startedAt: state === 'QUEUED' ? null : '2026-09-06T10:01:01Z',
+    updatedAt: '2026-09-06T10:01:01Z', finishedAt: state === 'SUCCEEDED' ? '2026-09-06T10:01:05Z' : null,
+    resultReference: state === 'SUCCEEDED' ? { type: 'assistant-proposal', id: PROPOSAL } : null,
+    failureCode: null, availableActions: state === 'SUCCEEDED' ? ['REFRESH_STATUS'] : ['CANCEL', 'REFRESH_STATUS'],
+  }
+}
+
+/** Una senal del canal: solo identidad y version, como manda el contrato del canal. */
+async function emitOperationSignal(page: Page, version: number, operationId = OPERATION) {
+  await page.evaluate(({ id, v }) => {
+    window.dispatchEvent(new CustomEvent('abstractify:e2e-operation-signal', { detail: { operationId: id, version: v } }))
+  }, { id: operationId, v: version })
+}
+
+async function dropOperationChannel(page: Page) {
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent('abstractify:e2e-operation-disconnect')))
+}
+
+async function reconnectOperationChannel(page: Page) {
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent('abstractify:e2e-operation-reconnect')))
+}
+
 async function openCanvas(page: Page, routes: {
   proposal: () => unknown
   onPropose?: (body: unknown) => unknown | Promise<unknown>
@@ -51,6 +77,7 @@ async function openCanvas(page: Page, routes: {
   onRejection?: () => unknown
   onCancellation?: () => unknown
   project?: () => unknown
+  operation?: () => unknown
 }) {
   await page.route('**/api/v1/component-registries/**', route => route.fulfill({ json: {
     registryVersion: 'textile-store@1.1.0',
@@ -81,6 +108,8 @@ async function openCanvas(page: Page, routes: {
     } },
   } }))
   await page.route('**/windows/project/42', route => route.fulfill({ json: [] }))
+  await page.route('**/api/v1/operations/**', route =>
+    route.fulfill({ json: (routes.operation ?? (() => operationAt(1, 'QUEUED', 'QUEUED', null)))() }))
   await page.route('**/categories/project/42', route => route.fulfill({ json: [] }))
 
   // La generica primero: en Playwright gana la ultima que coincide, asi que las de propuesta
@@ -148,6 +177,8 @@ test('submitting an instruction answers at once and leaves the Canvas usable', a
     },
   })
 
+  // Sin canal en directo: es el camino en que se pregunta cada poco, y lo que esta prueba mira.
+  await dropOperationChannel(page)
   await assistant(page).getByLabel('Instrucción para el asistente').fill('Pon el color primario en #1a2b3c')
   await assistant(page).getByRole('button', { name: 'Pedir propuesta' }).click()
   await expect.poll(() => sent).not.toBeNull()
@@ -158,6 +189,8 @@ test('submitting an instruction answers at once and leaves the Canvas usable', a
   answer()
 
   await expect(assistant(page).getByRole('status')).toHaveText('Todavía se está redactando.')
+  await expect(assistant(page).getByLabel('Seguimiento de la redacción'))
+    .toHaveText('Consultando la redacción periódicamente.')
 
   // Y tampoco durante el sondeo, que es la espera larga: se sigue pudiendo escribir mientras
   // pregunta, y sigue preguntando -no se quedo colgado en la primera respuesta-.
@@ -505,4 +538,102 @@ test('a refusal caused by scope says what fell outside and where', async ({ page
   await expect(refused).not.toContainText('OUTSIDE_SCOPE')
   await expect(refused).not.toContainText('BELONGS_TO_NO_PAGE')
   await expect(refused).not.toContainText('SetProperty')
+})
+
+/**
+ * Con el canal en directo, la redaccion se sigue por senales y no preguntando cada segundo: la
+ * propuesta se relee por REST solo cuando llega una senal nueva de su operacion, y lo que se pinta
+ * es lo que REST contesto. Una senal de otra operacion no cambia nada.
+ */
+test('with the channel live the panel follows signals and the poll does not run', async ({ page }) => {
+  let asked = 0
+  let operationVersion = 2
+  let served = drafted({ state: 'PENDING', outcome: 'WORKING', preview: null, effects: [],
+    modelSummary: null, unavailable: 'Todavía se está redactando.' })
+  await openCanvas(page, {
+    proposal: () => { asked += 1; return served },
+    operation: () => operationVersion >= 4 ? operationAt(4, 'SUCCEEDED', 'SUCCEEDED', 100)
+      : operationVersion === 3 ? operationAt(3, 'RUNNING', 'DRAFTING', 25) : operationAt(2, 'RUNNING', 'RUNNING', null),
+  })
+
+  await assistant(page).getByLabel('Instrucción para el asistente').fill('Pon el color primario en #1a2b3c')
+  await assistant(page).getByRole('button', { name: 'Pedir propuesta' }).click()
+  await expect(assistant(page).getByRole('status')).toHaveText('Todavía se está redactando.')
+  await expect(assistant(page).getByLabel('Seguimiento de la redacción'))
+    .toHaveText('Siguiendo la redacción en directo.')
+  const askedAfterReceipt = asked
+
+  // Sin senales no se pregunta: tres segundos son mas de dos vueltas del sondeo que ya no corre.
+  await page.waitForTimeout(3000)
+  expect(asked).toBe(askedAfterReceipt)
+
+  // Una senal de otra operacion no toca esta pantalla.
+  await emitOperationSignal(page, 9, '11111111-2222-4333-8444-555555555555')
+  await page.waitForTimeout(500)
+  expect(asked).toBe(askedAfterReceipt)
+  await expect(assistant(page).getByRole('status')).toHaveText('Todavía se está redactando.')
+
+  // La etapa de redaccion llega por el canal y se ensena en el monitor con su etiqueta local; cada
+  // version nueva de la operacion es exactamente una relectura de la propuesta por REST.
+  operationVersion = 3
+  await emitOperationSignal(page, 3)
+  await expect(page.getByRole('region', { name: 'Progreso de operaciones' })).toContainText('Redactando')
+  await expect.poll(() => asked).toBe(askedAfterReceipt + 1)
+
+  // La senal terminal es el aviso de releer la propuesta por REST, y lo que se pinta es eso.
+  operationVersion = 4
+  served = drafted()
+  await emitOperationSignal(page, 4)
+  await expect(assistant(page).getByText('Pone «color-primario» en #1a2b3c')).toBeVisible()
+  expect(asked).toBe(askedAfterReceipt + 2)
+  await expect(assistant(page).getByRole('button', { name: 'Aceptar propuesta' })).toBeVisible()
+})
+
+/**
+ * Perder la conexion no pierde la propuesta: se vuelve a preguntar por REST y se llega al mismo
+ * desenlace, y el panel dice que camino esta usando sin hablar de transporte. Al recuperar el
+ * canal, el sondeo se para otra vez.
+ */
+test('losing the channel falls back to REST and reaches the same terminal outcome', async ({ page }) => {
+  let asked = 0
+  let served = drafted({ state: 'PENDING', outcome: 'WORKING', preview: null, effects: [],
+    modelSummary: null, unavailable: 'Todavía se está redactando.' })
+  // La segunda propuesta es otra, con su identidad: una lectura de la primera no puede pisarla.
+  const SECOND = '4a3b2c1d-9e8f-4a7b-8c6d-5e4f3a2b1c0d'
+  let proposed = 0
+  await openCanvas(page, {
+    proposal: () => { asked += 1; return served },
+    onPropose: () => ({ status: 202, json: { operationId: OPERATION, proposalId: proposed++ === 0 ? PROPOSAL : SECOND } }),
+  })
+
+  await assistant(page).getByLabel('Instrucción para el asistente').fill('Pon el color primario en #1a2b3c')
+  await assistant(page).getByRole('button', { name: 'Pedir propuesta' }).click()
+  await expect(assistant(page).getByLabel('Seguimiento de la redacción'))
+    .toHaveText('Siguiendo la redacción en directo.')
+
+  await dropOperationChannel(page)
+  await expect(assistant(page).getByLabel('Seguimiento de la redacción'))
+    .toHaveText('Consultando la redacción periódicamente.')
+  const askedBeforePolling = asked
+  await expect.poll(() => asked, { timeout: 6000 }).toBeGreaterThan(askedBeforePolling)
+
+  served = drafted()
+  await expect(assistant(page).getByText('Pone «color-primario» en #1a2b3c')).toBeVisible()
+  await expect(assistant(page).getByLabel('Seguimiento de la redacción')).toHaveCount(0)
+  await expect(page.getByRole('region', { name: 'Canvas del proyecto' }).getByRole('status'))
+    .toHaveText('Revisión aceptada 1')
+
+  // Y si el canal vuelve mientras otra propuesta se redacta, el sondeo se para.
+  served = drafted({ proposalId: SECOND, state: 'PENDING', outcome: 'WORKING', preview: null, effects: [],
+    modelSummary: null, unavailable: 'Todavía se está redactando.' })
+  await assistant(page).getByLabel('Instrucción para el asistente').fill('Pon el color primario en #222222')
+  await assistant(page).getByRole('button', { name: 'Pedir propuesta' }).click()
+  await expect(assistant(page).getByLabel('Seguimiento de la redacción'))
+    .toHaveText('Consultando la redacción periódicamente.')
+  await reconnectOperationChannel(page)
+  await expect(assistant(page).getByLabel('Seguimiento de la redacción'))
+    .toHaveText('Siguiendo la redacción en directo.')
+  const askedWhenLive = asked
+  await page.waitForTimeout(3000)
+  expect(asked).toBe(askedWhenLive)
 })
