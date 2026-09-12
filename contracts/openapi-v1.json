@@ -7670,15 +7670,21 @@
           },
           "scope" : {
             "minLength" : 1,
-            "pattern" : "PROJECT|PAGE",
+            "pattern" : "PROJECT|PAGE|COMPONENT",
             "type" : "string",
-            "enum" : [ "PROJECT", "PAGE" ]
+            "enum" : [ "PROJECT", "PAGE", "COMPONENT" ]
           },
           "scopePageId" : {
             "maxLength" : 120,
             "minLength" : 0,
             "type" : "string",
-            "description" : "Obligatoria cuando el alcance es PAGE"
+            "description" : "Obligatoria cuando el alcance es PAGE o COMPONENT"
+          },
+          "scopeComponentId" : {
+            "maxLength" : 120,
+            "minLength" : 0,
+            "type" : "string",
+            "description" : "Obligatoria cuando el alcance es COMPONENT: el componente de esa página, con la identidad que muestra el Canvas"
           },
           "idempotencyKey" : {
             "maxLength" : 128,
@@ -7725,9 +7731,12 @@
           },
           "scope" : {
             "type" : "string",
-            "enum" : [ "PROJECT", "PAGE" ]
+            "enum" : [ "PROJECT", "PAGE", "COMPONENT" ]
           },
           "scopePageId" : {
+            "type" : "string"
+          },
+          "scopeComponentId" : {
             "type" : "string"
           },
           "modelSummary" : {

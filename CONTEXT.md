@@ -88,6 +88,10 @@ _Avoid_: In-place rewrite, automatic downgrade
 The verified usability reached by an accepted revision: editable, previewable, or exportable.
 _Avoid_: Draft status, publication state
 
+**Instruction scope**:
+The part of the store project an assistant instruction is aimed at, frozen with the proposal: the whole project, one store page, or one component of a page together with everything that hangs from it.
+_Avoid_: Target, focus, selection
+
 **Voice instruction**:
 An editable transcription of spoken input that enters the same assistant flow as a written instruction.
 _Avoid_: Voice command execution, audio operation
