@@ -184,7 +184,7 @@ const DesignInterfaceRender: React.FC = () => {
             <ThemeEditor project={settled} pageId={openedPage} onAccepted={setProject} readOnly={Boolean(inspecting)} />
           </div>
 
-          <AssistantPanel project={settled} pageId={openedPage} onAccepted={setProject}
+          <AssistantPanel project={settled} headRevisionId={project.acceptedRevision.id} pageId={openedPage} onAccepted={setProject}
             onPreview={setPreview} readOnly={Boolean(inspecting)} />
 
           <div id={destinations.ASSETS!.anchor} className="w-full flex flex-col items-center">

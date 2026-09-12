@@ -28,6 +28,16 @@ function projectAt(revisionId: string, number: number, heading: string, tokens: 
   }
 }
 
+function revisionSummary(id: string, number: number, parentId: string | null) {
+  return {
+    id, number, parentId, origin: number === 1 ? 'VERIFIED_TEMPLATE' : 'MANUAL_BATCH',
+    actorId: 'entrepreneur-e2e', registryVersion: 'textile-store@1.1.0',
+    templateVersion: 'verified-textile-start@1.1.0',
+    hash: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+    acceptedAt: '2026-09-06T10:00:00',
+  }
+}
+
 /** Una propuesta ya redactada, con la vista previa que dejaria. */
 function drafted(overrides: Record<string, unknown> = {}) {
   return {
@@ -71,7 +81,9 @@ async function reconnectOperationChannel(page: Page) {
 }
 
 async function openCanvas(page: Page, routes: {
-  proposal: () => unknown
+  proposal: (proposalId: string) => unknown
+  /** Las propuestas anteriores del proyecto, como las lista el servidor: sin vista previa. */
+  proposals?: () => unknown[]
   onPropose?: (body: unknown) => unknown | Promise<unknown>
   onAcceptance?: (body: unknown) => unknown | Promise<unknown>
   onRejection?: () => unknown
@@ -116,6 +128,10 @@ async function openCanvas(page: Page, routes: {
   // tienen que registrarse despues de la del proyecto o nunca les llegaria nada.
   await page.route('**/api/v1/projects**', route =>
     route.fulfill({ json: (routes.project ?? (() => projectAt('9001', 1, 'Mi tienda')))() }))
+  // El historial de revisiones, despues de la generica por lo mismo: para que le llegue.
+  await page.route('**/api/v1/projects/42/revisions**', route => route.fulfill({ json: { items: [
+    revisionSummary('9001', 2, '9000'), revisionSummary('9000', 1, null),
+  ], nextCursor: null } }))
 
   await page.route('**/api/v1/projects/42/assistant/proposals**', async route => {
     const request = route.request()
@@ -148,7 +164,8 @@ async function openCanvas(page: Page, routes: {
       })))(request.postDataJSON())
       return route.fulfill(outcome as Parameters<typeof route.fulfill>[0])
     }
-    return route.fulfill({ json: routes.proposal() })
+    if (pathname.endsWith('/assistant/proposals')) return route.fulfill({ json: (routes.proposals ?? (() => []))() })
+    return route.fulfill({ json: routes.proposal(pathname.slice(pathname.lastIndexOf('/') + 1)) })
   })
 
   await page.goto('/design-interface/42/Confecciones%20del%20Sol')
@@ -636,4 +653,116 @@ test('losing the channel falls back to REST and reaches the same terminal outcom
   const askedWhenLive = asked
   await page.waitForTimeout(3000)
   expect(asked).toBe(askedWhenLive)
+})
+
+const EARLIER = '5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b'
+const FAILED_ID = '6f7a8b9c-0d1e-4f2a-9b3c-4d5e6f7a8b9c'
+
+/** Una propuesta anterior tal como la lista el servidor: sin vista previa, con su desenlace. */
+function listed(overrides: Record<string, unknown>) {
+  return drafted({ preview: null, ...overrides })
+}
+
+/**
+ * La lista dice que se pidio, como acabo y contra que revision, y avisa cuando esa revision ya no
+ * es la ultima. Las etiquetas son del panel; el servidor manda codigos.
+ */
+test('earlier proposals are listed with their outcome and the revision they were drafted against', async ({ page }) => {
+  await openCanvas(page, {
+    proposal: () => drafted(),
+    proposals: () => [
+      listed({ proposalId: FAILED_ID, state: 'FAILED', outcome: 'FAILED', effects: [], modelSummary: null,
+        instruction: 'Quita la página catalogo', baseRevisionId: '9001' }),
+      // Aceptada sobre la 9000: la revision que dejo es la 9001, asi que su base ya no es la ultima.
+      listed({ proposalId: EARLIER, state: 'ACCEPTED', outcome: 'ACCEPTED', acceptedRevisionId: '9001',
+        instruction: 'Pon el color primario en #1a2b3c', baseRevisionId: '9000' }),
+      listed({ proposalId: '8a9b0c1d-2e3f-4a4b-8c5d-6e7f8a9b0c1d', state: 'REJECTED', outcome: 'REJECTED',
+        instruction: 'Mueve la página inicio al final', baseRevisionId: '8990' }),
+    ],
+  })
+
+  const earlier = assistant(page).getByRole('list', { name: 'Propuestas anteriores' })
+  const items = earlier.getByRole('listitem')
+  await expect(items).toHaveCount(3)
+  await expect(items.nth(0)).toContainText('«Quita la página catalogo»')
+  await expect(items.nth(0)).toContainText('No se pudo redactar · sobre la revisión 2, la actual')
+  await expect(items.nth(1)).toContainText('«Pon el color primario en #1a2b3c»')
+  await expect(items.nth(1)).toContainText('Aceptada · sobre la revisión 1 — ya no es la última: el proyecto cambió desde entonces')
+  // Una revision mas antigua que la pagina del historial se nombra por su identidad, no se calla.
+  await expect(items.nth(2)).toContainText('Descartada · sobre la revisión 8990 — ya no es la última')
+  await expect(items.nth(0).getByRole('button', { name: 'Volver a pedir' })).toBeVisible()
+  await expect(items.nth(1).getByRole('button', { name: 'Volver a pedir' })).toHaveCount(0)
+  await expect(earlier).not.toContainText('ACCEPTED')
+  await expect(earlier).not.toContainText('FAILED')
+})
+
+/**
+ * Abrir una anterior la lee por su identidad: vista previa calculada ahora, mismo resumen, y la
+ * decision pasa por el mismo camino explicito -aceptar escribe sobre esa propuesta y no otra-.
+ */
+test('opening an earlier proposal shows its effect and decides through the same explicit path', async ({ page }) => {
+  let acceptedPath: string | null = null
+  await openCanvas(page, {
+    proposal: proposalId => drafted({ proposalId, instruction: 'Pon el color primario en #1a2b3c' }),
+    proposals: () => [listed({ proposalId: EARLIER, instruction: 'Pon el color primario en #1a2b3c' })],
+    onAcceptance: () => ({ status: 201, json: drafted({ proposalId: EARLIER, state: 'ACCEPTED',
+      outcome: 'ACCEPTED', acceptedRevisionId: '9002', preview: null,
+      unavailable: 'Ya está aceptada: lo que hizo está en el proyecto.' }) }),
+  })
+  await page.route('**/api/v1/projects/42/assistant/proposals/*/acceptance', route => {
+    acceptedPath = new URL(route.request().url()).pathname
+    return route.fulfill({ status: 201, json: drafted({ proposalId: EARLIER, state: 'ACCEPTED',
+      outcome: 'ACCEPTED', acceptedRevisionId: '9002', preview: null }) })
+  })
+
+  const earlier = assistant(page).getByRole('list', { name: 'Propuestas anteriores' })
+  await earlier.getByRole('button', { name: 'Abrir' }).click()
+
+  await expect(assistant(page).getByText('Pone «color-primario» en #1a2b3c')).toBeVisible()
+  await expect(assistant(page).getByText('«cambiar el color primario a #1a2b3c»')).toBeVisible()
+  await expect(earlier.getByText('Se está viendo')).toBeVisible()
+  await page.getByRole('button', { name: 'Ver la propuesta en el Canvas' }).click()
+  await expect(assistant(page).getByRole('status')).toContainText('Estás viendo la propuesta')
+  await expect(page.getByRole('region', { name: 'Canvas del proyecto' }).getByRole('status'))
+    .toHaveText('Revisión aceptada 1')
+
+  await assistant(page).getByRole('button', { name: 'Aceptar propuesta' }).click()
+  await expect(assistant(page).getByRole('status')).toContainText('Aceptada')
+  expect(acceptedPath).toContain(EARLIER)
+})
+
+/**
+ * Volver a pedir una fallida es una peticion nueva: misma instruccion y alcance grabados, clave
+ * distinta, y la fallida sigue en la lista dicha como tal.
+ */
+test('a failed proposal can be asked for again as a new request', async ({ page }) => {
+  const sent: Record<string, unknown>[] = []
+  const NEW = '7a8b9c0d-1e2f-4a3b-8c4d-5e6f7a8b9c0d'
+  await openCanvas(page, {
+    proposal: proposalId => proposalId === NEW
+      ? drafted({ proposalId: NEW, state: 'PENDING', outcome: 'WORKING', preview: null, effects: [],
+        modelSummary: null, instruction: 'Quita la página catalogo', scope: 'PAGE', scopePageId: 'home',
+        unavailable: 'Todavía se está redactando.' })
+      : drafted({ proposalId }),
+    proposals: () => [listed({ proposalId: FAILED_ID, state: 'FAILED', outcome: 'FAILED', effects: [],
+      modelSummary: null, instruction: 'Quita la página catalogo', scope: 'PAGE', scopePageId: 'home' })],
+    onPropose: body => { sent.push(body as Record<string, unknown>); return {
+      status: 202, json: { operationId: OPERATION, proposalId: NEW },
+    } },
+  })
+
+  const earlier = assistant(page).getByRole('list', { name: 'Propuestas anteriores' })
+  await earlier.getByRole('button', { name: 'Volver a pedir' }).click()
+
+  await expect.poll(() => sent.length).toBe(1)
+  expect(sent[0]).toMatchObject({ instruction: 'Quita la página catalogo', scope: 'PAGE', scopePageId: 'home' })
+  expect(typeof sent[0].idempotencyKey).toBe('string')
+  await expect(assistant(page).getByRole('status')).toHaveText('Todavía se está redactando.')
+  // La fallida no resucita: sigue listada como lo que fue.
+  await expect(earlier.getByRole('listitem').filter({ hasText: 'No se pudo redactar' })).toHaveCount(1)
+
+  // Pedirla dos veces son dos peticiones con dos claves: nunca la misma.
+  await earlier.getByRole('button', { name: 'Volver a pedir' }).click()
+  await expect.poll(() => sent.length).toBe(2)
+  expect(sent[1].idempotencyKey).not.toBe(sent[0].idempotencyKey)
 })
