@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   acceptAssistantProposal, cancelAssistantProposal, getAssistantProposal, proposeAssistantChange,
   rejectAssistantProposal, refusalShown, scopeOf, scopeShown,
@@ -7,6 +7,9 @@ import {
 import { getStoreProject, type StoreProject } from '@/api/projects'
 import { safeProblem } from '@/api/problems'
 import { intentionKey, type ProjectDocument } from '@/canvas/intention'
+import { useAuth } from '@/contexts/AuthContext'
+import { registerOperationReceipt } from '@/realtime/known-operations'
+import { followOperationFeed, isOperationChannelLive } from '@/realtime/operation-feed'
 
 interface AssistantPanelProps {
   project: StoreProject
@@ -50,8 +53,11 @@ const OUTCOME_MESSAGE = {
  * El asistente: se le escribe, propone, y quien edita decide.
  *
  * <p>Pedir contesta enseguida con un recibo. Lo que tarde el modelo no puede tener bloqueado a quien
- * escribio la instruccion, que sigue editando mientras tanto; por eso esto no espera a la propuesta
- * sino que pregunta por ella hasta que esta.
+ * escribio la instruccion, que sigue editando mientras tanto. Como se entera de que ya esta depende
+ * de si el canal de operaciones esta en directo: si lo esta, cada senal nueva de su operacion es un
+ * aviso de releer la propuesta por REST; si no lo esta -nunca se conecto, o se perdio-, se vuelve a
+ * preguntar cada poco. Los dos caminos llegan al mismo desenlace porque el desenlace lo dice REST;
+ * el canal solo dice cuando mirar, y el panel dice cual de los dos esta usando.
  *
  * <p>Nada de lo que se ve aqui ha tocado el proyecto. La vista previa se pinta pidiendole al Canvas
  * que ensene el documento propuesto -el mismo renderizador que dibuja lo aceptado, para que no haya
@@ -67,6 +73,7 @@ const OUTCOME_MESSAGE = {
  * teclea mal apunta a otra cosa, y lo que se elige apunta a lo que se esta mirando.
  */
 export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnly }: AssistantPanelProps) {
+  const { firebaseUser } = useAuth()
   const [instruction, setInstruction] = useState('')
   const [scopeKind, setScopeKind] = useState<AssistantScopeKind>('PROJECT')
   const [componentId, setComponentId] = useState('')
@@ -75,6 +82,10 @@ export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnl
   const [problem, setProblem] = useState<string | null>(null)
   const [showing, setShowing] = useState(false)
   const [watched, setWatched] = useState<string | null>(null)
+  const [watchedOperation, setWatchedOperation] = useState<string | null>(null)
+  const [live, setLive] = useState(() => isOperationChannelLive())
+  const seenVersion = useRef(0)
+  const watchedRef = useRef<string | null>(null)
   const [listening, setListening] = useState(false)
   const [speechMessage, setSpeechMessage] = useState<string | null>(null)
   const recognition = useRef<SpeechRecognition | null>(null)
@@ -86,20 +97,49 @@ export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnl
   const applicable = drafted && proposal.outcome === 'CHANGE_AVAILABLE'
   const disabled = pending || readOnly
 
-  // Mientras la propuesta se escribe, se vuelve a preguntar. Se para en cuanto deja de estar
-  // pendiente: seguir preguntando por algo que ya no va a cambiar es ruido contra el servidor.
-  // Cual se vigila es estado y no una referencia: con una referencia, pedir una segunda mientras
-  // la primera seguia pendiente dejaba vivo el intervalo de la primera, que machacaba a la nueva.
+  /**
+   * La unica forma de releer la propuesta que se mira, venga el aviso de donde venga.
+   *
+   * <p>Tres caminos leen -el recibo, una senal del canal, el sondeo- y los tres pueden llegar
+   * desordenados. Una lectura solo entra si sigue siendo la propuesta que se mira y si lo que hay
+   * en pantalla no esta ya decidido: una lectura vieja que diga "redactando" no puede tapar el
+   * desenlace que otra ya trajo, y una lectura de una propuesta anterior no puede pisar la nueva.
+   */
+  const reread = useCallback(async (proposalId: string) => {
+    try {
+      const next = await getAssistantProposal(project.id, proposalId)
+      if (watchedRef.current !== proposalId) return
+      setProposal(current => current != null && current.proposalId === next.proposalId
+        && current.state !== 'PENDING' ? current : next)
+    } catch (error) {
+      if (watchedRef.current === proposalId) setProblem(safeProblem(error).message)
+    }
+  }, [project.id])
+
+  // Con el canal en directo, cada senal de la operacion que redacta -ya leida por REST y mas nueva
+  // que la anterior- es el aviso de releer la propuesta. Una senal de otra operacion no cambia
+  // nada: no es la que se mira. Y lo que se lee es la propuesta por REST, nunca lo que la senal
+  // trae, que es solo identidad y version.
+  useEffect(() => followOperationFeed({
+    onChannel: setLive,
+    onStatus: operation => {
+      if (operation.operationId !== watchedOperation || watched == null) return
+      if (operation.version <= seenVersion.current) return
+      seenVersion.current = operation.version
+      void reread(watched)
+    },
+  }), [watchedOperation, watched, reread])
+
+  // Sin canal en directo, mientras la propuesta se escribe se vuelve a preguntar. Se para en
+  // cuanto deja de estar pendiente: seguir preguntando por algo que ya no va a cambiar es ruido
+  // contra el servidor. Cual se vigila es estado y no una referencia: con una referencia, pedir una
+  // segunda mientras la primera seguia pendiente dejaba vivo el intervalo de la primera, que
+  // machacaba a la nueva.
   useEffect(() => {
-    if (proposal?.state !== 'PENDING' || watched == null) return
-    let live = true
-    const timer = setInterval(() => {
-      void getAssistantProposal(project.id, watched)
-        .then(next => { if (live) setProposal(next) })
-        .catch(error => { if (live) setProblem(safeProblem(error).message); clearInterval(timer) })
-    }, POLL_MS)
-    return () => { live = false; clearInterval(timer) }
-  }, [proposal?.state, watched, project.id])
+    if (proposal?.state !== 'PENDING' || watched == null || live) return
+    const timer = setInterval(() => { void reread(watched) }, POLL_MS)
+    return () => clearInterval(timer)
+  }, [proposal?.state, watched, live, reread])
 
   // Lo que se ensena en el Canvas se retira al irse, o quedaria pintada una propuesta que ya nadie
   // esta mirando y quien edita creeria estar viendo lo aceptado.
@@ -141,8 +181,14 @@ export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnl
         scopeComponentId: scope.componentId,
         idempotencyKey: intentionKey(),
       })
+      seenVersion.current = 0
+      watchedRef.current = receipt.proposalId
       setWatched(receipt.proposalId)
-      setProposal(await getAssistantProposal(project.id, receipt.proposalId))
+      setWatchedOperation(receipt.operationId)
+      // El recibo durable se apunta en el monitor antes de fiarse del canal: asi la operacion se
+      // recupera por REST tras una reconexion aunque su senal se haya perdido por el camino.
+      if (firebaseUser?.uid) registerOperationReceipt(firebaseUser.uid, receipt.operationId)
+      await reread(receipt.proposalId)
     } catch (error) {
       setProblem(safeProblem(error).message)
     } finally { setPending(false) }
@@ -243,6 +289,9 @@ export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnl
 
     {proposal?.state === 'PENDING' && <div className="flex flex-wrap items-center gap-2">
       <p role="status">{proposal.unavailable}</p>
+      <p aria-label="Seguimiento de la redacción">
+        {live ? 'Siguiendo la redacción en directo.' : 'Consultando la redacción periódicamente.'}
+      </p>
       {!readOnly && <button type="button" className={buttonStyle} disabled={pending}
         onClick={() => void cancel()}>Cancelar solicitud</button>}
     </div>}
