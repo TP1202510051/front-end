@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  acceptAssistantProposal, cancelAssistantProposal, getAssistantProposal, proposeAssistantChange,
-  rejectAssistantProposal, refusalShown, scopeOf, scopeShown,
-  type AssistantProposal, type AssistantScope, type AssistantScopeKind,
+  acceptAssistantProposal, cancelAssistantProposal, getAssistantProposal, listAssistantProposals,
+  proposeAssistantChange, rejectAssistantProposal, refusalShown, scopeOf, scopeShown,
+  PROPOSAL_HISTORY_LIMIT, type AssistantProposal, type AssistantScope, type AssistantScopeKind,
 } from '@/api/assistant'
-import { getStoreProject, type StoreProject } from '@/api/projects'
+import { getStoreProject, listRevisions, type StoreProject } from '@/api/projects'
 import { safeProblem } from '@/api/problems'
 import { intentionKey, type ProjectDocument } from '@/canvas/intention'
 import { useAuth } from '@/contexts/AuthContext'
@@ -13,6 +13,11 @@ import { followOperationFeed, isOperationChannelLive } from '@/realtime/operatio
 
 interface AssistantPanelProps {
   project: StoreProject
+  /**
+   * La revision aceptada de verdad, aunque se este inspeccionando otra: {@code project} trae la
+   * que se mira, y "la actual" tiene que decirse de la cabecera y no de la inspeccionada.
+   */
+  headRevisionId: string
   /** La pagina abierta, para acotar la instruccion a ella o a uno de sus componentes. */
   pageId: string | null
   onAccepted: (project: StoreProject) => void
@@ -41,6 +46,24 @@ const SCOPE_CHOICES: readonly (readonly [AssistantScopeKind, string])[] = [
   ['PAGE', 'Sólo esta página'],
   ['COMPONENT', 'Sólo un componente de esta página'],
 ]
+
+/**
+ * Dos tablas para el mismo desenlace porque se lee en dos sitios distintos: en la lista, una
+ * etiqueta corta junto a otras; en la propuesta abierta, una frase que dice que hacer. Las dos
+ * son del panel; el servidor manda codigos y ninguno de los dos se ensena.
+ */
+const OUTCOME_LABEL: Record<AssistantProposal['outcome'], string> = {
+  WORKING: 'Redactándose',
+  CHANGE_AVAILABLE: 'Con cambios para decidir',
+  CLARIFICATION_REQUIRED: 'Pide una aclaración',
+  NO_CHANGE: 'Sin cambios',
+  UNSUPPORTED: 'No aplicable',
+  STALE_CONTEXT: 'Quedó obsoleta',
+  CANCELLED: 'Cancelada',
+  FAILED: 'No se pudo redactar',
+  ACCEPTED: 'Aceptada',
+  REJECTED: 'Descartada',
+}
 
 const OUTCOME_MESSAGE = {
   CLARIFICATION_REQUIRED: 'Necesito una aclaración antes de proponer cambios.',
@@ -71,8 +94,15 @@ const OUTCOME_MESSAGE = {
  * aqui y se ve antes de pedir, mientras se escribe y mientras se dicta. El componente se elige de
  * los de la pagina, nombrados como el Canvas los nombra, y no tecleando una identidad: lo que se
  * teclea mal apunta a otra cosa, y lo que se elige apunta a lo que se esta mirando.
+ *
+ * <p>El panel no conoce solo la ultima: lista las propuestas que el proyecto ya recibio, con su
+ * desenlace y contra que revision se redactaron, y avisa cuando esa revision ya no es la ultima.
+ * Abrir una la lee por su identidad -la vista previa se calcula entonces, sobre el proyecto de
+ * ahora- y decidirla pasa por el mismo camino explicito que la mas reciente. Una que no se pudo
+ * redactar se puede volver a pedir desde aqui; lo que se pide es una peticion nueva con la misma
+ * instruccion y el mismo alcance, no la resurreccion de la fallida: la fallida queda dicha.
  */
-export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnly }: AssistantPanelProps) {
+export function AssistantPanel({ project, headRevisionId, pageId, onAccepted, onPreview, readOnly }: AssistantPanelProps) {
   const { firebaseUser } = useAuth()
   const [instruction, setInstruction] = useState('')
   const [scopeKind, setScopeKind] = useState<AssistantScopeKind>('PROJECT')
@@ -86,6 +116,9 @@ export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnl
   const [live, setLive] = useState(() => isOperationChannelLive())
   const seenVersion = useRef(0)
   const watchedRef = useRef<string | null>(null)
+  const [history, setHistory] = useState<AssistantProposal[]>([])
+  const [historyProblem, setHistoryProblem] = useState<string | null>(null)
+  const [revisionNumbers, setRevisionNumbers] = useState<Map<string, number>>(new Map())
   const [listening, setListening] = useState(false)
   const [speechMessage, setSpeechMessage] = useState<string | null>(null)
   const recognition = useRef<SpeechRecognition | null>(null)
@@ -135,11 +168,52 @@ export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnl
   // contra el servidor. Cual se vigila es estado y no una referencia: con una referencia, pedir una
   // segunda mientras la primera seguia pendiente dejaba vivo el intervalo de la primera, que
   // machacaba a la nueva.
+  // Una propuesta anterior reabierta mientras se redacta no trae su operacion -la lista no la
+  // dice-, asi que el canal no puede avisar por ella: se pregunta como si no hubiera canal.
   useEffect(() => {
-    if (proposal?.state !== 'PENDING' || watched == null || live) return
+    if (proposal?.state !== 'PENDING' || watched == null || (live && watchedOperation != null)) return
     const timer = setInterval(() => { void reread(watched) }, POLL_MS)
     return () => clearInterval(timer)
-  }, [proposal?.state, watched, live, reread])
+  }, [proposal?.state, watched, watchedOperation, live, reread])
+
+  // La lista se relee cuando algo pudo cambiarla: al abrir el proyecto, y cada vez que la
+  // propuesta que se mira cambia de punto -nace, se redacta, se decide-. Una respuesta que llega
+  // tarde no pisa a la que llego despues: solo entra la de la ultima peticion.
+  useEffect(() => {
+    let active = true
+    listAssistantProposals(project.id)
+      .then(items => { if (active) { setHistory(items); setHistoryProblem(null) } })
+      .catch(error => { if (active) setHistoryProblem(safeProblem(error).message) })
+    return () => { active = false }
+  }, [project.id, proposal?.proposalId, proposal?.state])
+
+  // Las revisiones se nombran por su numero, como en el historial, y la propuesta solo trae la
+  // identidad de la suya: la primera pagina del historial da el numero de las recientes, que son
+  // contra las que se redacto casi todo. Una mas antigua se nombra por su identidad, que es
+  // tambien un numero legible, antes que callarla.
+  useEffect(() => {
+    let active = true
+    listRevisions(project.id)
+      .then(page => { if (active) setRevisionNumbers(new Map(page.items.map(item => [item.id, item.number]))) })
+      .catch(() => undefined)
+    return () => { active = false }
+  }, [project.id, headRevisionId])
+
+  /** Contra que revision se redacto, dicho como en el historial, y si esa sigue siendo la ultima. */
+  function draftedAgainst(earlier: AssistantProposal): string {
+    const number = revisionNumbers.get(earlier.baseRevisionId)
+    const named = `sobre la revisión ${number ?? earlier.baseRevisionId}`
+    return earlier.baseRevisionId === headRevisionId ? `${named}, la actual`
+      : `${named} — ya no es la última: el proyecto cambió desde entonces`
+  }
+
+  /** Empezar a mirar una propuesta: desde aqui, cada aviso -canal o sondeo- la relee. */
+  function watch(proposalId: string, operationId: string | null) {
+    seenVersion.current = 0
+    watchedRef.current = proposalId
+    setWatched(proposalId)
+    setWatchedOperation(operationId)
+  }
 
   // Lo que se ensena en el Canvas se retira al irse, o quedaria pintada una propuesta que ya nadie
   // esta mirando y quien edita creeria estar viendo lo aceptado.
@@ -172,19 +246,31 @@ export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnl
 
   async function ask(event: React.FormEvent) {
     event.preventDefault()
+    await propose(instruction.trim(), scope)
+  }
+
+  /**
+   * Volver a pedir lo que fallo es pedirlo otra vez, no revivir lo fallido.
+   *
+   * <p>Se manda la misma instruccion y el mismo alcance que quedaron grabados, con una clave de
+   * idempotencia nueva: con la misma, el servidor devolveria la propuesta fallida que ya existe,
+   * que es justo lo que no se quiere. La fallida sigue en la lista, dicha como tal.
+   */
+  async function retry(failed: AssistantProposal) {
+    await propose(failed.instruction, scopeOf(failed))
+  }
+
+  async function propose(text: string, aim: AssistantScope) {
     setPending(true); setProblem(null); show(false)
     try {
       const receipt = await proposeAssistantChange(project.id, {
-        instruction: instruction.trim(),
-        scope: scope.kind,
-        scopePageId: scope.pageId,
-        scopeComponentId: scope.componentId,
+        instruction: text,
+        scope: aim.kind,
+        scopePageId: aim.pageId,
+        scopeComponentId: aim.componentId,
         idempotencyKey: intentionKey(),
       })
-      seenVersion.current = 0
-      watchedRef.current = receipt.proposalId
-      setWatched(receipt.proposalId)
-      setWatchedOperation(receipt.operationId)
+      watch(receipt.proposalId, receipt.operationId)
       // El recibo durable se apunta en el monitor antes de fiarse del canal: asi la operacion se
       // recupera por REST tras una reconexion aunque su senal se haya perdido por el camino.
       if (firebaseUser?.uid) registerOperationReceipt(firebaseUser.uid, receipt.operationId)
@@ -222,6 +308,18 @@ export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnl
     next.onend = () => setListening(false)
     try { next.start() }
     catch { setListening(false); setSpeechMessage('No se pudo iniciar el dictado. Puedes seguir escribiendo.') }
+  }
+
+  /**
+   * Abrir una anterior es leerla por su identidad, como se lee la ultima: la vista previa se
+   * calcula ahora, sobre el proyecto de ahora, y si ya no cabe el servidor lo dice como obsoleta.
+   */
+  async function open(earlier: AssistantProposal) {
+    setPending(true); setProblem(null); show(false)
+    // La lista no trae la operacion; si es la que ya se seguia, se conserva la que se tenia.
+    watch(earlier.proposalId, earlier.proposalId === watchedRef.current ? watchedOperation : null)
+    try { await reread(earlier.proposalId) }
+    finally { setPending(false) }
   }
 
   async function cancel() {
@@ -352,5 +450,28 @@ export function AssistantPanel({ project, pageId, onAccepted, onPreview, readOnl
     </p>}
 
     {problem && <p role="alert">{problem}</p>}
+
+    {(history.length > 0 || historyProblem) && <>
+      <h3 className="font-semibold">Propuestas anteriores</h3>
+      {historyProblem && <p role="alert">{historyProblem}</p>}
+      <ul aria-label="Propuestas anteriores" className="space-y-2">
+        {history.map(earlier => {
+          const opened = earlier.proposalId === proposal?.proposalId
+          return <li key={earlier.proposalId} className="rounded border border-slate-600 p-2">
+            <p className="italic">«{earlier.instruction}»</p>
+            <p>{OUTCOME_LABEL[earlier.outcome]} · {draftedAgainst(earlier)}</p>
+            <div className="mt-1 flex flex-wrap gap-2">
+              {opened
+                ? <span aria-current="true">Se está viendo</span>
+                : <button type="button" className={buttonStyle} disabled={pending}
+                    onClick={() => void open(earlier)}>Abrir</button>}
+              {earlier.state === 'FAILED' && !readOnly && <button type="button" className={buttonStyle}
+                disabled={disabled} onClick={() => void retry(earlier)}>Volver a pedir</button>}
+            </div>
+          </li>
+        })}
+      </ul>
+      {history.length >= PROPOSAL_HISTORY_LIMIT && <p>Se muestran las {PROPOSAL_HISTORY_LIMIT} más recientes.</p>}
+    </>}
   </section>
 }

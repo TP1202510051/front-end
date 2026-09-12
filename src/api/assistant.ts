@@ -32,6 +32,11 @@ function strings(value: unknown): value is string[] {
   return Array.isArray(value) && value.every(item => typeof item === 'string')
 }
 
+/** La propuesta que se pidio, y no otra: la identidad de la respuesta es la de la ruta. */
+function isProposal(value: unknown, proposalId: string): value is AssistantProposal {
+  return isProposalShape(value) && value.proposalId.toLowerCase() === proposalId.toLowerCase()
+}
+
 /**
  * Lo que llega es una propuesta, y no se cree por venir del servidor.
  *
@@ -39,11 +44,10 @@ function strings(value: unknown): value is string[] {
  * que las listas sean listas de texto. Es lo unico que este panel lee para decidir que ensena, asi
  * que un campo raro aqui es una pantalla que miente sobre lo que se va a aceptar.
  */
-function isProposal(value: unknown, proposalId: string): value is AssistantProposal {
+function isProposalShape(value: unknown): value is AssistantProposal {
   if (!value || typeof value !== 'object') return false
   const item = value as Record<string, unknown>
   return typeof item.proposalId === 'string'
-    && item.proposalId.toLowerCase() === proposalId.toLowerCase()
     && typeof item.projectId === 'string'
     && typeof item.state === 'string' && STATES.includes(item.state as AssistantState)
     && typeof item.outcome === 'string' && OUTCOMES.includes(item.outcome as AssistantOutcome)
@@ -134,6 +138,26 @@ export async function proposeAssistantChange(projectId: string,
       throw publicProblem(null)
     }
     return { operationId: receipt.operationId, proposalId: receipt.proposalId }
+  } catch (error) { throw safeProblem(error) }
+}
+
+/**
+ * Las propuestas del proyecto, de la mas reciente hacia atras, sin vista previa.
+ *
+ * <p>La lista es para elegir cual mirar, no para mirarlas todas: la vista previa se calcula al
+ * abrir una, sobre lo que el proyecto es en ese momento. Cada elemento se comprueba como se
+ * comprueba una propuesta sola; una lista con un elemento raro es una lista que miente entera.
+ */
+export const PROPOSAL_HISTORY_LIMIT = 20
+
+export async function listAssistantProposals(projectId: string): Promise<AssistantProposal[]> {
+  try {
+    const { data } = await platform.GET('/api/v1/projects/{projectId}/assistant/proposals', {
+      params: { path: { projectId }, query: { limit: PROPOSAL_HISTORY_LIMIT } },
+      signal: AbortSignal.timeout(15_000),
+    })
+    if (!Array.isArray(data) || !data.every(item => isProposalShape(item))) throw publicProblem(null)
+    return data
   } catch (error) { throw safeProblem(error) }
 }
 
