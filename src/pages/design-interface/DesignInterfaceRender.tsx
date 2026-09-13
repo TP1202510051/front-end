@@ -129,14 +129,14 @@ const DesignInterfaceRender: React.FC = () => {
 
   return (
     <div className="w-full h-screen flex flex-col bg-[#202123] overflow-hidden relative">
-      <div className="flex flex-grow overflow-hidden">
+      <div className="flex flex-col md:flex-row flex-grow overflow-hidden">
         <Sidebar
           projectId={projectId ?? ""}
           projectName={project.name}
           setIsSaving={setIsSaving}
         />
 
-        <div className="w-full flex-grow flex flex-col items-center justify-start gap-3 overflow-y-auto bg-[var(--dashboard-background)] p-4 relative">
+        <div className="min-w-0 flex-1 flex flex-col items-center justify-start gap-3 overflow-y-auto bg-[var(--dashboard-background)] p-4 relative">
           <div className="w-full flex justify-between items-center">
             <SavingStatus isSaving={isSaving} />
           </div>

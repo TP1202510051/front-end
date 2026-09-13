@@ -1,32 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-
-const PROPOSAL = '3f2b7c1a-8d4e-4a6b-9c0d-1e2f3a4b5c6d'
-const OPERATION = '7a1c2d3e-4f5a-4b6c-8d9e-0f1a2b3c4d5e'
-
-function projectAt(revisionId: string, number: number, heading: string, tokens: Record<string, string> = {}) {
-  return {
-    id: '42', name: 'Confecciones del Sol', createdAt: '2026-09-06T10:00:00', imageUrl: null,
-    acceptedRevision: {
-      id: revisionId, number, registryVersion: 'textile-store@1.1.0',
-      templateVersion: 'verified-textile-start@1.1.0', acceptedAt: '2026-09-06T10:00:00',
-      hash: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
-      origin: number === 1 ? 'VERIFIED_TEMPLATE' : 'MANUAL_BATCH',
-      document: {
-        schemaVersion: 'project-document@1.4.0', registryVersion: 'textile-store@1.1.0',
-        templateVersion: 'verified-textile-start@1.1.0',
-        theme: { tokens, rules: [] }, blocks: [], blockInstances: [],
-        pages: [{ id: 'home', path: '/', kind: 'HOME', rootComponentId: 'hero-main', components: [
-          { id: 'hero-main', type: 'layout.hero',
-            properties: { heading, subheading: 'Prendas listas' },
-            bindings: { collection: { target: 'EVERYTHING', reference: null, limit: 12, order: 'NEWEST' } },
-            interactions: {}, slots: { actions: ['hero-action'] }, styles: {} },
-          { id: 'hero-action', type: 'action.link', properties: { label: 'Ver colección' },
-            bindings: {}, interactions: { activate: 'home' }, slots: {}, styles: {} },
-        ] }],
-      },
-    },
-  }
-}
+import { OPERATION, PROPOSAL, drafted, projectAt, registryPublication } from './support/store-project'
 
 function revisionSummary(id: string, number: number, parentId: string | null) {
   return {
@@ -35,22 +8,6 @@ function revisionSummary(id: string, number: number, parentId: string | null) {
     templateVersion: 'verified-textile-start@1.1.0',
     hash: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
     acceptedAt: '2026-09-06T10:00:00',
-  }
-}
-
-/** Una propuesta ya redactada, con la vista previa que dejaria. */
-function drafted(overrides: Record<string, unknown> = {}) {
-  return {
-    proposalId: PROPOSAL, projectId: '42', state: 'DRAFTED', outcome: 'CHANGE_AVAILABLE',
-    instruction: 'Pon el color primario en #1a2b3c', baseRevisionId: '9001',
-    scope: 'PROJECT', scopePageId: null, scopeComponentId: null,
-    modelSummary: 'cambiar el color primario a #1a2b3c',
-    effects: ['Pone «color-primario» en #1a2b3c'], losses: [], refused: [],
-    destructive: false,
-    preview: projectAt('9001', 1, 'Mi tienda', { 'color-primario': '#1a2b3c' }).acceptedRevision.document,
-    unavailable: null, acceptedRevisionId: null,
-    createdAt: '2026-09-06T10:01:00', decidedAt: null,
-    ...overrides,
   }
 }
 
@@ -91,34 +48,7 @@ async function openCanvas(page: Page, routes: {
   project?: () => unknown
   operation?: () => unknown
 }) {
-  await page.route('**/api/v1/component-registries/**', route => route.fulfill({ json: {
-    registryVersion: 'textile-store@1.1.0',
-    components: [{
-      type: 'layout.hero',
-      properties: {
-        heading: { type: 'TEXT', required: true, minLength: 1, maxLength: 80 },
-        subheading: { type: 'TEXT', required: true, minLength: 1, maxLength: 160 },
-      },
-      slots: { actions: { allowedTypes: ['action.link'], minimum: 1, maximum: 1 } },
-      bindings: [{ name: 'collection', source: 'catalog.collection', required: true,
-        targets: ['COLLECTION', 'CATEGORY', 'EVERYTHING'] }],
-      interactions: [], constraints: ['TOP_LEVEL_ONLY'],
-    }, {
-      type: 'action.link',
-      properties: { label: { type: 'TEXT', required: true, minLength: 1, maxLength: 40 } },
-      slots: {}, bindings: [], interactions: [{ name: 'activate', required: true }], constraints: [],
-    }],
-    pages: [
-      { kind: 'HOME', required: true, path: '/', rootTypes: ['layout.hero'] },
-      { kind: 'CATALOG', required: true, path: '/catalogo', rootTypes: ['catalog.grid'] },
-      { kind: 'CONTENT', required: false, path: null, rootTypes: ['content.section'] },
-    ],
-    template: { templateVersion: 'verified-textile-start@1.1.0', composition: {
-      schemaVersion: 'registry-composition@1.0.0', registryVersion: 'textile-store@1.1.0',
-      templateVersion: 'verified-textile-start@1.1.0',
-      pages: projectAt('9001', 1, 'Mi tienda').acceptedRevision.document.pages,
-    } },
-  } }))
+  await page.route('**/api/v1/component-registries/**', route => route.fulfill({ json: registryPublication() }))
   await page.route('**/api/v1/operations/**', route =>
     route.fulfill({ json: (routes.operation ?? (() => operationAt(1, 'QUEUED', 'QUEUED', null)))() }))
 
@@ -346,7 +276,7 @@ for (const stable of [
   })
 }
 
-test('the proposal shows what it would do and what it would leave, without accepting it', async ({ page }) => {
+test('the proposal shows what it would do and what it would leave, without accepting it', { tag: '@S3' }, async ({ page }) => {
   await openCanvas(page, { proposal: () => drafted() })
 
   await assistant(page).getByLabel('Instrucción para el asistente').fill('Pon el color primario en #1a2b3c')
@@ -610,7 +540,7 @@ test('with the channel live the panel follows signals and the poll does not run'
  * desenlace, y el panel dice que camino esta usando sin hablar de transporte. Al recuperar el
  * canal, el sondeo se para otra vez.
  */
-test('losing the channel falls back to REST and reaches the same terminal outcome', async ({ page }) => {
+test('losing the channel falls back to REST and reaches the same terminal outcome', { tag: '@S4' }, async ({ page }) => {
   let asked = 0
   let served = drafted({ state: 'PENDING', outcome: 'WORKING', preview: null, effects: [],
     modelSummary: null, unavailable: 'Todavía se está redactando.' })

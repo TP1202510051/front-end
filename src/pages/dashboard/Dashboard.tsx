@@ -96,7 +96,8 @@ const Dashboard = () => {
                 )
               )
             ) : (
-              <div className="col-span-full text-center text-gray-400">
+              // gray-400 sobre blanco no llega al contraste minimo: axe lo marca como serio.
+              <div className="col-span-full text-center text-[var(--muted-foreground)]">
                 <p>No hay proyectos disponibles.</p>
               </div>
             )}

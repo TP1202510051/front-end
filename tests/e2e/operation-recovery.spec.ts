@@ -59,7 +59,7 @@ test('authenticated client requests cancellation and trusts the returned durable
   expect(result).toEqual(cancelled)
 })
 
-test('foreign and missing operations use safe not-found recovery without server text', async ({ page }) => {
+test('foreign and missing operations use safe not-found recovery without server text', { tag: '@S2' }, async ({ page }) => {
   await page.route('**/api/v1/projects*', route => route.fulfill({ json: { items: [], nextCursor: null } }))
   await page.route('**/api/v1/operations/**', route => route.fulfill({ status: 404, json: {
     code: 'RESOURCE_NOT_FOUND', detail: 'PRIVATE_OWNER_AND_PROMPT', recoveryAction: 'EXECUTE_UNTRUSTED',
@@ -76,7 +76,7 @@ test('foreign and missing operations use safe not-found recovery without server 
   expect(result).toEqual({ code: 'RESOURCE_NOT_FOUND', action: 'RETURN_TO_PROJECTS', message: 'El recurso no está disponible.' })
 })
 
-test('incompatible operation data cannot become a displayed state or executable action', async ({ page }) => {
+test('incompatible operation data cannot become a displayed state or executable action', { tag: '@S3' }, async ({ page }) => {
   await page.route('**/api/v1/projects*', route => route.fulfill({ json: { items: [], nextCursor: null } }))
   let response: unknown = {}
   await page.route('**/api/v1/operations/**', route => route.fulfill({ json: response }))
@@ -97,7 +97,7 @@ test('incompatible operation data cannot become a displayed state or executable 
   }
 })
 
-test('visible progress stays monotonic and REST reconstructs gaps and reconnects', async ({ page }) => {
+test('visible progress stays monotonic and REST reconstructs gaps and reconnects', { tag: '@S4' }, async ({ page }) => {
   await page.route('**/api/v1/projects*', route => route.fulfill({ json: { items: [], nextCursor: null } }))
   let durable = { ...queued, state: 'RUNNING', stage: 'PREPARE', progress: 10, version: 2,
     startedAt: '2026-08-28T00:00:10Z', updatedAt: '2026-08-28T00:00:10Z' }
@@ -131,7 +131,7 @@ test('visible progress stays monotonic and REST reconstructs gaps and reconnects
   expect(reads).toBe(3)
 })
 
-test('a remembered command receipt recovers after reconnect without any notification', async ({ page }) => {
+test('a remembered command receipt recovers after reconnect without any notification', { tag: '@S4' }, async ({ page }) => {
   await page.route('**/api/v1/projects*', route => route.fulfill({ json: { items: [], nextCursor: null } }))
   let reads = 0
   await page.route('**/api/v1/operations/**', route => {
@@ -152,7 +152,7 @@ test('a remembered command receipt recovers after reconnect without any notifica
   expect(reads).toBe(2)
 })
 
-test('authorization expiry clears progress and a foreign signal discloses nothing', async ({ page }) => {
+test('authorization expiry clears progress and a foreign signal discloses nothing', { tag: ['@S2', '@S4'] }, async ({ page }) => {
   await page.route('**/api/v1/projects*', route => route.fulfill({ json: { items: [], nextCursor: null } }))
   let own = true
   await page.route('**/api/v1/operations/**', route => own
@@ -209,7 +209,7 @@ test('only a succeeded integrity-checked export exposes an authorized short-live
  * pinta con su frase segura. Ni el token ni el identificador de la exportacion vuelven a la pantalla:
  * lo que caduco no sirve para nada y lo que se denego no es de quien mira.
  */
-test('a denied or expired download reference fails closed without leaking the reference', async ({ page }) => {
+test('a denied or expired download reference fails closed without leaking the reference', { tag: '@S2' }, async ({ page }) => {
   const exportId = '936a89df-0d03-4ea5-a446-821a9e3ec333'
   const token = 'b'.repeat(43)
   const exportOperation = { ...queued, workType: 'STORE_EXPORT', state: 'SUCCEEDED', stage: 'SUCCEEDED',

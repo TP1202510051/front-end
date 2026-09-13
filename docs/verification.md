@@ -14,4 +14,8 @@ Port 4173 must be free: the test always starts its own server and refuses to reu
 
 The smoke has a 90-second limit to include Vite's cold dependency transformation after `npm ci`. This harness timeout is not a production responsiveness target.
 
+## Release gate
+
+The gate (`docs/release-gate.md`) adds to the smoke above: `npm run test:e2e:gate` runs every journey in Chrome and Edge, which block; `npm run test:e2e:firefox` is an informative smoke whose failure is recorded and does not block; `tests/e2e/responsive-journeys.spec.ts` walks the critical journeys at 360, 768, 1024 and 1440 px with axe and a screenshot per state; `tests/e2e/keyboard-journey.spec.ts` walks them by keyboard alone; and `npm run blockers` (after `npm run build`) writes the sanitized security-blocker evidence to `release-evidence/`. On this Windows 10 host Playwright's Firefox build does not start; Linux CI is where Firefox runs.
+
 The `e2e` authentication boundary is selected only for the test development server. A deployment build using this mode is rejected. Normal development and production modes continue to use Firebase authentication. The standalone typecheck includes the Playwright configuration and test files.

@@ -32,6 +32,8 @@ export const CreateProjectDialog = () => {
         <DialogTitle>Ingrese nombre del nuevo proyecto</DialogTitle>
         <div className="mt-4">
           <Input
+            // El dialogo pide una sola cosa: al abrirse, el foco ya esta en ella.
+            autoFocus
             placeholder="Nombre..."
             value={projectName}
             onChange={(e) => setProjectName(e.target.value)}
