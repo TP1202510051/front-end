@@ -101,8 +101,6 @@ interface Options {
 async function open(page: Page, options: Options = {}) {
   const assets = options.assets ?? []
   await page.route('**/api/v1/component-registries/**', route => route.fulfill({ json: publication }))
-  await page.route('**/windows/project/42', route => route.fulfill({ json: [] }))
-  await page.route('**/categories/project/42', route => route.fulfill({ json: [] }))
   // Playwright resuelve la ultima ruta registrada primero, asi que la generica va antes que las
   // especificas: al reves se quedaria con las de assets por coincidir el prefijo.
   await page.route('**/api/v1/projects**', route => route.fulfill({ json: projectCiting(options.citing ?? null) }))

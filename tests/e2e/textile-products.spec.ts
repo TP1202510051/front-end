@@ -133,8 +133,6 @@ async function open(page: Page, options: Options = {}) {
   }
   const replace = (listing: Listing) => listings.set(listing.after ?? null, listing)
   await page.route('**/api/v1/component-registries/**', route => route.fulfill({ json: publication }))
-  await page.route('**/windows/project/42', route => route.fulfill({ json: [] }))
-  await page.route('**/categories/project/42', route => route.fulfill({ json: [] }))
   // Playwright resuelve la ultima ruta registrada primero, asi que la generica del proyecto va
   // antes que las especificas: al reves se quedaria con la de productos por coincidir el prefijo.
   await page.route('**/api/v1/projects**', route => route.fulfill({ json: project }))
@@ -293,8 +291,6 @@ test('a second page is asked for and appended', async ({ page }) => {
  */
 test('a foreign catalogue reads the same as one that is not there', async ({ page }) => {
   await page.route('**/api/v1/component-registries/**', route => route.fulfill({ json: publication }))
-  await page.route('**/windows/project/42', route => route.fulfill({ json: [] }))
-  await page.route('**/categories/project/42', route => route.fulfill({ json: [] }))
   await page.route('**/api/v1/projects**', route => route.fulfill({ json: project }))
   await page.route('**/api/v1/projects/42/assets**', route => route.fulfill({ json: [] }))
   await page.route('**/api/v1/projects/42/products**', route => route.fulfill({

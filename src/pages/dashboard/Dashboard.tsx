@@ -1,6 +1,5 @@
 import DashboardCard from '@/components/ui/dashboard-card';
-import type { Project } from '@/models/projectModel';
-import { listProjects } from '@/api/projects';
+import { listProjects, type ProjectSummary } from '@/api/projects';
 import { safeProblem, type ApiProblem, type RecoveryAction } from '@/api/problems';
 import { useEffect, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router';
@@ -17,7 +16,7 @@ const recoveryLabels: Record<RecoveryAction, string> = {
 };
 
 const Dashboard = () => {
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const { searchTerm } = useOutletContext<OutletContext>();
   const [ loadingProjects, setLoadingProjects ] = useState(false);
   const [problem, setProblem] = useState<ApiProblem | null>(null);

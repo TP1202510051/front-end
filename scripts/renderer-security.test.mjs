@@ -6,7 +6,8 @@ const renderers = new URL('../src/components/renderers/', import.meta.url)
 const rendererFiles = (await readdir(renderers)).filter(name => name.endsWith('.tsx'))
 const sources = await Promise.all([
   ...rendererFiles.map(name => readFile(new URL(name, renderers), 'utf8')),
-  readFile(new URL('../src/pages/code-interface/CodeInterface.tsx', import.meta.url), 'utf8'),
+  // The page that mounts the accepted revision (CodeInterface's successor since front-end#87).
+  readFile(new URL('../src/pages/design-interface/DesignInterfaceRender.tsx', import.meta.url), 'utf8'),
 ])
 const renderingPath = sources.join('\n')
 

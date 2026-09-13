@@ -93,8 +93,6 @@ test('textile entrepreneur creates opens and reloads the initial Accepted revisi
       templateVersion: 'verified-textile-start@1.1.0', pages: project.acceptedRevision.document.pages,
     } },
   } }))
-  await page.route('**/windows/project/42', route => route.fulfill({ json: [] }))
-  await page.route('**/categories/project/42', route => route.fulfill({ json: [] }))
 
   await page.goto('/dashboard')
   await page.getByRole('button', { name: 'Nuevo Proyecto' }).click()

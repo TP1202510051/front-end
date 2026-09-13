@@ -109,7 +109,6 @@ const stamps = { createdAt: '2026-09-06T10:00:00', updatedAt: '2026-09-06T10:00:
 async function open(page: Page, options: Options = {}) {
   const catalogue = options.products ?? []
   await page.route('**/api/v1/component-registries/**', route => route.fulfill({ json: publication }))
-  await page.route('**/windows/project/42', route => route.fulfill({ json: [] }))
   // Playwright resuelve la ultima ruta registrada primero, asi que la generica va antes.
   await page.route('**/api/v1/projects**', async route => {
     if (route.request().method() === 'POST') {
