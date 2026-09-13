@@ -167,6 +167,26 @@ export async function listProjects(after?: string): Promise<ProjectPage> {
   } catch (error) { throw safeProblem(error) }
 }
 
+/**
+ * Todas las páginas de proyectos del usuario, en orden de listado.
+ *
+ * <p>Un cursor que vuelva a aparecer sería un servidor dando vueltas; se corta como problema
+ * público en vez de seguir pidiendo para siempre.
+ */
+export async function listAllProjects(): Promise<ProjectSummary[]> {
+  const projects: ProjectSummary[] = []
+  const seen = new Set<string>()
+  let after: string | undefined
+  do {
+    const page = await listProjects(after)
+    projects.push(...page.items)
+    after = page.nextCursor ?? undefined
+    if (after && seen.has(after)) throw publicProblem(null)
+    if (after) seen.add(after)
+  } while (after)
+  return projects
+}
+
 export async function createStoreProject(name: string): Promise<StoreProject> {
   try {
     const { data } = await platform.POST('/api/v1/projects', { body: { name }, signal: AbortSignal.timeout(15_000) })

@@ -110,8 +110,6 @@ function refusal(issues: string[]) {
 async function route(page: Page, project: () => unknown,
   onAccept?: (body: Record<string, unknown>) => unknown, revisions: Record<string, unknown> = {}) {
   await page.route('**/api/v1/component-registries/**', route => route.fulfill({ json: publication }))
-  await page.route('**/windows/project/42', route => route.fulfill({ json: [] }))
-  await page.route('**/categories/project/42', route => route.fulfill({ json: [] }))
   await page.route('**/api/v1/projects**', async route => {
     const request = route.request()
     const path = new URL(request.url()).pathname

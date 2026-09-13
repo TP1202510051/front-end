@@ -1,13 +1,11 @@
-// src/main.tsx
-import { Buffer } from 'buffer'
+// sockjs-client (el transporte del canal de operaciones) lee `global` como en Node; Vite no lo
+// define en el navegador, asi que se apunta a window antes de que se cargue.
 declare global {
   interface Window {
     global: typeof window;
-    Buffer: typeof Buffer;
   }
 }
 window.global = window;
-window.Buffer = Buffer;
 
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'

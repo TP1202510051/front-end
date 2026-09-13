@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { createProject, getProjectsByUserId } from '../services/project.service';
+import { createStoreProject, listAllProjects } from '@/api/projects';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -19,7 +19,7 @@ export const useProjectCreation = () => {
       setLoading(true);
 
       // *** VALIDACIÓN DE NOMBRE REPETIDO ***
-      const existingProjects = await getProjectsByUserId();
+      const existingProjects = await listAllProjects();
       const exists = existingProjects.some(
         (p) => p.name.trim().toLowerCase() === name.trim().toLowerCase()
       );
@@ -30,9 +30,9 @@ export const useProjectCreation = () => {
       }
 
       // *** CREACIÓN ***
-      const result = await createProject(name);
+      const created = await createStoreProject(name);
       toast.success('Proyecto creado con éxito!');
-      navigate(`/design-interface/${result}/${name}`);
+      navigate(`/design-interface/${created.id}/${name}`);
 
     } catch (error) {
       toast.error('Error al crear el proyecto');

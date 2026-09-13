@@ -82,8 +82,6 @@ const publication = {
 async function open(page: Page, project: () => unknown,
   onAccept?: (body: Record<string, unknown>) => unknown, registry: unknown = publication) {
   await page.route('**/api/v1/component-registries/**', route => route.fulfill({ json: registry }))
-  await page.route('**/windows/project/42', route => route.fulfill({ json: [] }))
-  await page.route('**/categories/project/42', route => route.fulfill({ json: [] }))
   await page.route('**/api/v1/projects**', async route => {
     const request = route.request()
     const path = new URL(request.url()).pathname
@@ -398,8 +396,6 @@ test('a document that claims the block schema without carrying it is refused', a
   delete incompatible.acceptedRevision.document.blocks
   delete incompatible.acceptedRevision.document.blockInstances
   await page.route('**/api/v1/component-registries/**', route => route.fulfill({ json: publication }))
-  await page.route('**/windows/project/42', route => route.fulfill({ json: [] }))
-  await page.route('**/categories/project/42', route => route.fulfill({ json: [] }))
   await page.route('**/api/v1/projects**', route => route.fulfill({ json: incompatible }))
   await page.goto('/design-interface/42/Confecciones%20del%20Sol')
   await expect(page.getByText('La respuesta del servicio no es compatible. Actualiza la aplicación.')).toBeVisible()

@@ -104,8 +104,6 @@ interface Options {
 
 async function open(page: Page, options: Options = {}) {
   await page.route('**/api/v1/component-registries/**', route => route.fulfill({ json: publication }))
-  await page.route('**/windows/project/42', route => route.fulfill({ json: [] }))
-  await page.route('**/categories/project/42', route => route.fulfill({ json: [] }))
   await page.route('**/api/v1/projects**', route => route.fulfill({ json: project }))
   await page.route('**/api/v1/projects/42/assets**', route => route.fulfill({ json: [] }))
   // Playwright resuelve la ultima ruta registrada primero, asi que esta va despues de la generica.
@@ -263,8 +261,6 @@ test('an exportable exact revision starts one durable export and registers its r
 test('inspecting an earlier revision never reports the head by mistake', async ({ page }) => {
   const asked: string[] = []
   await page.route('**/api/v1/component-registries/**', route => route.fulfill({ json: publication }))
-  await page.route('**/windows/project/42', route => route.fulfill({ json: [] }))
-  await page.route('**/categories/project/42', route => route.fulfill({ json: [] }))
   await page.route('**/api/v1/projects**', route => route.fulfill({ json: project }))
   await page.route('**/api/v1/projects/42/revisions/2', route => route.fulfill({ json: {
     ...project,

@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dialog';
 
 import { EditIcon } from 'lucide-react';
-import { updateProjectName, deleteProject } from '@/services/project.service';
+import { deleteStoreProject, renameStoreProject } from '@/api/projects';
 import { toast } from 'react-toastify';
 
 interface ProjectHeaderProps {
@@ -38,7 +38,7 @@ export const ProjectHeader = ({ projectId, projectName, setIsSaving }: ProjectHe
     if (!projectId) return;
     try {
       setIsSaving(true);
-      await updateProjectName(projectId, newProjectName);
+      await renameStoreProject(projectId, newProjectName);
       toast.success('Nombre actualizado');
       navigate(`/design-interface/${projectId}/${newProjectName}`);
     } catch {
@@ -52,7 +52,7 @@ export const ProjectHeader = ({ projectId, projectName, setIsSaving }: ProjectHe
   const handleDeleteProject = async () => {
     if (!projectId) return;
     try {
-      await deleteProject(projectId);
+      await deleteStoreProject(projectId);
       toast.success('Proyecto eliminado');
       navigate('/dashboard');
     } catch {

@@ -119,10 +119,8 @@ async function openCanvas(page: Page, routes: {
       pages: projectAt('9001', 1, 'Mi tienda').acceptedRevision.document.pages,
     } },
   } }))
-  await page.route('**/windows/project/42', route => route.fulfill({ json: [] }))
   await page.route('**/api/v1/operations/**', route =>
     route.fulfill({ json: (routes.operation ?? (() => operationAt(1, 'QUEUED', 'QUEUED', null)))() }))
-  await page.route('**/categories/project/42', route => route.fulfill({ json: [] }))
 
   // La generica primero: en Playwright gana la ultima que coincide, asi que las de propuesta
   // tienen que registrarse despues de la del proyecto o nunca les llegaria nada.

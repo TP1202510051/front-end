@@ -6,9 +6,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { deleteProject } from '@/services/project.service';
+import { deleteStoreProject, type ProjectSummary } from '@/api/projects';
 import { toast } from 'react-toastify';
-import type { Project } from "@/models/projectModel";
 import { useNavigate } from "react-router";
 import {
   Dialog,
@@ -27,7 +26,7 @@ interface DashboardCardProps {
   title: string;
   lastEdited?: string;
   loadingProjects: React.Dispatch<React.SetStateAction<boolean>>;
-  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
+  setProjects: React.Dispatch<React.SetStateAction<ProjectSummary[]>>;
 };
 
 const DashboardCard = ({ id, imageUrl, title, lastEdited, loadingProjects, setProjects }: DashboardCardProps) => {
@@ -39,7 +38,7 @@ const DashboardCard = ({ id, imageUrl, title, lastEdited, loadingProjects, setPr
   const handleDelete = async () => {
     loadingProjects(true);
     try {
-      await deleteProject(id);
+      await deleteStoreProject(id);
       setProjects(prev => prev.filter(p => p.id !== id));
       toast.success("Proyecto eliminado correctamente");
     } catch (error) {

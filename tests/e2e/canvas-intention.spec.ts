@@ -65,8 +65,6 @@ async function openCanvas(page: Page, onRevisions: (body: unknown) => Promise<un
       pages: projectAt('9001', 1, 'Mi tienda').acceptedRevision.document.pages,
     } },
   } }))
-  await page.route('**/windows/project/42', route => route.fulfill({ json: [] }))
-  await page.route('**/categories/project/42', route => route.fulfill({ json: [] }))
   await page.route('**/api/v1/projects**', async route => {
     const request = route.request()
     const pathname = new URL(request.url()).pathname

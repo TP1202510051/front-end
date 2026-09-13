@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react'
 import { getRegistryPublication, REGISTRY_VERSION, TEMPLATE_VERSION } from '@/api/registry'
 import type { RegistryPublication } from '@/registry/publication'
 
-export function useRegistryPublication(reloadKey: unknown = null, registryVersion = REGISTRY_VERSION,
-  templateVersion = TEMPLATE_VERSION) {
+export function useRegistryPublication(registryVersion = REGISTRY_VERSION, templateVersion = TEMPLATE_VERSION) {
   const [publication, setPublication] = useState<RegistryPublication | null>(null)
   const [failed, setFailed] = useState(false)
 
@@ -17,7 +16,7 @@ export function useRegistryPublication(reloadKey: unknown = null, registryVersio
       if (active) setFailed(true)
     })
     return () => { active = false }
-  }, [reloadKey, registryVersion, templateVersion])
+  }, [registryVersion, templateVersion])
 
   return { publication, failed }
 }

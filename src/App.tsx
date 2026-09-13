@@ -11,7 +11,6 @@ import RegisterPage from './pages/authentication/RegisterPage';
 import ProfilePage from './pages/authentication/ProfilePage';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { EditingProvider } from './contexts/EditingContext.tsx';
 import { OperationMonitor } from './components/operations/OperationMonitor.tsx';
 import VerifiedTemplatePage from './pages/verified-template/VerifiedTemplatePage.tsx';
 
@@ -71,8 +70,7 @@ function App() {
   return (
     <div className="min-h-screen text-white">
       <main>
-        <EditingProvider>
-          <OperationMonitor />
+        <OperationMonitor />
           <RouterProvider router={router} />
           <ToastContainer
           position="top-right"
@@ -86,7 +84,6 @@ function App() {
           pauseOnHover
           theme="dark" // o "light"
         />
-        </EditingProvider>
       </main>
     </div>
   );

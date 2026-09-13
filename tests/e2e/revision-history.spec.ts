@@ -71,8 +71,6 @@ interface Backend {
 
 async function open(page: Page, backend: Backend) {
   await page.route('**/api/v1/component-registries/**', route => route.fulfill({ json: registry }))
-  await page.route('**/windows/project/42', route => route.fulfill({ json: [] }))
-  await page.route('**/categories/project/42', route => route.fulfill({ json: [] }))
   await page.route('**/api/v1/projects**', async route => {
     const request = route.request()
     const url = new URL(request.url())
