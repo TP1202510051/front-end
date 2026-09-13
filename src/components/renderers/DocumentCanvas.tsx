@@ -152,7 +152,9 @@ export function DocumentCanvas({ project, onAccepted, onPreview }: DocumentCanva
           value={heading}
           onChange={event => setHeading(event.target.value)}
           maxLength={80}
-          className="flex-1 rounded-md border px-3 py-2 text-[var(--dashboard-foreground)]"
+          // min-w-0: Firefox da al input un ancho minimo intrinseco mayor que Chrome y a 360 px la
+          // fila desbordaba y sacaba «Guardar» de la ventana.
+          className="min-w-0 flex-1 rounded-md border px-3 py-2 text-[var(--dashboard-foreground)]"
         />
         <button type="submit" disabled={saving.status === 'pending'}
           className="rounded-md bg-slate-900 px-4 py-2 text-white disabled:opacity-60">
