@@ -64,7 +64,7 @@ test('invalid registry properties produce a useful validation state', async ({ p
   await expect(page.getByRole('heading', { name: 'Confecciones Andinas' })).toHaveCount(0)
 })
 
-test('incompatible registry data fails closed before rendering', async ({ page }) => {
+test('incompatible registry data fails closed before rendering', { tag: '@S3' }, async ({ page }) => {
   const incompatible = structuredClone(publication)
   const heading = incompatible.components[0].properties.heading as { maxLength?: number }
   delete heading.maxLength

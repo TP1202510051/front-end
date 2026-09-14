@@ -38,6 +38,21 @@ conserva capturas, trazas y el informe HTML.
 La puerta de accesibilidad rechaza violaciones críticas de axe y adjunta el análisis completo. No es
 una comprobación de conformidad WCAG.
 
+## La puerta de release
+
+Chrome y Edge bloquean; Firefox es un humo informativo (`docs/release-gate.md`):
+
+```bash
+npm run test:e2e:gate      # Chrome y Edge
+npm run test:e2e:firefox   # informativo: su fallo se registra y no bloquea
+npm run blockers           # evidencia saneada de los bloqueos de seguridad, tras `npm run build`
+```
+
+`tests/e2e/responsive-journeys.spec.ts` recorre crear proyecto, editar la portada y aceptar una
+propuesta a 360, 768, 1024 y 1440 px con axe (crítica o seria bloquea) y una captura por estado;
+`tests/e2e/keyboard-journey.spec.ts` hace el mismo recorrido solo con teclado. `blockers` deja en
+`release-evidence/` qué prueba demuestra cada bloqueo y si pasó, sin nada más.
+
 ## El cliente de la API no se escribe a mano
 
 `src/api/schema.d.ts` se genera desde `contracts/openapi-v1.json`, que es el mismo fichero que
@@ -76,6 +91,7 @@ y una construcción de despliegue que lo use se rechaza.
 | `src/registry/` | El registro verificado de componentes |
 | `contracts/` | El contrato REST versionado |
 | `tests/e2e/` | Recorridos con Playwright y axe |
+| `scripts/` | Contrato, seguridad del renderizado, secretos del artefacto y evidencia de bloqueos |
 
 ## Contribuir
 

@@ -1,0 +1,97 @@
+name: Frontend gate
+# La mitad SPA de la puerta de release (front-end#88): instalacion limpia desde el lockfile, lint,
+# typecheck, build, contrato versionado, recorridos Playwright con axe en Chrome y Edge -que
+# bloquean-, humo informativo en Firefox y la evidencia saneada de los bloqueos de seguridad.
+# El backend la vuelve a correr sobre la revision fijada en contracts/frontend-ref.txt.
+on:
+  pull_request:
+    branches: [develop]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    name: Instalacion limpia, lint, typecheck, build y contrato
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.1.0'
+          cache: npm
+      - run: npm ci
+      - run: npm run verify
+      # S1: el artefacto recien construido no lleva ninguna credencial.
+      - run: node --test scripts/artifact-secrets.test.mjs
+
+  journeys:
+    name: Recorridos con axe en ${{ matrix.project }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: chrome
+            channel: chrome
+            blocking: true
+          - project: edge
+            channel: msedge
+            blocking: true
+          # Firefox no bloquea el release: su fallo queda visible en el paso, en la anotacion y en
+          # el resumen, y no retrasa la sustentacion.
+          - project: firefox
+            channel: firefox
+            blocking: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.1.0'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps ${{ matrix.channel }}
+      - id: journeys
+        run: npx playwright test --project=${{ matrix.project }}
+        continue-on-error: ${{ !matrix.blocking }}
+      - name: Dejar visible el humo informativo que fallo
+        if: steps.journeys.outcome == 'failure' && !matrix.blocking
+        run: |
+          echo "::warning title=Firefox::El humo informativo en Firefox fallo; Chrome y Edge son los que bloquean."
+          echo "### Firefox (informativo): FALLO" >> "$GITHUB_STEP_SUMMARY"
+          echo "El informe de Playwright va adjunto como artefacto. No bloquea el release." >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: steps.journeys.outcome == 'failure'
+        with:
+          name: playwright-report-${{ matrix.project }}
+          path: playwright-report
+          retention-days: 14
+
+  blockers:
+    name: Evidencia de los bloqueos de seguridad
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.1.0'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chrome
+      - run: npm run build
+      - run: npm run blockers
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-blockers-frontend
+          path: release-evidence
+          if-no-files-found: error
+          retention-days: 30

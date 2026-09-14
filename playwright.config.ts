@@ -15,12 +15,27 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
   },
+  // Chrome y Edge son los navegadores que bloquean el release; Firefox es un humo informativo
+  // (release-gates §9). `npm run test:e2e` corre solo Chrome; la puerta elige el proyecto.
   projects: [
     {
       name: 'chrome',
       use: {
         ...devices['Desktop Chrome'],
         channel: 'chrome',
+      },
+    },
+    {
+      name: 'edge',
+      use: {
+        ...devices['Desktop Edge'],
+        channel: 'msedge',
+      },
+    },
+    {
+      name: 'firefox',
+      use: {
+        ...devices['Desktop Firefox'],
       },
     },
   ],

@@ -113,7 +113,7 @@ test('textile entrepreneur creates opens and reloads the initial Accepted revisi
   expect(projectReads).toBeGreaterThanOrEqual(2)
 })
 
-test('denied project access is explicit and does not expose server details', async ({ page }) => {
+test('denied project access is explicit and does not expose server details', { tag: '@S2' }, async ({ page }) => {
   await page.route('**/api/v1/projects/42', route => route.fulfill({ status: 403, json: {
     detail: 'SECRET_POLICY_AND_ROLE', title: 'SECRET_POLICY_AND_ROLE',
   } }))
@@ -123,7 +123,7 @@ test('denied project access is explicit and does not expose server details', asy
   await expect(page.getByText('SECRET_POLICY_AND_ROLE', { exact: false })).toHaveCount(0)
 })
 
-test('Actor A cannot open a Store project created by Actor B', async ({ page }) => {
+test('Actor A cannot open a Store project created by Actor B', { tag: '@S2' }, async ({ page }) => {
   const owners = new Map<string, string>()
   let sequence = 70
   await page.route('**/api/v1/projects**', async route => {
@@ -172,7 +172,7 @@ function storeProject(id: string, name: string) {
 }
 
 for (const inaccessibleId of ['404', '99']) {
-  test(`missing and foreign project ${inaccessibleId} share the same safe UI`, async ({ page }) => {
+  test(`missing and foreign project ${inaccessibleId} share the same safe UI`, { tag: '@S2' }, async ({ page }) => {
     await page.route(`**/api/v1/projects/${inaccessibleId}`, route => route.fulfill({
       status: 404,
       json: {
