@@ -9,6 +9,8 @@ export default defineConfig({
   reporter: [
     ['list'],
     ['html', { open: 'never', outputFolder: 'playwright-report' }],
+    // El informe JSON alimenta la evidencia saneada del release (scripts/release-evidence.mjs).
+    ['json', { outputFile: process.env.PLAYWRIGHT_JSON_OUTPUT_NAME ?? 'release/playwright-report.json' }],
   ],
   use: {
     baseURL: 'http://127.0.0.1:4173',

@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { OPERATION, PROPOSAL, drafted, projectAt, registryPublication } from './support/store-project'
+import { dispatchChannelEvent } from './support/channel'
 
 function revisionSummary(id: string, number: number, parentId: string | null) {
   return {
@@ -24,17 +25,15 @@ function operationAt(version: number, state: 'QUEUED' | 'RUNNING' | 'SUCCEEDED',
 
 /** Una senal del canal: solo identidad y version, como manda el contrato del canal. */
 async function emitOperationSignal(page: Page, version: number, operationId = OPERATION) {
-  await page.evaluate(({ id, v }) => {
-    window.dispatchEvent(new CustomEvent('abstractify:e2e-operation-signal', { detail: { operationId: id, version: v } }))
-  }, { id: operationId, v: version })
+  await dispatchChannelEvent(page, 'abstractify:e2e-operation-signal', { operationId, version })
 }
 
 async function dropOperationChannel(page: Page) {
-  await page.evaluate(() => window.dispatchEvent(new CustomEvent('abstractify:e2e-operation-disconnect')))
+  await dispatchChannelEvent(page, 'abstractify:e2e-operation-disconnect')
 }
 
 async function reconnectOperationChannel(page: Page) {
-  await page.evaluate(() => window.dispatchEvent(new CustomEvent('abstractify:e2e-operation-reconnect')))
+  await dispatchChannelEvent(page, 'abstractify:e2e-operation-reconnect')
 }
 
 async function openCanvas(page: Page, routes: {

@@ -10,13 +10,26 @@ window.global = window;
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
-import App from './App.tsx'
-import { AuthProvider } from './contexts/AuthContext.tsx';
+import { loadRuntimeConfig } from './runtime-config'
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <AuthProvider>
-      <App />
-    </AuthProvider>
-  </StrictMode>,
-)
+// La aplicacion se importa despues de leer la configuracion de la instalacion: el cliente REST y
+// Firebase la leen al evaluarse, asi que no puede estar ya en el arbol de modulos cuando se carga.
+const root = createRoot(document.getElementById('root')!)
+loadRuntimeConfig().then(async outcome => {
+  if (outcome.status !== 'loaded') {
+    root.render(<main role="alert" className="flex min-h-screen items-center justify-center p-8">
+      {outcome.status === 'missing'
+        ? 'Esta instalación no tiene identidad configurada (runtime-config.json).'
+        : 'La configuración de esta instalación no es válida.'}
+    </main>)
+    return
+  }
+  const [{ default: App }, { AuthProvider }] = await Promise.all([import('./App.tsx'), import('./contexts/AuthContext.tsx')])
+  root.render(
+    <StrictMode>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </StrictMode>,
+  )
+})

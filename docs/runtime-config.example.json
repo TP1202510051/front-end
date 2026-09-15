@@ -1,0 +1,12 @@
+{
+  "apiBaseUrl": "https://api.example.invalid",
+  "apiWsUrl": "https://api.example.invalid/ws",
+  "firebase": {
+    "apiKey": "public-web-api-key",
+    "authDomain": "project.firebaseapp.com",
+    "projectId": "project",
+    "storageBucket": "project.appspot.com",
+    "messagingSenderId": "000000000000",
+    "appId": "1:000000000000:web:0000000000000000"
+  }
+}

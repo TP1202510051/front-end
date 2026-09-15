@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { dispatchChannelEvent, dispatchIntoClosedChannel } from './support/channel'
 
 const operationId = '936a89df-0d03-4ea5-a446-821a9e3ec111'
 const queued = {
@@ -8,17 +9,11 @@ const queued = {
 }
 
 async function emitOperationSignal(page: import('@playwright/test').Page, version: number, id = operationId) {
-  await page.evaluate(({ operationId: signalledId, operationVersion }) => {
-    window.dispatchEvent(new CustomEvent('abstractify:e2e-operation-signal', {
-      detail: { operationId: signalledId, version: operationVersion },
-    }))
-  }, { operationId: id, operationVersion: version })
+  await dispatchChannelEvent(page, 'abstractify:e2e-operation-signal', { operationId: id, version })
 }
 
 async function registerOperationReceipt(page: import('@playwright/test').Page, id = operationId) {
-  await page.evaluate((receiptId) => window.dispatchEvent(new CustomEvent('abstractify:operation-receipt', {
-    detail: { actorId: 'entrepreneur-e2e', operationId: receiptId },
-  })), id)
+  await dispatchChannelEvent(page, 'abstractify:operation-receipt', { actorId: 'entrepreneur-e2e', operationId: id })
 }
 
 test('authenticated client recovers the durable operation without assuming invented progress', async ({ page }) => {
@@ -126,7 +121,7 @@ test('visible progress stays monotonic and REST reconstructs gaps and reconnects
 
   durable = { ...durable, stage: 'STORE', progress: 90, version: 6,
     updatedAt: '2026-08-28T00:00:30Z' }
-  await page.evaluate(() => window.dispatchEvent(new Event('abstractify:e2e-operation-reconnect')))
+  await dispatchChannelEvent(page, 'abstractify:e2e-operation-reconnect')
   await expect(monitor.getByRole('progressbar')).toHaveAttribute('value', '90')
   expect(reads).toBe(3)
 })
@@ -164,12 +159,13 @@ test('authorization expiry clears progress and a foreign signal discloses nothin
   await emitOperationSignal(page, 2)
   const monitor = page.getByRole('region', { name: 'Progreso de operaciones' })
   await expect(monitor).toBeVisible()
-  await page.evaluate(() => window.dispatchEvent(new Event('abstractify:e2e-operation-expired')))
+  await dispatchChannelEvent(page, 'abstractify:e2e-operation-expired')
   await expect(monitor).not.toBeVisible()
 
   own = false
   const foreignId = '936a89df-0d03-4ea5-a446-821a9e3ec999'
-  await emitOperationSignal(page, 1, foreignId)
+  // La expiracion cerro el canal: una senal ajena ya no tiene a quien llegar, y menos que dibujar.
+  await dispatchIntoClosedChannel(page, 'abstractify:e2e-operation-signal', { operationId: foreignId, version: 1 })
   await expect(monitor).not.toBeVisible()
   await expect(page.locator('body')).not.toContainText(foreignId)
   await expect(page.locator('body')).not.toContainText('FOREIGN_PRIVATE_PROJECT')

@@ -2,6 +2,7 @@ import { platform } from './client'
 import { getAccessToken } from '@/auth/auth-session'
 import { publicProblem, safeProblem } from './problems'
 import type { components } from './schema'
+import { runtimeConfig } from '@/runtime-config'
 
 export type ProjectAsset = components['schemas']['ProjectAssetView']
 export type AssetDerivative = components['schemas']['AssetDerivativeView']
@@ -123,6 +124,6 @@ export async function readAssetObjectUrl(
 }
 
 function base(): string {
-  return (import.meta.env.VITE_API_BASE_URL || window.location.origin)
+  return (runtimeConfig().apiBaseUrl || window.location.origin)
     .replace(/\/api\/?$/, '').replace(/\/$/, '')
 }
