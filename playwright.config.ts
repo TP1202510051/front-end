@@ -1,9 +1,5 @@
 import { defineConfig, devices } from '@playwright/test'
 
-// El artefacto construido se sirve con `vite preview` en otro puerto: los recorridos van contra el
-// servidor e2e del mismo commit, y el proyecto `artifact` prueba que el dist/ identificado arranca.
-const ARTIFACT_PORT = 4174
-
 export default defineConfig({
   testDir: './tests/e2e',
   timeout: 90_000,
@@ -44,36 +40,19 @@ export default defineConfig({
         ...devices['Desktop Firefox'],
       },
     },
-    {
-      name: 'artifact',
-      testDir: './tests/artifact',
-      use: {
-        ...devices['Desktop Chrome'],
-        channel: 'chrome',
-        baseURL: `http://127.0.0.1:${ARTIFACT_PORT}`,
-      },
-    },
   ],
-  webServer: [
-    {
-      command: 'npm run dev -- --mode e2e --host 127.0.0.1 --port 4173 --strictPort',
-      env: {
-        VITE_API_BASE_URL: 'http://127.0.0.1:4173',
-        VITE_FIREBASE_API_KEY: 'deterministic-e2e-key',
-        VITE_FIREBASE_APP_ID: 'deterministic-e2e-app',
-        VITE_FIREBASE_AUTH_DOMAIN: 'abstractify-e2e.invalid',
-        VITE_FIREBASE_MESSAGING_SENDER_ID: '000000000000',
-        VITE_FIREBASE_PROJECT_ID: 'abstractify-e2e',
-        VITE_FIREBASE_STORAGE_BUCKET: 'abstractify-e2e.invalid',
-      },
-      reuseExistingServer: !process.env.CI,
-      url: 'http://127.0.0.1:4173',
+  webServer: {
+    command: 'npm run dev -- --mode e2e --host 127.0.0.1 --port 4173 --strictPort',
+    env: {
+      VITE_API_BASE_URL: 'http://127.0.0.1:4173',
+      VITE_FIREBASE_API_KEY: 'deterministic-e2e-key',
+      VITE_FIREBASE_APP_ID: 'deterministic-e2e-app',
+      VITE_FIREBASE_AUTH_DOMAIN: 'abstractify-e2e.invalid',
+      VITE_FIREBASE_MESSAGING_SENDER_ID: '000000000000',
+      VITE_FIREBASE_PROJECT_ID: 'abstractify-e2e',
+      VITE_FIREBASE_STORAGE_BUCKET: 'abstractify-e2e.invalid',
     },
-    {
-      // Sirve dist/ tal cual; sin runtime-config.json en dist/ el artefacto no tiene identidad.
-      command: `npm run preview -- --host 127.0.0.1 --port ${ARTIFACT_PORT} --strictPort`,
-      reuseExistingServer: !process.env.CI,
-      url: `http://127.0.0.1:${ARTIFACT_PORT}`,
-    },
-  ],
+    reuseExistingServer: !process.env.CI,
+    url: 'http://127.0.0.1:4173',
+  },
 })

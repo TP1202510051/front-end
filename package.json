@@ -13,7 +13,7 @@
     "test:e2e:gate": "playwright test --project=chrome --project=edge",
     "test:e2e:firefox": "playwright test --project=firefox",
     "blockers": "node scripts/release-blockers.mjs",
-    "test:artifact": "playwright test --project=artifact",
+    "test:artifact": "playwright test -c playwright.artifact.config.ts",
     "release:artifact": "node scripts/release-artifact.mjs identify dist release/frontend-artifact.json",
     "release:evidence": "node scripts/release-evidence.mjs release-evidence release/playwright-report.json release/playwright-artifact.json",
     "contract:generate": "node scripts/contract.mjs generate",

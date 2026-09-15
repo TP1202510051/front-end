@@ -18,7 +18,7 @@ Capability ticket: [front-end#89](https://github.com/TP1202510051/front-end/issu
 | No file (404, or a SPA fallback that returns HTML) | the build-time values (development server, `e2e` mode); a release artifact, built without identity, reports itself unconfigured |
 | File present but malformed (wrong type, broken JSON) | refused as a whole: the installation is reported invalid, nothing is half applied |
 
-`tests/e2e/runtime-config.spec.ts` proves the three on the e2e server; `tests/artifact/boot.spec.ts` (`npm run test:artifact`, Playwright project `artifact`) proves them on the identified `dist/` itself, served by `vite preview`: the built artifact reads a served configuration and shows the entry page, and without one reports itself unconfigured. `docs/runtime-config.example.json` is the shape.
+`tests/e2e/runtime-config.spec.ts` proves the three on the e2e server; `tests/artifact/boot.spec.ts` (`npm run test:artifact`, its own `playwright.artifact.config.ts`) proves them on the identified `dist/` itself, served by `vite preview`: the built artifact reads a served configuration and shows the entry page, and without one reports itself unconfigured. `docs/runtime-config.example.json` is the shape.
 
 ## Evidence
 
