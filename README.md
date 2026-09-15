@@ -69,14 +69,31 @@ pasa hasta que los dos repositorios coinciden. Encima del cliente generado hay v
 rechazan una respuesta que no cumpla el contrato, para que una carga inesperada no llegue nunca a la
 interfaz haciéndose pasar por datos buenos.
 
-## Variables de entorno
+## Un solo artefacto, configurado al desplegar
 
-| Variable | Para qué |
-|---|---|
-| `VITE_API_BASE_URL` | Origen de la API de la plataforma |
-| `VITE_API_WS_URL` | Origen del canal de tiempo real |
-| `VITE_CLOUD_RUN_URL` | Origen del servicio de inferencia del asistente |
-| `VITE_FIREBASE_*` | Configuración de Firebase para la autenticación |
+El artefacto de release se construye una vez, sin identidad de instalación, y se promueve por el
+hash de su contenido (`docs/release-artifact.md`):
+
+```bash
+npm run build               # el único build
+npm run release:artifact    # release/frontend-artifact.json con el SHA-256 de ese dist
+npm run test:artifact       # el dist identificado arranca y lee su runtime-config.json
+node scripts/release-artifact.mjs verify dist release/frontend-artifact.json   # antes de desplegar
+npm run release:evidence    # evidencia saneada a partir de los informes JSON de Playwright
+```
+
+Al arrancar, la aplicación lee `/runtime-config.json` junto al artefacto —la instalación lo escribe
+al desplegar; `docs/runtime-config.example.json` es la forma— y solo sin ese fichero usa las
+variables de Vite de abajo, que son las del servidor de desarrollo y del modo `e2e`. Un artefacto de
+release sin el fichero dice que no está configurado en vez de arrancar contra nada.
+
+## Variables de entorno (desarrollo y e2e)
+
+| Variable | Para qué | Clave en `runtime-config.json` |
+|---|---|---|
+| `VITE_API_BASE_URL` | Origen de la API de la plataforma | `apiBaseUrl` |
+| `VITE_API_WS_URL` | Origen del canal de tiempo real | `apiWsUrl` |
+| `VITE_FIREBASE_*` | Configuración de Firebase para la autenticación | `firebase.*` |
 
 Ningún secreto vive en el repositorio. El modo `e2e` sustituye la autenticación por una determinista
 y una construcción de despliegue que lo use se rechaza.

@@ -2,9 +2,10 @@ import createClient from 'openapi-fetch'
 import { getAccessToken } from '@/auth/auth-session'
 import { publicProblem, safeProblem } from './problems'
 import type { paths } from './schema'
+import { runtimeConfig } from '@/runtime-config'
 
 // Existing environments may end in /api for the legacy client. v1 paths are absolute contract paths.
-const baseUrl = (import.meta.env.VITE_API_BASE_URL || window.location.origin).replace(/\/api\/?$/, '').replace(/\/$/, '')
+const baseUrl = (runtimeConfig().apiBaseUrl || window.location.origin).replace(/\/api\/?$/, '').replace(/\/$/, '')
 export const platform = createClient<paths>({ baseUrl })
 platform.use({
   async onRequest({ request }) {

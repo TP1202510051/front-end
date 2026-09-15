@@ -2,6 +2,7 @@ import { Client, type IMessage } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 import { getAccessToken } from '@/auth/auth-session'
 import { isUuid } from '@/api/validators'
+import { runtimeConfig } from '@/runtime-config'
 
 export interface OperationSignal {
   operationId: string
@@ -30,7 +31,7 @@ function parseSignal(message: IMessage): OperationSignal | null {
 /** Browser transport exposes subscription only; business commands have no WebSocket interface. */
 export function subscribeToOperationChannel(handlers: OperationChannelHandlers): () => void {
   const client = new Client({
-    webSocketFactory: () => new SockJS(import.meta.env.VITE_API_WS_URL) as WebSocket,
+    webSocketFactory: () => new SockJS(runtimeConfig().apiWsUrl) as WebSocket,
     reconnectDelay: 5_000,
     heartbeatIncoming: 10_000,
     heartbeatOutgoing: 10_000,

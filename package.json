@@ -13,11 +13,15 @@
     "test:e2e:gate": "playwright test --project=chrome --project=edge",
     "test:e2e:firefox": "playwright test --project=firefox",
     "blockers": "node scripts/release-blockers.mjs",
+    "test:artifact": "playwright test --project=artifact",
+    "release:artifact": "node scripts/release-artifact.mjs identify dist release/frontend-artifact.json",
+    "release:evidence": "node scripts/release-evidence.mjs release-evidence release/playwright-report.json release/playwright-artifact.json",
     "contract:generate": "node scripts/contract.mjs generate",
     "contract:check": "node scripts/contract.mjs check",
     "contract:pair": "node scripts/contract.mjs pair",
     "test:contract": "node --test scripts/contract.test.mjs scripts/renderer-security.test.mjs",
-    "verify": "npm run contract:check && npm run test:contract && npm run lint && npm run typecheck && npm run build",
+    "test:scripts": "node --test scripts/contract.test.mjs scripts/renderer-security.test.mjs scripts/artifact-identity.test.mjs scripts/release-evidence.test.mjs",
+    "verify": "npm run contract:check && npm run test:scripts && npm run lint && npm run typecheck && npm run build",
     "verify:pair": "npm run contract:pair && npm run verify && npm run test:e2e"
   },
   "dependencies": {
