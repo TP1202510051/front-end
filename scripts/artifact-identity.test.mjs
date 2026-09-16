@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { artifactSha256, contentManifest, identify, mismatches, RUNTIME_CONFIG } from './artifact-identity.mjs'
+import { artifactSha256, contentManifest, identify, mismatches, remoteMismatches, RUNTIME_CONFIG } from './artifact-identity.mjs'
 
 async function dist(files) {
   const directory = await mkdtemp(join(tmpdir(), 'artifact-'))
@@ -54,4 +54,25 @@ test('a directory without index.html is not a built artifact', async () => {
   const empty = await dist({ 'readme.txt': 'nothing built here' })
   await assert.rejects(identify(empty, 'c1'), /no index\.html/)
   await rm(empty, { recursive: true })
+})
+
+/** A host like Firebase Hosting: serves what it has and index.html to everything else. */
+function host(files) {
+  return async url => {
+    const path = new URL(url).pathname.slice(1)
+    const body = files[path] ?? files['index.html']
+    return { ok: true, status: 200, arrayBuffer: async () => Buffer.from(body) }
+  }
+}
+
+test('a deployment serves the identified artifact only when every file hashes the same', async () => {
+  const bare = await dist(BUILD)
+  const identity = await identify(bare, 'c1')
+  assert.deepEqual(await remoteMismatches('https://rc.example.invalid/', identity, host(BUILD)), [])
+  assert.deepEqual(await remoteMismatches('https://rc.example.invalid', identity, host({ ...BUILD, 'assets/app-abc123.js': 'console.log(2)' })),
+    ['changed file assets/app-abc123.js'])
+  // A missing file comes back as index.html: still not the artifact.
+  const { 'assets/app-abc123.css': _css, ...without } = BUILD
+  assert.deepEqual(await remoteMismatches('https://rc.example.invalid', identity, host(without)), ['changed file assets/app-abc123.css'])
+  await rm(bare, { recursive: true })
 })

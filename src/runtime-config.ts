@@ -11,7 +11,10 @@
  */
 export const RUNTIME_CONFIG_PATH = '/runtime-config.json'
 
-/** Las claves de Firebase, una sola vez: de aqui salen el tipo, la lectura y la validacion. */
+/**
+ * Las claves de Firebase, una sola vez: de aqui salen el tipo, la lectura y la validacion.
+ * scripts/hosting-config.mjs repite la lista porque un script no puede importar esto: cambiarlas juntas.
+ */
 const FIREBASE_KEYS = ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId'] as const
 type FirebaseKey = typeof FIREBASE_KEYS[number]
 /** Sin estas tres no hay identidad con la que iniciar sesion: sin ellas la instalacion no esta configurada. */
