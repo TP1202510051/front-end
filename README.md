@@ -82,6 +82,11 @@ node scripts/release-artifact.mjs verify dist release/frontend-artifact.json   #
 npm run release:evidence    # evidencia saneada a partir de los informes JSON de Playwright
 ```
 
+Para staging (`docs/staging-certification.md`): `npm run hosting:stage -- <config.json> <site> rc`
+escribe la configuración junto al `dist/` identificado, `verify-remote` comprueba que el canal de
+Hosting sirve exactamente ese artefacto, y `npm run test:staging` recorre la plataforma contra el
+despliegue real (se salta sin `STAGING_URL`, `STAGING_EMAIL` y `STAGING_PASSWORD`).
+
 Al arrancar, la aplicación lee `/runtime-config.json` junto al artefacto —la instalación lo escribe
 al desplegar; `docs/runtime-config.example.json` es la forma— y solo sin ese fichero usa las
 variables de Vite de abajo, que son las del servidor de desarrollo y del modo `e2e`. Un artefacto de
