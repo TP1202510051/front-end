@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { expect, test, type Page } from '@playwright/test'
+import { reserveGeminiRun, stagingSettings } from './safety'
 
 /**
  * La certificacion en staging (front-end#90): los recorridos criticos contra el release desplegado
@@ -12,10 +13,11 @@ const url = process.env.STAGING_URL
 const email = process.env.STAGING_EMAIL
 const password = process.env.STAGING_PASSWORD
 const storeUrl = process.env.STAGING_STORE_URL
+const { model, ready } = stagingSettings(process.env)
 /** La instruccion predeclarada de la corrida Gemini (TesisAoskaunto/release/staging/gemini-run.json). */
 const instruction = process.env.STAGING_INSTRUCTION ?? 'Pon el color primario en #1b3a5c'
 
-test.skip(!url || !email || !password, 'STAGING_URL, STAGING_EMAIL and STAGING_PASSWORD select the staging deployment; without them nothing is certified')
+test.skip(!ready, 'Staging is not configured; nothing is certified')
 // Los recorridos se encadenan sobre el mismo proyecto: en serie, y el primero que falle para el resto.
 test.describe.configure({ mode: 'serial' })
 
@@ -29,7 +31,7 @@ async function signIn(page: Page) {
   await expect(page).toHaveURL(/\/dashboard$/)
 }
 
-test('the entrepreneur signs in with a real identity, creates a project and saves a manual edit', async ({ page }) => {
+test('the entrepreneur signs in with a real identity and creates a fresh project', async ({ page }) => {
   await signIn(page)
   const name = `Certificación ${new Date().toISOString().slice(0, 16)}`
   await page.getByRole('button', { name: 'Nuevo Proyecto' }).click()
@@ -39,15 +41,6 @@ test('the entrepreneur signs in with a real identity, creates a project and save
   receipt.projectId = page.url().match(/design-interface\/(\d+)/)?.[1]
   const canvas = page.getByRole('region', { name: 'Canvas del proyecto' })
   await expect(canvas.getByRole('status')).toHaveText('Revisión aceptada 1')
-
-  await page.getByLabel('Titular de la portada').fill('Certificación en staging')
-  await page.getByRole('button', { name: 'Guardar', exact: true }).click()
-  await expect(canvas.getByRole('status')).toHaveText('Revisión aceptada 2', { timeout: 30_000 })
-  // Persistencia: lo aceptado sobrevive a recargar y viene del servidor, no del estado local.
-  await page.reload()
-  await expect(canvas.getByRole('status')).toHaveText('Revisión aceptada 2')
-  await expect(page.getByRole('heading', { name: 'Certificación en staging' })).toBeVisible()
-  receipt.manualEdit = { revision: 2 }
 
   // El actor es la identidad verificada del token: un cuerpo que nombre a otro no cambia el dueno.
   // El token y el origen se toman de una peticion que la aplicacion hace de verdad.
@@ -66,8 +59,10 @@ test('the assistant drafts through the worker, progress reaches the canvas and a
   const id = receipt.projectId
   test.skip(!id, 'the project of the previous journey is needed')
   await page.goto(`/design-interface/${id}/certificacion`)
+  await expect(page.getByRole('region', { name: 'Canvas del proyecto' }).getByRole('status')).toHaveText('Revisión aceptada 1')
   const assistant = page.getByRole('region', { name: 'Asistente' })
   await assistant.getByLabel('Instrucción para el asistente').fill(instruction)
+  if (model === 'gemini') await reserveGeminiRun(process.env.STAGING_GEMINI_RUN_LOCK!, String(id))
   await assistant.getByRole('button', { name: 'Pedir propuesta' }).click()
   // El progreso llega por el canal (Pub/Sub -> worker -> notificacion) y REST lo recupera.
   const monitor = page.getByRole('region', { name: 'Progreso de operaciones' })
@@ -75,8 +70,24 @@ test('the assistant drafts through the worker, progress reaches the canvas and a
   await expect(assistant.getByText('Lo que cambia')).toBeVisible({ timeout: 5 * 60_000 })
   await assistant.getByRole('button', { name: 'Aceptar propuesta' }).click()
   await expect(assistant.getByRole('status')).toContainText('Aceptada', { timeout: 60_000 })
-  await expect(page.getByRole('region', { name: 'Canvas del proyecto' }).getByRole('status')).toHaveText('Revisión aceptada 3')
-  receipt.assistant = { instruction, acceptedRevision: 3 }
+  await expect(page.getByRole('region', { name: 'Canvas del proyecto' }).getByRole('status')).toHaveText('Revisión aceptada 2')
+  receipt.assistant = { instruction, acceptedRevision: 2, model }
+})
+
+test('a manual edit after the assistant survives a reload', async ({ page }) => {
+  await signIn(page)
+  const id = receipt.projectId
+  test.skip(!id, 'the fresh project of the previous journeys is needed')
+  await page.goto(`/design-interface/${id}/certificacion`)
+  const canvas = page.getByRole('region', { name: 'Canvas del proyecto' })
+  await expect(canvas.getByRole('status')).toHaveText('Revisión aceptada 2')
+  await page.getByLabel('Titular de la portada').fill('Certificación en staging')
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click()
+  await expect(canvas.getByRole('status')).toHaveText('Revisión aceptada 3', { timeout: 30_000 })
+  await page.reload()
+  await expect(canvas.getByRole('status')).toHaveText('Revisión aceptada 3')
+  await expect(page.getByRole('heading', { name: 'Certificación en staging' })).toBeVisible()
+  receipt.manualEdit = { revision: 3 }
 })
 
 test('a reload after the proposal recovers the durable operation from REST, not from the channel', async ({ page }) => {

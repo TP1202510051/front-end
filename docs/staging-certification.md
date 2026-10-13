@@ -11,11 +11,21 @@ Capability ticket: [front-end#90](https://github.com/TP1202510051/front-end/issu
 
 ## Journeys against staging
 
-`npm run test:staging` (`playwright.staging.config.ts`, `tests/staging/platform-journeys.spec.ts`) runs against `STAGING_URL` with a Firebase e-mail test account (`STAGING_EMAIL`, `STAGING_PASSWORD`) that the operator creates for the certification and removes after it; `STAGING_STORE_URL` points at the deployed `textile-complete` reference store; `STAGING_INSTRUCTION` is the predeclared assistant instruction. Without those variables every test is skipped and says so — nothing local is presented as the real integration.
+The backend wizard runs the corrected staging tools with:
 
-What they prove, in order and against real boundaries: sign-in with a verified Firebase identity; create a project; save a manual edit as an accepted revision that survives a reload (Cloud SQL); ask the assistant, see progress arrive (Pub/Sub → worker → channel) and accept the proposal as the next revision; recover the proposal list from REST after a reload; request an export, wait for the verified ZIP and download it through the short-lived link (object storage), recording its SHA-256; and read the reference store's mode, which must not be `DEMO`. The first journey also posts a project whose body names another actor and records that the deployment ignored or refused it: the actor is the verified token. Each journey attaches `staging-receipt` (project id, revisions, the actor-from-body outcome, instruction, export hash, store mode) to the report; `npm run staging:receipt -- <out.json>` extracts it for the backend certifier, which composes the Firebase, Pub/Sub and storage receipts from it, and `npm run release:evidence` summarises the JSON report like any other.
+```bash
+node scripts/staging/journeys.mjs chrome /path/to/front-end staging/.env.staging
+# After recording Gemini's receipt and switching BOTH services to deterministic:
+node scripts/staging/journeys.mjs edge /path/to/front-end staging/.env.staging
+```
 
-Run it once in Chrome (blocking) and once with `--project=edge`.
+Run these from the backend checkout. Its local configuration is private JSON data, never shell source. The runner verifies the actual model of both tagged cloud revisions and supplies credentials through the environment. It requires the deployed SANDBOX reference store URL before starting any journey.
+
+Chrome proves, in order: real Firebase sign-in; creation of a fresh project at revision 1; the predeclared assistant instruction through Pub/Sub and the worker, accepted as revision 2; a manual edit saved as revision 3 that survives a reload; recovery of the proposal from REST; verified export and temporary download; and the SANDBOX reference store. The actor named in a forged request body cannot replace the verified identity. The assistant checks revision 1 before submitting, preserving the predeclared condition of no previous manual edits.
+
+`STAGING_BROWSER` defaults to `chrome` and selects exactly one project. Configured runs also require `STAGING_ASSISTANT_MODEL`; Gemini requires Chrome and `STAGING_GEMINI_RUN_LOCK`. Immediately before clicking the request button, an exclusive persistent reservation is written. A duplicate or concurrent attempt fails before making the request. The reservation stays after errors and timeouts; inspect the existing execution rather than deleting the lock or retrying automatically. The backend runner supplies a stable per-candidate lock path. Unconfigured staging skips; partial configuration fails before browser launch.
+
+Edge runs only after both services use the deterministic model. It repeats the journeys without a second paid model request. The runner writes `playwright-staging-chrome.json` and `playwright-staging-edge.json` separately; extracted receipts are `journeys-receipt.json` (Chrome) and `journeys-edge-receipt.json` (Edge). These operator reports complement the frozen release; they do not rebuild the deployed SPA or replace its identity.
 
 ## Declared limits
 
