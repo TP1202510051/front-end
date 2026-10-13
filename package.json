@@ -14,7 +14,7 @@
     "test:e2e:firefox": "playwright test --project=firefox",
     "blockers": "node scripts/release-blockers.mjs",
     "test:artifact": "playwright test -c playwright.artifact.config.ts",
-    "test:staging": "playwright test -c playwright.staging.config.ts --project=chrome",
+    "test:staging": "playwright test -c playwright.staging.config.ts",
     "hosting:stage": "node scripts/hosting-stage.mjs dist release/frontend-artifact.json",
     "staging:receipt": "node scripts/staging-receipt.mjs",
     "release:artifact": "node scripts/release-artifact.mjs identify dist release/frontend-artifact.json",
@@ -23,7 +23,7 @@
     "contract:check": "node scripts/contract.mjs check",
     "contract:pair": "node scripts/contract.mjs pair",
     "test:contract": "node --test scripts/contract.test.mjs scripts/renderer-security.test.mjs",
-    "test:scripts": "node --test scripts/contract.test.mjs scripts/renderer-security.test.mjs scripts/artifact-identity.test.mjs scripts/release-evidence.test.mjs scripts/hosting-stage.test.mjs",
+    "test:scripts": "node --test scripts/contract.test.mjs scripts/renderer-security.test.mjs scripts/artifact-identity.test.mjs scripts/release-evidence.test.mjs scripts/hosting-stage.test.mjs scripts/staging-safety.test.mjs",
     "verify": "npm run contract:check && npm run test:scripts && npm run lint && npm run typecheck && npm run build",
     "verify:pair": "npm run contract:pair && npm run verify && npm run test:e2e"
   },
